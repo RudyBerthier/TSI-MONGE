@@ -4,9 +4,9 @@ import React from 'react'
 export const downloadSecurePDF = async (fileUrl, filename = 'document.pdf') => {
   try {
     // Récupérer le fichier via une requête sécurisée
-    const response = await fetch(`/api/documents/download${fileUrl.replace('/uploads', '')}`, {
+    const response = await fetch(fileUrl, {
       method: 'GET',
-      credentials: 'include', // Inclure les cookies d'authentification si nécessaire
+      credentials: 'include',
       headers: {
         'Accept': 'application/pdf, application/octet-stream'
       }
@@ -52,7 +52,7 @@ export const downloadSecurePDF = async (fileUrl, filename = 'document.pdf') => {
 export const openSecurePDFInNewTab = async (fileUrl, filename = 'document.pdf') => {
   try {
     // Récupérer le fichier via une requête sécurisée
-    const response = await fetch(`/api/documents/download${fileUrl.replace('/uploads', '')}`, {
+    const response = await fetch(fileUrl, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -72,24 +72,25 @@ export const openSecurePDFInNewTab = async (fileUrl, filename = 'document.pdf') 
       throw new Error('Le fichier n\'est pas un PDF valide')
     }
 
-    // Créer un URL blob temporaire et ouvrir dans un nouvel onglet
+    // Créer un URL blob temporaire
     const blobUrl = URL.createObjectURL(blob)
+    
+    // Ouvrir dans un nouvel onglet
     const newWindow = window.open(blobUrl, '_blank', 'noopener,noreferrer')
     
     if (!newWindow) {
-      // Si le popup est bloqué, forcer le téléchargement
-      downloadSecurePDF(fileUrl, filename)
+      console.warn('Popup bloqué, mais le fichier est téléchargé')
     } else {
       // Nettoyer l'URL blob après que la fenêtre soit fermée
       newWindow.addEventListener('beforeunload', () => {
         URL.revokeObjectURL(blobUrl)
       })
-      
-      // Nettoyer après 5 minutes au cas où
-      setTimeout(() => {
-        URL.revokeObjectURL(blobUrl)
-      }, 5 * 60 * 1000)
     }
+    
+    // Nettoyer après 5 minutes au cas où
+    setTimeout(() => {
+      URL.revokeObjectURL(blobUrl)
+    }, 5 * 60 * 1000)
     
   } catch (error) {
     console.error('Erreur lors de l\'ouverture sécurisée:', error)
@@ -107,7 +108,7 @@ export const SecurePDFLink = ({ fileUrl, filename, children, className, onClick,
       onClick(e)
     }
     
-    // Ouvrir le PDF de manière sécurisée
+    // Ouvrir le PDF de manière sécurisée (télécharge ET ouvre)
     openSecurePDFInNewTab(fileUrl, filename)
   }
 

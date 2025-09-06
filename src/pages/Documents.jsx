@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { documentsAPI } from '../services/api'
+import { documentsAPI, progressionAPI } from '../services/api'
+import { useClass } from '../contexts/ClassContext'
 import { Download, Compass, TrendingUp, Hash, Brain, Dice6, Calculator, Zap, Type, FileText, AlertTriangle, BookOpen, SortAsc, BarChart3, Target, Home, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
 import { SecurePDFLink } from '../utils/pdfUtils.jsx'
 
@@ -24,6 +25,7 @@ const typeLabels = {
 }
 
 export function Documents() {
+  const { currentClass } = useClass()
   const [documents, setDocuments] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -34,38 +36,54 @@ export function Documents() {
   const [showAllEvals, setShowAllEvals] = useState(false)
   const [evalSortBy, setEvalSortBy] = useState('chapitre')
   const [expandedCategories, setExpandedCategories] = useState('')
-  const [progressionStatus, setProgressionStatus] = useState(() => {
-    // Essayer de récupérer la progression depuis localStorage (synchronisation avec Admin)
-    const savedProgression = localStorage.getItem('progressionChapters')
-    if (savedProgression) {
-      try {
-        const chapters = JSON.parse(savedProgression)
+  const [progressionStatus, setProgressionStatus] = useState({
+    // Valeurs par défaut pendant le chargement
+    'geometrie-1': 'en-cours',
+    'calculs-1': 'en-cours', 
+    'fonctions-1': 'en-cours',
+    'suites-1': 'a-venir',
+    'algebre-1': 'a-venir',
+    'geometrie-2': 'a-venir',
+    'calculs-2': 'a-venir',
+    'fonctions-2': 'a-venir'
+  })
+  const [progressionLoading, setProgressionLoading] = useState(true)
+
+  // Fonction pour charger la progression depuis l'API
+  const loadProgression = async () => {
+    if (!currentClass?.id) return
+    
+    try {
+      console.log('📚 [DEBUG DOCUMENTS] Loading progression for class:', currentClass.id)
+      setProgressionLoading(true)
+      const progression = await progressionAPI.getProgression(currentClass.id)
+      
+      if (progression && progression.chapters) {
         const statusMap = {}
-        chapters.forEach(chapter => {
+        progression.chapters.forEach(chapter => {
           statusMap[chapter.id] = chapter.status
         })
-        return statusMap
-      } catch (error) {
-        console.error('Erreur lors de la récupération de la progression:', error)
+        console.log('📚 [DEBUG DOCUMENTS] Progression loaded:', statusMap)
+        setProgressionStatus(statusMap)
       }
+    } catch (error) {
+      console.error('📚 [DEBUG DOCUMENTS] Error loading progression:', error)
+      // Garder les valeurs par défaut en cas d'erreur
+    } finally {
+      setProgressionLoading(false)
     }
-    
-    // Valeurs par défaut si aucune progression sauvegardée
-    return {
-      'geometrie-1': 'en-cours',
-      'calculs-1': 'en-cours', 
-      'fonctions-1': 'en-cours',
-      'suites-1': 'a-venir',
-      'algebre-1': 'a-venir',
-      'geometrie-2': 'a-venir',
-      'calculs-2': 'a-venir',
-      'fonctions-2': 'a-venir'
-    }
-  })
+  }
 
   useEffect(() => {
     loadDocuments()
   }, [])
+
+  // Charger la progression quand la classe change
+  useEffect(() => {
+    if (currentClass) {
+      loadProgression()
+    }
+  }, [currentClass])
 
   const loadDocuments = async () => {
     try {
@@ -252,7 +270,7 @@ export function Documents() {
     <>
       <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Documents TSI 1ère année</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">Documents {currentClass?.name || 'Classe'}</h1>
           <p className="text-xl mb-8 text-blue-100 max-w-3xl mx-auto">Lycée Monge, Chambéry - Cours, exercices et ressources pour réussir en mathématiques</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="#documents" className="inline-flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors">
@@ -272,10 +290,23 @@ export function Documents() {
           {/* Section progression */}
           <section className="mb-16">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">Progression annuelle</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Progression annuelle
+                {currentClass && (
+                  <span className="text-lg font-normal text-blue-600 ml-2">({currentClass.name})</span>
+                )}
+              </h2>
               <p className="text-gray-600 text-lg">Suivez l'avancement du programme de mathématiques tout au long de l'année</p>
             </div>
             
+            {progressionLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Chargement de la progression...</p>
+                </div>
+              </div>
+            ) : (
             <div className="space-y-4">
               {[
                 { id: 'geometrie-1', title: 'I. Géométrie 1 :', subtitle: 'Vecteurs, bases et repères' },
@@ -309,6 +340,7 @@ export function Documents() {
                 )
               })}
             </div>
+            )}
           </section>
 
           {/* Section documents principaux */}

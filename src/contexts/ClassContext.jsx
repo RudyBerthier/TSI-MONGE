@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { classAPI } from '../services/api'
 
 const ClassContext = createContext()
 
@@ -46,32 +47,63 @@ export function ClassProvider({ children }) {
   const [currentClass, setCurrentClass] = useState(null)
   const [isFirstVisit, setIsFirstVisit] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [availableClasses, setAvailableClasses] = useState(AVAILABLE_CLASSES) // Fallback par défaut
+  const [classesLoaded, setClassesLoaded] = useState(false)
 
-  // Charger la classe depuis localStorage au démarrage
+  // Charger les classes depuis l'API
   useEffect(() => {
+    const loadClasses = async () => {
+      try {
+        console.log('🏫 [DEBUG CONTEXT] Loading classes from API...')
+        const classes = await classAPI.getAvailableClasses()
+        console.log('🏫 [DEBUG CONTEXT] Classes loaded:', classes)
+        if (classes && classes.length > 0) {
+          setAvailableClasses(classes)
+        }
+      } catch (error) {
+        console.error('🏫 [DEBUG CONTEXT] Error loading classes, using fallback:', error)
+        // Garder les classes par défaut en cas d'erreur
+      } finally {
+        setClassesLoaded(true)
+      }
+    }
+    
+    loadClasses()
+  }, [])
+
+  // Charger la classe depuis localStorage quand les classes sont chargées
+  useEffect(() => {
+    if (!classesLoaded) return // Attendre que les classes soient chargées
+    
     const savedClass = localStorage.getItem('selectedClass')
     const hasVisited = localStorage.getItem('hasVisitedBefore')
     
+    console.log('🏫 [DEBUG CONTEXT] Checking saved class:', savedClass)
+    
     if (savedClass) {
       // Vérifier que la classe sauvegardée existe toujours
-      const classExists = AVAILABLE_CLASSES.find(cls => cls.id === savedClass)
+      const classExists = availableClasses.find(cls => cls.id === savedClass)
       if (classExists) {
+        console.log('🏫 [DEBUG CONTEXT] Found saved class:', classExists)
         setCurrentClass(classExists)
       } else {
         // La classe n'existe plus, forcer la sélection
+        console.log('🏫 [DEBUG CONTEXT] Saved class not found, forcing selection')
         setIsFirstVisit(true)
         localStorage.removeItem('selectedClass')
       }
     } else if (!hasVisited) {
       // Première visite
+      console.log('🏫 [DEBUG CONTEXT] First visit detected')
       setIsFirstVisit(true)
     } else {
       // Utilisateur revient mais n'a pas de classe sélectionnée
+      console.log('🏫 [DEBUG CONTEXT] No saved class, forcing selection')
       setIsFirstVisit(true)
     }
     
     setLoading(false)
-  }, [])
+  }, [classesLoaded, availableClasses])
 
   // Fonction pour sélectionner une classe
   const selectClass = (classData) => {
@@ -101,9 +133,9 @@ export function ClassProvider({ children }) {
 
   const value = {
     currentClass,
-    availableClasses: AVAILABLE_CLASSES,
+    availableClasses, // Utiliser les classes chargées depuis l'API
     isFirstVisit,
-    loading,
+    loading: loading || !classesLoaded, // Loading tant que les classes ne sont pas chargées
     selectClass,
     changeClass,
     resetClassSelection
@@ -122,4 +154,13 @@ export function useClass() {
     throw new Error('useClass must be used within a ClassProvider')
   }
   return context
+}
+
+// Hook pour récupérer seulement les classes disponibles
+export function useAvailableClasses() {
+  const context = useContext(ClassContext)
+  if (!context) {
+    throw new Error('useAvailableClasses must be used within a ClassProvider')
+  }
+  return context.availableClasses
 }

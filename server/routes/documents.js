@@ -64,10 +64,17 @@ async function writeDocuments(documents) {
 router.get('/', async (req, res) => {
   try {
     const documents = await readDocuments();
+    const { class: filterClass } = req.query;
+    
+    // Filtrer par classe si spécifié
+    let filteredDocuments = documents;
+    if (filterClass) {
+      filteredDocuments = documents.filter(doc => doc.class === filterClass);
+    }
     
     // Organiser par catégorie
     const organized = {};
-    documents.forEach(doc => {
+    filteredDocuments.forEach(doc => {
       if (!organized[doc.category]) {
         organized[doc.category] = [];
       }
@@ -77,6 +84,7 @@ router.get('/', async (req, res) => {
         filename: doc.filename,
         category: doc.category,
         type: doc.type,
+        class: doc.class,
         file_url: `/uploads/documents/${doc.category}/${doc.filename}`,
         created_at: doc.created_at
       });
@@ -92,12 +100,12 @@ router.get('/', async (req, res) => {
 // POST /api/documents - Upload d'un nouveau document
 router.post('/', upload.single('file'), async (req, res) => {
   try {
-    const { category, type, title } = req.body;
+    const { category, type, title, class: docClass } = req.body;
     
-    if (!req.file || !category || !type || !title) {
+    if (!req.file || !category || !type || !title || !docClass) {
       return res.status(400).json({ 
         error: 'Données manquantes',
-        required: ['file', 'category', 'type', 'title']
+        required: ['file', 'category', 'type', 'title', 'class']
       });
     }
     
@@ -109,6 +117,7 @@ router.post('/', upload.single('file'), async (req, res) => {
       filename: req.file.filename,
       category,
       type,
+      class: docClass,
       file_path: req.file.path,
       file_size: req.file.size,
       created_at: new Date().toISOString()
@@ -208,6 +217,7 @@ router.delete('/:id', async (req, res) => {
     // Supprimer le fichier physique
     try {
       await fs.unlink(document.file_path);
+      console.log(`Fichier supprimé: ${document.file_path}`);
     } catch (fileError) {
       console.warn('Fichier déjà supprimé ou introuvable:', fileError.message);
     }
@@ -216,11 +226,11 @@ router.delete('/:id', async (req, res) => {
     documents.splice(documentIndex, 1);
     await writeDocuments(documents);
     
-    res.json({ success: true, message: 'Document supprimé' });
+    res.json({ success: true, message: 'Document supprimé avec succès' });
     
   } catch (error) {
     console.error('Erreur suppression document:', error);
-    res.status(500).json({ error: 'Erreur suppression' });
+    res.status(500).json({ error: 'Erreur lors de la suppression du document' });
   }
 });
 

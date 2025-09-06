@@ -8,7 +8,13 @@
   {
     "id": "rudy",
     "username": "rudy",
-    "password": "$2b$10$1wowM074qxnfTCaGwiCaDObqQZgXglT9OUSTL8H1S6z65CAbtuvmK",
+    "password": "$2b$10$wlklAjqWD7992hbALm7q/uM4/MSYEw9ChGFP8COSns.dQMdlOI9la",
     "role": "admin"
+  },
+  {
+    "id": "dlmskf",
+    "username": "dlmskf",
+    "password": "$2b$10$a0gE6w5i/WZa9XICJ9439u8WyTuh8YzgNz153JrUL4./UuqMDVZw2",
+    "role": "user"
   }
 ]

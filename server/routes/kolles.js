@@ -62,14 +62,22 @@ async function writeKolles(kolles) {
 router.get('/', async (req, res) => {
   try {
     const kolles = await readKolles();
+    const { class: filterClass } = req.query;
+    
+    // Filtrer par classe si spécifié
+    let filteredKolles = kolles;
+    if (filterClass) {
+      filteredKolles = kolles.filter(kolle => kolle.class === filterClass);
+    }
     
     // Trier par numéro de semaine
-    kolles.sort((a, b) => a.week_number - b.week_number);
+    filteredKolles.sort((a, b) => a.week_number - b.week_number);
     
-    const formattedKolles = kolles.map(kolle => ({
+    const formattedKolles = filteredKolles.map(kolle => ({
       id: kolle.id,
       week_number: kolle.week_number,
       week_dates: kolle.week_dates,
+      class: kolle.class,
       filename: kolle.filename,
       file_url: `/uploads/kolles/${kolle.filename}`,
       created_at: kolle.created_at
@@ -85,12 +93,12 @@ router.get('/', async (req, res) => {
 // POST /api/kolles - Upload d'un nouveau programme de khôlle
 router.post('/', upload.single('file'), async (req, res) => {
   try {
-    const { week_number, week_dates } = req.body;
+    const { week_number, week_dates, class: kolleClass } = req.body;
     
-    if (!req.file || !week_number || !week_dates) {
+    if (!req.file || !week_number || !week_dates || !kolleClass) {
       return res.status(400).json({ 
         error: 'Données manquantes',
-        required: ['file', 'week_number', 'week_dates']
+        required: ['file', 'week_number', 'week_dates', 'class']
       });
     }
     
@@ -123,6 +131,7 @@ router.post('/', upload.single('file'), async (req, res) => {
       id: uuidv4(),
       week_number: weekNum,
       week_dates: week_dates.trim(),
+      class: kolleClass,
       filename: req.file.filename,
       file_path: req.file.path,
       file_size: req.file.size,
@@ -258,12 +267,25 @@ const uploadAnnualProgram = multer({
 router.get('/annual-programs', async (req, res) => {
   try {
     const programs = await readAnnualPrograms();
+    const { class: filterClass } = req.query;
     
-    const formattedPrograms = programs.map(program => ({
+    console.log('📚 [DEBUG SERVER] GET annual-programs with class filter:', filterClass);
+    console.log('📚 [DEBUG SERVER] Total programs before filtering:', programs.length);
+    
+    // Filtrer par classe si spécifié
+    let filteredPrograms = programs;
+    if (filterClass) {
+      filteredPrograms = programs.filter(program => program.class === filterClass);
+    }
+    
+    console.log('📚 [DEBUG SERVER] Programs after filtering:', filteredPrograms.length);
+    
+    const formattedPrograms = filteredPrograms.map(program => ({
       id: program.id,
       title: program.title,
       year: program.year,
       filename: program.filename,
+      class: program.class,
       file_url: `/uploads/annual_programs/${program.filename}`,
       isActive: program.isActive || false,
       created_at: program.created_at
@@ -279,12 +301,14 @@ router.get('/annual-programs', async (req, res) => {
 // POST /api/kolles/annual-programs - Upload d'un nouveau programme annuel
 router.post('/annual-programs', uploadAnnualProgram.single('file'), async (req, res) => {
   try {
-    const { title, year } = req.body;
+    const { title, year, class: programClass } = req.body;
     
-    if (!req.file || !title || !year) {
+    console.log('📚 [DEBUG SERVER] POST annual-program:', { title, year, programClass });
+    
+    if (!req.file || !title || !year || !programClass) {
       return res.status(400).json({ 
         error: 'Données manquantes',
-        required: ['file', 'title', 'year']
+        required: ['file', 'title', 'year', 'class']
       });
     }
     
@@ -294,6 +318,7 @@ router.post('/annual-programs', uploadAnnualProgram.single('file'), async (req, 
       id: uuidv4(),
       title: title.trim(),
       year: year.trim(),
+      class: programClass.trim(),
       filename: req.file.filename,
       file_path: req.file.path,
       file_size: req.file.size,
@@ -393,14 +418,22 @@ router.patch('/annual-programs/:id/toggle', async (req, res) => {
       return res.status(404).json({ error: 'Programme annuel non trouvé' });
     }
     
-    // Désactiver tous les autres programmes
+    // Récupérer la classe du programme à activer
+    const targetClass = programs[programIndex].class;
+    console.log('📚 [DEBUG SERVER] Toggling program for class:', targetClass);
+    
+    // Désactiver seulement les autres programmes de la MÊME classe
     programs.forEach(program => {
-      program.isActive = false;
+      if (program.class === targetClass && program.id !== req.params.id) {
+        program.isActive = false;
+        console.log('📚 [DEBUG SERVER] Deactivating program:', program.id, 'for class:', program.class);
+      }
     });
     
     // Activer le programme sélectionné
     programs[programIndex].isActive = true;
     programs[programIndex].updated_at = new Date().toISOString();
+    console.log('📚 [DEBUG SERVER] Activated program:', req.params.id, 'for class:', targetClass);
     
     await writeAnnualPrograms(programs);
     

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { documentsAPI, kollesAPI } from '../services/api'
 import { Download, Calendar, ExternalLink, Link, AlertTriangle, Info } from 'lucide-react'
-import { SecurePDFLink } from '../utils/pdfUtils.jsx'
+import { SecurePDFLink, openSecurePDFInNewTab } from '../utils/pdfUtils.jsx'
+import { useClass } from '../contexts/ClassContext'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 export function Kolles() {
+  const { currentClass } = useClass()
   const [kolles, setKolles] = useState([])
   const [planningDocument, setPlanningDocument] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -51,7 +53,9 @@ export function Kolles() {
   }
 
   const openKolle = (filename) => {
-    window.open(`/api/kolles/download/${filename}`, '_blank')
+    const fileUrl = `/uploads/kolles/${filename}`
+    // Utiliser le système blob sécurisé
+    openSecurePDFInNewTab(fileUrl, filename)
   }
 
   if (loading) {
@@ -84,7 +88,7 @@ export function Kolles() {
     <>
       <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Khôlles TSI 1</h1>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">Khôlles {currentClass?.name || 'Classe'}</h1>
           <p className="text-xl mb-8 text-blue-100 max-w-3xl mx-auto">Planning annuel et programmes hebdomadaires des colles de mathématiques</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {planningDocument ? (

@@ -36,13 +36,17 @@ const authenticatedFetch = async (url, options = {}) => {
 }
 
 export const documentsAPI = {
-  async getDocuments() {
-    const response = await fetch(`${API_BASE}/documents`)
+  async getDocuments(classFilter = null) {
+    const currentClass = classFilter || getCurrentClass()
+    console.log('📄 [DEBUG API] getDocuments called with classFilter:', classFilter, 'using class:', currentClass)
+    const response = await fetch(`${API_BASE}/documents?class=${currentClass}`)
     if (!response.ok) throw new Error('Erreur lors du chargement des documents')
     return response.json()
   },
 
-  async uploadDocument(formData) {
+  async uploadDocument(formData, classOverride = null) {
+    const currentClass = classOverride || getCurrentClass()
+    formData.append('class', currentClass)
     const response = await authenticatedFetch(`${API_BASE}/documents`, {
       method: 'POST',
       body: formData
@@ -76,13 +80,17 @@ export const documentsAPI = {
 }
 
 export const kollesAPI = {
-  async getKolles() {
-    const response = await fetch(`${API_BASE}/kolles`)
+  async getKolles(classFilter = null) {
+    const currentClass = classFilter || getCurrentClass()
+    console.log('📚 [DEBUG API] getKolles called with classFilter:', classFilter, 'using class:', currentClass)
+    const response = await fetch(`${API_BASE}/kolles?class=${currentClass}`)
     if (!response.ok) throw new Error('Erreur lors du chargement des programmes de khôlles')
     return response.json()
   },
 
-  async uploadKolle(formData) {
+  async uploadKolle(formData, classOverride = null) {
+    const currentClass = classOverride || getCurrentClass()
+    formData.append('class', currentClass)
     const response = await authenticatedFetch(`${API_BASE}/kolles`, {
       method: 'POST',
       body: formData
@@ -114,13 +122,18 @@ export const kollesAPI = {
     return response.json()
   },
 
-  async getAnnualPrograms() {
-    const response = await fetch(`${API_BASE}/kolles/annual-programs`)
+  async getAnnualPrograms(classFilter = null) {
+    const currentClass = classFilter || getCurrentClass()
+    console.log('📅 [DEBUG API] getAnnualPrograms called with classFilter:', classFilter, 'using class:', currentClass)
+    const response = await fetch(`${API_BASE}/kolles/annual-programs?class=${currentClass}`)
     if (!response.ok) throw new Error('Erreur lors du chargement des programmes annuels')
     return response.json()
   },
 
-  async uploadAnnualProgram(formData) {
+  async uploadAnnualProgram(formData, classOverride = null) {
+    const currentClass = classOverride || getCurrentClass()
+    formData.append('class', currentClass)
+    console.log('📅 [DEBUG API] uploadAnnualProgram for class:', currentClass)
     const response = await authenticatedFetch(`${API_BASE}/kolles/annual-programs`, {
       method: 'POST',
       body: formData
@@ -279,193 +292,149 @@ export const chaptersAPI = {
 
 export const classAPI = {
   async getAvailableClasses() {
+    console.log('🌐 [DEBUG API] Appel GET /api/classes...')
+    console.log('🌐 [DEBUG API] URL complète:', `${API_BASE}/classes`)
     try {
       const response = await fetch(`${API_BASE}/classes`)
-      if (!response.ok) throw new Error('API non disponible')
-      return response.json()
+      console.log('🌐 [DEBUG API] Réponse reçue:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ [DEBUG API] Réponse d\'erreur:', errorText)
+        throw new Error(`Erreur lors du chargement des classes: ${response.status} ${response.statusText}`)
+      }
+      
+      const data = await response.json()
+      console.log('✅ [DEBUG API] Données JSON reçues:', data)
+      console.log('✅ [DEBUG API] Type des données:', typeof data, 'Array:', Array.isArray(data))
+      return data
     } catch (error) {
-      // Fallback vers les classes par défaut si l'API n'est pas disponible
-      console.log('API classes non disponible, utilisation des classes par défaut')
-      return [
-        { id: 'tsi1', name: 'TSI 1ère année', description: 'Technologie et Sciences Industrielles - 1ère année', color: 'blue' },
-        { id: 'tsi2', name: 'TSI 2ème année', description: 'Technologie et Sciences Industrielles - 2ème année', color: 'green' },
-        { id: 'mpsi', name: 'MPSI', description: 'Mathématiques, Physique et Sciences de l\'Ingénieur', color: 'purple' },
-        { id: 'mp', name: 'MP', description: 'Mathématiques, Physique', color: 'red' },
-        { id: 'pcsi', name: 'PCSI', description: 'Physique, Chimie et Sciences de l\'Ingénieur', color: 'yellow' },
-        { id: 'pc', name: 'PC', description: 'Physique, Chimie', color: 'indigo' }
-      ]
+      console.error('❌ [DEBUG API] Erreur dans getAvailableClasses:', error)
+      throw error
     }
   },
 
   async createClass(classData) {
-    try {
-      const response = await authenticatedFetch(`${API_BASE}/classes`, {
-        method: 'POST',
-        body: JSON.stringify(classData)
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erreur lors de la création de la classe')
-      }
-      return response.json()
-    } catch (error) {
-      // Mode simulation pour développement
-      console.log('Mode simulation: classe créée localement')
-      return { success: true, class: classData }
+    const response = await authenticatedFetch(`${API_BASE}/classes`, {
+      method: 'POST',
+      body: JSON.stringify(classData)
+    })
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la création de la classe')
     }
+    return response.json()
   },
 
   async updateClass(classId, classData) {
-    try {
-      const response = await authenticatedFetch(`${API_BASE}/classes/${classId}`, {
-        method: 'PUT', 
-        body: JSON.stringify(classData)
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erreur lors de la modification de la classe')
-      }
-      return response.json()
-    } catch (error) {
-      // Mode simulation pour développement
-      console.log('Mode simulation: classe modifiée localement')
-      return { success: true, class: { ...classData, id: classId } }
+    const response = await authenticatedFetch(`${API_BASE}/classes/${classId}`, {
+      method: 'PUT', 
+      body: JSON.stringify(classData)
+    })
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la modification de la classe')
     }
+    return response.json()
   },
 
   async deleteClass(classId) {
-    try {
-      const response = await authenticatedFetch(`${API_BASE}/classes/${classId}`, {
-        method: 'DELETE'
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erreur lors de la suppression de la classe')
-      }
-      return response.json()
-    } catch (error) {
-      // Mode simulation pour développement
-      console.log('Mode simulation: classe supprimée localement')
-      return { success: true, deleted: classId }
+    const response = await authenticatedFetch(`${API_BASE}/classes/${classId}`, {
+      method: 'DELETE'
+    })
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la suppression de la classe')
     }
+    return response.json()
   },
 
   async getClassStats(classId) {
-    try {
-      const response = await authenticatedFetch(`${API_BASE}/classes/${classId}/stats`)
-      if (!response.ok) throw new Error('Erreur lors du chargement des statistiques de la classe')
-      return response.json()
-    } catch (error) {
-      // Statistiques par défaut
-      return {
-        documents: 0,
-        kolles: 0,
-        evaluations: 0,
-        chapters: 8
-      }
-    }
+    const response = await authenticatedFetch(`${API_BASE}/classes/${classId}/stats`)
+    if (!response.ok) throw new Error('Erreur lors du chargement des statistiques de la classe')
+    return response.json()
   }
 }
 
 export const progressionAPI = {
   async getProgression(classId) {
-    try {
-      const response = await authenticatedFetch(`${API_BASE}/progression/${classId}`)
-      if (!response.ok) throw new Error('API non disponible')
-      return response.json()
-    } catch (error) {
-      console.log('API progression non disponible, utilisation du localStorage')
-      // Fallback vers localStorage
-      const saved = localStorage.getItem(`progression_${classId}`)
-      if (saved) {
-        return JSON.parse(saved)
-      }
-      return null // Pas de progression sauvegardée
-    }
+    const response = await authenticatedFetch(`${API_BASE}/progression/${classId}`)
+    if (!response.ok) throw new Error('Erreur lors du chargement de la progression')
+    return response.json()
   },
 
   async updateProgression(classId, progressionData) {
-    try {
-      const response = await authenticatedFetch(`${API_BASE}/progression/${classId}`, {
-        method: 'PUT',
-        body: JSON.stringify(progressionData)
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erreur lors de la mise à jour de la progression')
-      }
-      return response.json()
-    } catch (error) {
-      console.log('Mode simulation: progression sauvegardée localement')
-      // Sauvegarder localement
-      localStorage.setItem(`progression_${classId}`, JSON.stringify(progressionData))
-      return { success: true, progression: progressionData }
+    const response = await authenticatedFetch(`${API_BASE}/progression/${classId}`, {
+      method: 'PUT',
+      body: JSON.stringify(progressionData)
+    })
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la mise à jour de la progression')
     }
+    return response.json()
   },
 
   async updateChapterStatus(classId, chapterId, status) {
-    try {
-      const response = await authenticatedFetch(`${API_BASE}/progression/${classId}/chapters/${chapterId}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ status })
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erreur lors de la mise à jour du statut du chapitre')
-      }
-      return response.json()
-    } catch (error) {
-      console.log('Mode simulation: statut du chapitre mis à jour localement')
-      // Mise à jour locale
-      const saved = localStorage.getItem(`progression_${classId}`)
-      if (saved) {
-        const progression = JSON.parse(saved)
-        if (progression.chapters) {
-          progression.chapters = progression.chapters.map(chapter =>
-            chapter.id === chapterId ? { ...chapter, status } : chapter
-          )
-          localStorage.setItem(`progression_${classId}`, JSON.stringify(progression))
-        }
-      }
-      return { success: true, chapterId, status }
+    const response = await authenticatedFetch(`${API_BASE}/progression/${classId}/chapters/${chapterId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    })
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la mise à jour du statut du chapitre')
     }
+    return response.json()
   },
 
   async updateChapterOrder(classId, chapters) {
-    try {
-      const response = await authenticatedFetch(`${API_BASE}/progression/${classId}/order`, {
-        method: 'PUT',
-        body: JSON.stringify({ chapters })
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erreur lors de la mise à jour de l\'ordre des chapitres')
-      }
-      return response.json()
-    } catch (error) {
-      console.log('Mode simulation: ordre des chapitres mis à jour localement')
-      // Mise à jour locale
-      const progression = { chapters }
-      localStorage.setItem(`progression_${classId}`, JSON.stringify(progression))
-      return { success: true, chapters }
+    const response = await authenticatedFetch(`${API_BASE}/progression/${classId}/order`, {
+      method: 'PUT',
+      body: JSON.stringify({ chapters })
+    })
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la mise à jour de l\'ordre des chapitres')
     }
+    return response.json()
   },
 
   async resetProgression(classId) {
-    try {
-      const response = await authenticatedFetch(`${API_BASE}/progression/${classId}/reset`, {
-        method: 'POST'
-      })
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Erreur lors de la réinitialisation de la progression')
-      }
-      return response.json()
-    } catch (error) {
-      console.log('Mode simulation: progression réinitialisée localement')
-      // Réinitialisation locale
-      localStorage.removeItem(`progression_${classId}`)
-      return { success: true, reset: true }
+    const response = await authenticatedFetch(`${API_BASE}/progression/${classId}/reset`, {
+      method: 'POST'
+    })
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la réinitialisation de la progression')
     }
+    return response.json()
+  }
+}
+
+// API pour la gestion des paramètres du site
+export const settingsAPI = {
+  async getSettings() {
+    console.log('⚙️ [DEBUG API] getSettings called')
+    const response = await authenticatedFetch(`${API_BASE}/settings`)
+    if (!response.ok) throw new Error('Erreur lors du chargement des paramètres')
+    return response.json()
+  },
+
+  async updateSettings(settings) {
+    console.log('⚙️ [DEBUG API] updateSettings called with:', settings)
+    const response = await authenticatedFetch(`${API_BASE}/settings`, {
+      method: 'PUT',
+      body: JSON.stringify(settings)
+    })
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Erreur lors de la mise à jour des paramètres')
+    }
+    return response.json()
   }
 }

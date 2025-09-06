@@ -1,0 +1,12 @@
+{
+  "tsi1": {
+    "id": "tsi1",
+    "name": "TSI 1",
+    "active": true
+  },
+  "tsi2": {
+    "id": "tsi2",
+    "name": "TSI 2",
+    "active": true
+  }
+}

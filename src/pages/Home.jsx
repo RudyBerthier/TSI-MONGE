@@ -1,14 +1,16 @@
 import { Link } from 'react-router-dom'
 import { BookOpen, Target, School, Mail, Info, ExternalLink, ArrowRight } from 'lucide-react'
+import { useClass } from '../contexts/ClassContext'
 
 export function Home() {
+  const { currentClass } = useClass()
 
   return (
     <>
       <section className="bg-gradient-to-br from-blue-600 to-blue-800 text-white py-20">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">Documents pour les prépas TSI 1ère année</h1>
-          <p className="text-xl mb-8 text-blue-100 max-w-3xl mx-auto">Lycée Monge, Chambéry - Site destiné aux étudiants en TSI 1 à Monge et aux colleurs</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">Documents pour les prépas {currentClass?.name || 'Classe'}</h1>
+          <p className="text-xl mb-8 text-blue-100 max-w-3xl mx-auto">Lycée Monge, Chambéry - Site destiné aux étudiants en {currentClass?.name || 'classe'} à Monge et aux colleurs</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/documents" className="inline-flex items-center gap-2 bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors">
               <BookOpen size={20} />
@@ -52,7 +54,7 @@ export function Home() {
                   <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                     <BookOpen size={32} className="text-green-600" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900">Documents TSI 1</h3>
+                  <h3 className="text-xl font-semibold text-gray-900">Documents {currentClass?.name || 'Classe'}</h3>
                 </div>
                 <p className="text-gray-600 mb-4">Cours, exercices et ressources pour la première année</p>
                 <div>
@@ -108,7 +110,7 @@ export function Home() {
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900">À propos</h3>
                 </div>
-                <p className="text-gray-600">Ce site regroupe tous les documents nécessaires pour suivre les cours de mathématiques en TSI 1ère année au lycée Monge de Chambéry.</p>
+                <p className="text-gray-600">Ce site regroupe tous les documents nécessaires pour suivre les cours de mathématiques en {currentClass?.name || 'classe'} au lycée Monge de Chambéry.</p>
               </div>
             </div>
           </section>

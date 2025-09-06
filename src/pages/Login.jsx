@@ -1,13 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authAPI } from '../services/api'
 import { Wrench, Home, Unlock } from 'lucide-react'
+import { useClass } from '../contexts/ClassContext'
 
 export function Login() {
+  const { currentClass } = useClass()
   const [formData, setFormData] = useState({ username: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      const token = localStorage.getItem('token')
+      if (token) {
+        try {
+          await authAPI.verifyToken()
+          console.log('🔐 [LOGIN] Token valide détecté, redirection vers admin...')
+          navigate('/admin')
+        } catch (error) {
+          console.log('🔐 [LOGIN] Token invalide, nettoyage...')
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+        }
+      }
+    }
+    
+    checkExistingAuth()
+  }, [navigate])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -41,7 +62,7 @@ export function Login() {
             <Wrench size={32} /> Administration
           </h1>
           <p className="text-gray-600 text-sm">
-            TSI 1 - Lycée Monge
+            {currentClass?.name || 'Classe'} - Lycée Monge
           </p>
         </div>
 

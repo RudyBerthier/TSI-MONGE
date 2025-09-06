@@ -1,0 +1,27 @@
+[
+  {
+    "id": "chapitre-1",
+    "title": "Nombres complexes",
+    "description": "Introduction aux nombres complexes et applications"
+  },
+  {
+    "id": "chapitre-2", 
+    "title": "Suites numériques",
+    "description": "Suites convergentes et divergentes"
+  },
+  {
+    "id": "chapitre-3",
+    "title": "Fonctions d'une variable réelle",
+    "description": "Limite, continuité et dérivabilité"
+  },
+  {
+    "id": "chapitre-4",
+    "title": "Intégration",
+    "description": "Intégrale de Riemann et applications"
+  },
+  {
+    "id": "chapitre-5",
+    "title": "Algèbre linéaire",
+    "description": "Espaces vectoriels et applications linéaires"
+  }
+]

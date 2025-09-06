@@ -6,6 +6,9 @@ const path = require('path');
 const documentsRouter = require('./routes/documents');
 const kollesRouter = require('./routes/kolles');
 const chaptersRouter = require('./routes/chapters');
+const classesRouter = require('./routes/classes');
+const progressionRouter = require('./routes/progression');
+const settingsRouter = require('./routes/settings');
 const { router: authRouter } = require('./routes/auth');
 
 const app = express();
@@ -26,6 +29,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/documents', documentsRouter);
 app.use('/api/kolles', kollesRouter);
 app.use('/api/chapters', chaptersRouter);
+app.use('/api/classes', classesRouter);
+app.use('/api/progression', progressionRouter);
+app.use('/api/settings', settingsRouter);
 app.use('/api/auth', authRouter);
 
 // Health check

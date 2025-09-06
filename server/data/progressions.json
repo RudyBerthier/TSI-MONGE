@@ -1,0 +1,193 @@
+{
+  "tsi2": {
+    "classId": "tsi2",
+    "chapters": [
+      {
+        "id": "geometrie-1",
+        "title": "I. Géométrie 1",
+        "subtitle": "Vecteurs, bases et repères",
+        "status": "en-cours",
+        "order": 1
+      },
+      {
+        "id": "calculs-1",
+        "title": "II. Calculs 1",
+        "subtitle": "Trigonométrie",
+        "status": "en-cours",
+        "order": 2
+      },
+      {
+        "id": "fonctions-1",
+        "title": "III. Fonctions 1",
+        "subtitle": "Généralités et structure",
+        "status": "en-cours",
+        "order": 3
+      },
+      {
+        "id": "suites-1",
+        "title": "IV. Suites 1",
+        "subtitle": "Définitions et propriétés",
+        "status": "en-cours",
+        "order": 4
+      },
+      {
+        "id": "algebre-1",
+        "title": "V. Algèbre 1",
+        "subtitle": "Polynômes et fractions rationnelles",
+        "status": "a-venir",
+        "order": 5
+      },
+      {
+        "id": "geometrie-2",
+        "title": "VI. Géométrie 2",
+        "subtitle": "Géométrie dans l'espace",
+        "status": "a-venir",
+        "order": 6
+      },
+      {
+        "id": "calculs-2",
+        "title": "VII. Calculs 2",
+        "subtitle": "Dérivation et intégration",
+        "status": "a-venir",
+        "order": 7
+      },
+      {
+        "id": "fonctions-2",
+        "title": "VIII. Fonctions 2",
+        "subtitle": "Fonctions usuelles",
+        "status": "a-venir",
+        "order": 8
+      }
+    ],
+    "updated_at": "2025-09-06T09:44:27.526Z"
+  },
+  "mpsi": {
+    "classId": "mpsi",
+    "chapters": [],
+    "updated_at": "2025-09-05T23:29:32.639Z"
+  },
+  "tsi1": {
+    "classId": "tsi1",
+    "chapters": [
+      {
+        "id": "geometrie-1",
+        "title": "I. Géométrie 1",
+        "subtitle": "Vecteurs, bases et repères",
+        "status": "en-cours",
+        "order": 1
+      },
+      {
+        "id": "calculs-1",
+        "title": "II. Calculs 1",
+        "subtitle": "Trigonométrie",
+        "status": "en-cours",
+        "order": 2
+      },
+      {
+        "id": "fonctions-1",
+        "title": "III. Fonctions 1",
+        "subtitle": "Généralités et structure",
+        "status": "en-cours",
+        "order": 3
+      },
+      {
+        "id": "suites-1",
+        "title": "IV. Suites 1",
+        "subtitle": "Définitions et propriétés",
+        "status": "en-cours",
+        "order": 4
+      },
+      {
+        "id": "algebre-1",
+        "title": "V. Algèbre 1",
+        "subtitle": "Polynômes et fractions rationnelles",
+        "status": "a-venir",
+        "order": 5
+      },
+      {
+        "id": "geometrie-2",
+        "title": "VI. Géométrie 2",
+        "subtitle": "Géométrie dans l'espace",
+        "status": "a-venir",
+        "order": 6
+      },
+      {
+        "id": "calculs-2",
+        "title": "VII. Calculs 2",
+        "subtitle": "Dérivation et intégration",
+        "status": "a-venir",
+        "order": 7
+      },
+      {
+        "id": "fonctions-2",
+        "title": "VIII. Fonctions 2",
+        "subtitle": "Fonctions usuelles",
+        "status": "a-venir",
+        "order": 8
+      }
+    ],
+    "updated_at": "2025-09-06T09:43:22.050Z"
+  },
+  "pc": {
+    "classId": "pc",
+    "chapters": [
+      {
+        "id": "geometrie-1",
+        "title": "I. Géométrie 1",
+        "subtitle": "Vecteurs, bases et repères",
+        "status": "en-cours",
+        "order": 1
+      },
+      {
+        "id": "calculs-1",
+        "title": "II. Calculs 1",
+        "subtitle": "Trigonométrie",
+        "status": "en-cours",
+        "order": 2
+      },
+      {
+        "id": "fonctions-1",
+        "title": "III. Fonctions 1",
+        "subtitle": "Généralités et structure",
+        "status": "en-cours",
+        "order": 3
+      },
+      {
+        "id": "suites-1",
+        "title": "IV. Suites 1",
+        "subtitle": "Définitions et propriétés",
+        "status": "a-venir",
+        "order": 4
+      },
+      {
+        "id": "algebre-1",
+        "title": "V. Algèbre 1",
+        "subtitle": "Polynômes et fractions rationnelles",
+        "status": "a-venir",
+        "order": 5
+      },
+      {
+        "id": "geometrie-2",
+        "title": "VI. Géométrie 2",
+        "subtitle": "Géométrie dans l'espace",
+        "status": "a-venir",
+        "order": 6
+      },
+      {
+        "id": "calculs-2",
+        "title": "VII. Calculs 2",
+        "subtitle": "Dérivation et intégration",
+        "status": "a-venir",
+        "order": 7
+      },
+      {
+        "id": "fonctions-2",
+        "title": "VIII. Fonctions 2",
+        "subtitle": "Fonctions usuelles",
+        "status": "en-cours",
+        "order": 8
+      }
+    ],
+    "updated_at": "2025-09-06T08:31:51.338Z"
+  }
+}

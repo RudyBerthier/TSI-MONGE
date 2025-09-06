@@ -11,24 +11,42 @@ const categories = {
   complexes: { name: 'Nombres complexes', icon: <Zap size={24} /> },
   algebre: { name: 'Algèbre', icon: <Type size={24} /> }
 }
-import { documentsAPI, kollesAPI, authAPI, chaptersAPI, classAPI, progressionAPI } from '../services/api'
+import { documentsAPI, kollesAPI, authAPI, chaptersAPI, classAPI, progressionAPI, settingsAPI } from '../services/api'
 import { useClass, AVAILABLE_CLASSES } from '../contexts/ClassContext'
 import { useNavigate } from 'react-router-dom'
+import { useNotifications, NotificationContainer } from '../components/Notifications'
 
 export function Admin() {
   const { currentClass, resetClassSelection } = useClass()
+  const { notifications, showSuccess, showError, showInfo, showWarning, removeNotification } = useNotifications()
   const [stats, setStats] = useState({ documents: 0, themes: 8, kolles: 0, evaluations: 0 })
   const [activeTab, setActiveTab] = useState('documents')
   const [selectedAdminClass, setSelectedAdminClass] = useState(null) // Classe sélectionnée pour l'admin
-  const [adminMode, setAdminMode] = useState('classSelection') // 'classSelection' ou 'classManagement'
-  const [availableClasses, setAvailableClasses] = useState(AVAILABLE_CLASSES)
+  const [adminMode, setAdminModeState] = useState(() => {
+    // Récupérer l'état du menu depuis localStorage ou utiliser 'classSelection' par défaut
+    return localStorage.getItem('adminMode') || 'classSelection'
+  }) // 'classSelection', 'classManagement' ou 'generalSettings'
+
+  // Fonction wrapper pour setAdminMode qui sauvegarde aussi dans localStorage
+  const setAdminMode = (newMode) => {
+    console.log('🔄 [DEBUG] Changement adminMode vers:', newMode)
+    localStorage.setItem('adminMode', newMode)
+    setAdminModeState(newMode)
+  }
+  const [availableClasses, setAvailableClasses] = useState([])
+  const [classesLoading, setClassesLoading] = useState(true)
   const [showClassModal, setShowClassModal] = useState(false)
   const [classModalMode, setClassModalMode] = useState('add')
   const [selectedClassData, setSelectedClassData] = useState(null)
+  const [showDeleteClassModal, setShowDeleteClassModal] = useState(false)
+  const [classToDelete, setClassToDelete] = useState(null)
+  const [showEditClassModal, setShowEditClassModal] = useState(false)
+  const [classToEdit, setClassToEdit] = useState(null)
   const [documents, setDocuments] = useState([])
   const [kolles, setKolles] = useState([])
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [currentUser, setCurrentUser] = useState(null)
   const [users, setUsers] = useState([])
   const [showUserModal, setShowUserModal] = useState(false)
   const [modalMode, setModalMode] = useState('add')
@@ -38,6 +56,12 @@ export function Admin() {
   const [showGenericDeleteModal, setShowGenericDeleteModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState(null)
   const [deleteAction, setDeleteAction] = useState(null)
+  const [deleteType, setDeleteType] = useState('')
+  const [showGeneralSettingsModal, setShowGeneralSettingsModal] = useState(false)
+  const [generalSettings, setGeneralSettings] = useState({
+    siteName: 'TSI 1 Mathématiques - Lycée Monge Chambéry',
+    schoolYear: '2024-2025'
+  })
   const [annualPrograms, setAnnualPrograms] = useState([])
   const [showDocumentModal, setShowDocumentModal] = useState(false)
   const [documentModalMode, setDocumentModalMode] = useState('edit')
@@ -78,26 +102,79 @@ export function Admin() {
     checkAuthentication()
   }, [])
 
+  // Debug pour surveiller les changements d'état des classes
   useEffect(() => {
+    console.log('🎯 [DEBUG STATE] availableClasses a changé:', availableClasses)
+    console.log('🎯 [DEBUG STATE] Nombre de classes:', availableClasses?.length || 0)
+    console.log('🎯 [DEBUG STATE] Type:', typeof availableClasses, 'Array:', Array.isArray(availableClasses))
+  }, [availableClasses])
+
+  // Debug pour surveiller les changements d'état du modal utilisateur
+  useEffect(() => {
+    console.log('👤 [DEBUG STATE] showUserModal a changé:', showUserModal)
+    console.log('👤 [DEBUG STATE] selectedUser:', selectedUser)
+    console.log('👤 [DEBUG STATE] modalMode:', modalMode)
+  }, [showUserModal, selectedUser, modalMode])
+
+  // Debug pour surveiller les changements d'état du modal de suppression générique
+  useEffect(() => {
+    console.log('🗑️ [DEBUG STATE] showGenericDeleteModal a changé:', showGenericDeleteModal)
+    console.log('🗑️ [DEBUG STATE] itemToDelete:', itemToDelete)
+  }, [showGenericDeleteModal, itemToDelete])
+
+  useEffect(() => {
+    console.log('⏳ [DEBUG STATE] classesLoading a changé:', classesLoading)
+  }, [classesLoading])
+
+  useEffect(() => {
+    console.log('🔧 [DEBUG USEEFFECT] isAuthenticated a changé:', isAuthenticated)
     if (isAuthenticated) {
-      loadDocuments()
-      loadKolles()
+      console.log('🔧 [DEBUG USEEFFECT] Utilisateur authentifié, chargement des données générales...')
+      loadClasses()
       loadUsers()
-      loadChapters()
-      loadAnnualPrograms()
+      loadGeneralSettings()
+    } else {
+      console.log('🔧 [DEBUG USEEFFECT] Utilisateur non authentifié, pas de chargement')
     }
   }, [isAuthenticated])
 
+  // Charger les données spécifiques à la classe quand elle est sélectionnée
+  useEffect(() => {
+    console.log('🔧 [DEBUG USEEFFECT] selectedAdminClass a changé:', selectedAdminClass)
+    if (selectedAdminClass && isAuthenticated) {
+      console.log('🔧 [DEBUG USEEFFECT] Chargement des données pour la classe:', selectedAdminClass.name)
+      loadDocuments()
+      loadKolles()
+      loadChapters()
+      loadProgression()
+      loadAnnualPrograms()
+    }
+  }, [selectedAdminClass, isAuthenticated])
+
+
   const checkAuthentication = async () => {
+    console.log('🔐 [DEBUG AUTH] Vérification de l\'authentification...')
     try {
       await authAPI.verifyToken()
+      console.log('✅ [DEBUG AUTH] Token valide, utilisateur authentifié')
+      
+      // Récupérer les infos de l'utilisateur connecté
+      const userInfo = localStorage.getItem('user')
+      if (userInfo) {
+        const user = JSON.parse(userInfo)
+        setCurrentUser(user)
+        console.log('👤 [DEBUG AUTH] Utilisateur connecté:', user)
+      }
+      
       setIsAuthenticated(true)
       loadStats()
     } catch (error) {
+      console.log('❌ [DEBUG AUTH] Token invalide ou erreur:', error)
       // Rediriger vers la page de login si non authentifié
       navigate('/login')
     } finally {
       setLoading(false)
+      console.log('🏁 [DEBUG AUTH] Vérification terminée, loading = false')
     }
   }
 
@@ -137,7 +214,7 @@ export function Admin() {
 
   const loadDocuments = async () => {
     try {
-      const docs = await documentsAPI.getDocuments()
+      const docs = await documentsAPI.getDocuments(selectedAdminClass?.id)
       setDocuments(docs)
     } catch (error) {
       console.error('Error loading documents:', error)
@@ -146,10 +223,36 @@ export function Admin() {
 
   const loadKolles = async () => {
     try {
-      const kollesList = await kollesAPI.getKolles()
+      const kollesList = await kollesAPI.getKolles(selectedAdminClass?.id)
       setKolles(kollesList)
     } catch (error) {
       console.error('Error loading kolles:', error)
+    }
+  }
+
+  const loadClasses = async () => {
+    console.log('🔄 [DEBUG] Début du chargement des classes...')
+    try {
+      setClassesLoading(true)
+      console.log('🔄 [DEBUG] Appel de classAPI.getAvailableClasses()...')
+      const classes = await classAPI.getAvailableClasses()
+      console.log('✅ [DEBUG] Classes reçues de l\'API:', classes)
+      console.log('✅ [DEBUG] Type des classes:', typeof classes, 'Array:', Array.isArray(classes))
+      setAvailableClasses(classes)
+      console.log('✅ [DEBUG] Classes définies dans l\'état')
+    } catch (error) {
+      console.error('❌ [DEBUG] Erreur lors du chargement des classes:', error)
+      console.error('❌ [DEBUG] Détails de l\'erreur:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
+      // En cas d'erreur, laisser le tableau vide - les classes doivent être récupérées via l'API
+      setAvailableClasses([])
+      console.log('⚠️ [DEBUG] Classes définies comme tableau vide après erreur')
+    } finally {
+      setClassesLoading(false)
+      console.log('🏁 [DEBUG] Chargement des classes terminé, classesLoading = false')
     }
   }
 
@@ -158,13 +261,14 @@ export function Admin() {
     const formData = new FormData(e.target)
     
     try {
-      await documentsAPI.uploadDocument(formData)
-      alert('Document ajouté avec succès !')
+      await documentsAPI.uploadDocument(formData, selectedAdminClass?.id)
+      showSuccess('Document ajouté avec succès !')
       e.target.reset()
       loadStats() // Recharger les statistiques
+      loadDocuments() // Recharger la liste
     } catch (error) {
       console.error('Error uploading document:', error)
-      alert('Erreur lors de l\'upload: ' + error.message)
+      showError('Erreur lors de l\'upload: ' + error.message)
     }
   }
 
@@ -173,13 +277,14 @@ export function Admin() {
     const formData = new FormData(e.target)
     
     try {
-      await kollesAPI.uploadKolle(formData)
-      alert('Programme de khôlle ajouté avec succès !')
+      await kollesAPI.uploadKolle(formData, selectedAdminClass?.id)
+      showSuccess('Programme de khôlle ajouté avec succès !')
       e.target.reset()
       loadStats() // Recharger les statistiques
+      loadKolles() // Recharger la liste
     } catch (error) {
       console.error('Error uploading kolle program:', error)
-      alert('Erreur lors de l\'upload: ' + error.message)
+      showError('Erreur lors de l\'upload: ' + error.message)
     }
   }
 
@@ -198,10 +303,10 @@ export function Admin() {
       await documentsAPI.deleteDocument(id)
       loadStats()
       loadDocuments()
-      alert('Document supprimé avec succès !')
+      showSuccess('Document supprimé avec succès !')
     } catch (error) {
       console.error('Error deleting document:', error)
-      alert('Erreur lors de la suppression')
+      showError('Erreur lors de la suppression')
     }
   }
 
@@ -210,10 +315,10 @@ export function Admin() {
       await kollesAPI.deleteKolle(id)
       loadStats()
       loadKolles()
-      alert('Programme supprimé avec succès !')
+      showSuccess('Programme supprimé avec succès !')
     } catch (error) {
       console.error('Error deleting kolle:', error)
-      alert('Erreur lors de la suppression')
+      showError('Erreur lors de la suppression')
     }
   }
 
@@ -234,12 +339,12 @@ export function Admin() {
 
     try {
       await documentsAPI.updateDocument(selectedDocument.id, documentData)
-      alert(`Document "${selectedDocument.title}" modifié avec succès !`)
+      showSuccess(`Document "${selectedDocument.title}" modifié avec succès !`)
       setShowDocumentModal(false)
       loadDocuments()
       loadStats()
     } catch (error) {
-      alert('Erreur: ' + error.message)
+      showError('Erreur: ' + error.message)
     }
   }
 
@@ -258,11 +363,11 @@ export function Admin() {
 
     try {
       await kollesAPI.updateKolle(selectedKolle.id, kolleData)
-      alert(`Dates du programme semaine ${selectedKolle.week_number} modifiées avec succès !`)
+      showSuccess(`Dates du programme semaine ${selectedKolle.week_number} modifiées avec succès !`)
       setShowKolleModal(false)
       loadKolles()
     } catch (error) {
-      alert('Erreur: ' + error.message)
+      showError('Erreur: ' + error.message)
     }
   }
 
@@ -284,10 +389,10 @@ export function Admin() {
   const deleteChapter = async (chapterId) => {
     try {
       await chaptersAPI.deleteChapter(chapterId)
-      alert('Chapitre supprimé avec succès !')
+      showSuccess('Chapitre supprimé avec succès !')
       loadChapters()
     } catch (error) {
-      alert('Erreur: ' + error.message)
+      showError('Erreur: ' + error.message)
     }
   }
 
@@ -309,29 +414,18 @@ export function Admin() {
     try {
       if (chapterModalMode === 'add') {
         await chaptersAPI.addChapter(chapterData)
-        alert('Nouveau chapitre ajouté avec succès !')
+        showSuccess('Nouveau chapitre ajouté avec succès !')
       } else {
         await chaptersAPI.updateChapter(selectedChapter.id, chapterData)
-        alert('Chapitre modifié avec succès !')
+        showSuccess('Chapitre modifié avec succès !')
       }
       setShowChapterModal(false)
       loadChapters()
     } catch (error) {
-      alert('Erreur: ' + error.message)
+      showError('Erreur: ' + error.message)
     }
   }
 
-  const editUser = (user) => {
-    setModalMode('edit')
-    setSelectedUser(user)
-    setShowUserModal(true)
-  }
-
-  const addUser = () => {
-    setModalMode('add')
-    setSelectedUser(null)
-    setShowUserModal(true)
-  }
 
   const loadUsers = async () => {
     try {
@@ -353,43 +447,58 @@ export function Admin() {
 
     try {
       if (modalMode === 'add') {
+        // Vérifier si l'utilisateur existe déjà
+        const existingUser = users.find(user => user.username.toLowerCase() === userData.username.toLowerCase())
+        if (existingUser) {
+          showError('Un utilisateur avec ce nom d\'utilisateur existe déjà !')
+          return
+        }
+        
         await authAPI.addUser(userData)
-        alert('Utilisateur ajouté avec succès !')
+        showSuccess('Utilisateur ajouté avec succès !')
       } else {
+        // Mode édition - vérifier si le nouveau nom d'utilisateur existe déjà (sauf pour l'utilisateur actuel)
+        const existingUser = users.find(user => 
+          user.username.toLowerCase() === userData.username.toLowerCase() && 
+          user.id !== selectedUser.id
+        )
+        if (existingUser) {
+          showError('Un utilisateur avec ce nom d\'utilisateur existe déjà !')
+          return
+        }
+        
         // Mode édition - ne pas envoyer le mot de passe s'il est vide
         if (!userData.password) {
           delete userData.password
         }
         await authAPI.updateUser(selectedUser.id, userData)
-        alert('Utilisateur modifié avec succès !')
+        showSuccess('Utilisateur modifié avec succès !')
       }
       setShowUserModal(false)
       loadUsers()
     } catch (error) {
-      alert('Erreur: ' + error.message)
+      showError('Erreur: ' + error.message)
     }
   }
 
-  const confirmDeleteUser = (user) => {
-    setUserToDelete(user)
-    setShowDeleteModal(true)
-  }
 
   const showGenericDeleteConfirm = (item, action, type) => {
+    console.log('🗑️ [DEBUG] showGenericDeleteConfirm appelée avec:', { item, type })
     setItemToDelete({...item, type})
     setDeleteAction(() => action)
     setShowGenericDeleteModal(true)
+    console.log('🗑️ [DEBUG] setShowGenericDeleteModal(true) appelé')
   }
 
   const handleDeleteUser = async () => {
     try {
       await authAPI.deleteUser(userToDelete.id)
-      alert(`Utilisateur "${userToDelete.username}" supprimé avec succès !`)
+      showSuccess(`Utilisateur "${userToDelete.username}" supprimé avec succès !`)
       setShowDeleteModal(false)
       setUserToDelete(null)
       loadUsers()
     } catch (error) {
-      alert('Erreur: ' + error.message)
+      showError('Erreur: ' + error.message)
     }
   }
 
@@ -400,13 +509,67 @@ export function Admin() {
       setItemToDelete(null)
       setDeleteAction(null)
     } catch (error) {
-      alert('Erreur lors de la suppression: ' + error.message)
+      showError('Erreur lors de la suppression: ' + error.message)
+    }
+  }
+
+  // Fonctions de gestion des paramètres généraux
+  const openGeneralSettingsModal = () => {
+    console.log('🎨 [DEBUG] Ouverture modal paramètres généraux')
+    setShowGeneralSettingsModal(true)
+  }
+
+
+  // Fonction pour générer dynamiquement le nom du site avec la classe courante
+  const generateSiteName = (siteName) => {
+    if (!currentClass) return siteName
+    
+    // Remplacer "TSI 1" ou similaire par le nom de la classe actuelle
+    const updatedName = siteName.replace(/TSI\s*1|TSI\s*\d+/gi, currentClass.name || currentClass.id.toUpperCase())
+    return updatedName
+  }
+
+  const loadGeneralSettings = async () => {
+    try {
+      console.log('⚙️ [DEBUG] Chargement des paramètres généraux')
+      const settings = await settingsAPI.getSettings()
+      setGeneralSettings({
+        siteName: settings.siteName,
+        schoolYear: settings.schoolYear
+      })
+      console.log('✅ Paramètres généraux chargés:', settings)
+    } catch (error) {
+      console.warn('⚠️ Erreur lors du chargement des paramètres, utilisation des valeurs par défaut:', error.message)
+      // Garder les valeurs par défaut en cas d'erreur
+    }
+  }
+
+  const handleSaveGeneralSettings = async (formData) => {
+    try {
+      const settings = {
+        siteName: formData.get('siteName'),
+        schoolYear: formData.get('schoolYear')
+      }
+      
+      console.log('💾 Sauvegarde paramètres généraux:', settings)
+      
+      // Sauvegarder via l'API
+      await settingsAPI.updateSettings(settings)
+      
+      // Mettre à jour l'état local
+      setGeneralSettings(settings)
+      setShowGeneralSettingsModal(false)
+      showSuccess('Paramètres généraux sauvegardés avec succès !')
+      
+    } catch (error) {
+      showError('Erreur: ' + error.message)
     }
   }
 
   const loadAnnualPrograms = async () => {
     try {
-      const programsList = await kollesAPI.getAnnualPrograms()
+      console.log('📅 [DEBUG] loadAnnualPrograms called with selectedAdminClass:', selectedAdminClass?.id)
+      const programsList = await kollesAPI.getAnnualPrograms(selectedAdminClass?.id)
       setAnnualPrograms(programsList)
     } catch (error) {
       console.error('Error loading annual programs:', error)
@@ -418,24 +581,24 @@ export function Admin() {
     const formData = new FormData(e.target)
     
     try {
-      await kollesAPI.uploadAnnualProgram(formData)
-      alert('Programme annuel ajouté avec succès !')
+      await kollesAPI.uploadAnnualProgram(formData, selectedAdminClass?.id)
+      showSuccess('Programme annuel ajouté avec succès !')
       e.target.reset()
       loadAnnualPrograms()
     } catch (error) {
       console.error('Error uploading annual program:', error)
-      alert('Erreur lors de l\'upload: ' + error.message)
+      showError('Erreur lors de l\'upload: ' + error.message)
     }
   }
 
   const deleteAnnualProgram = async (id) => {
     try {
       await kollesAPI.deleteAnnualProgram(id)
-      alert('Programme annuel supprimé avec succès !')
+      showSuccess('Programme annuel supprimé avec succès !')
       loadAnnualPrograms()
     } catch (error) {
       console.error('Error deleting annual program:', error)
-      alert('Erreur lors de la suppression')
+      showError('Erreur lors de la suppression')
     }
   }
 
@@ -454,22 +617,22 @@ export function Admin() {
 
     try {
       await kollesAPI.updateAnnualProgram(selectedAnnualProgram.id, programData)
-      alert('Programme annuel modifié avec succès !')
+      showSuccess('Programme annuel modifié avec succès !')
       setShowAnnualProgramModal(false)
       loadAnnualPrograms()
     } catch (error) {
-      alert('Erreur: ' + error.message)
+      showError('Erreur: ' + error.message)
     }
   }
 
   const toggleAnnualProgram = async (programId) => {
     try {
       await kollesAPI.toggleAnnualProgram(programId)
-      alert('Programme annuel activé avec succès !')
+      showSuccess('Programme annuel activé avec succès !')
       loadAnnualPrograms()
     } catch (error) {
       console.error('Error toggling annual program:', error)
-      alert('Erreur lors de l\'activation')
+      showError('Erreur lors de l\'activation')
     }
   }
 
@@ -593,14 +756,40 @@ export function Admin() {
   }, [documents])
 
   // Fonctions de gestion des classes
+  const handleEditClass = async (formData) => {
+    try {
+      const classData = {
+        id: formData.get('id'),
+        name: formData.get('name'),
+        description: formData.get('description'),
+        color: formData.get('color')
+      }
+      
+      console.log('✏️ Sauvegarde modification classe:', classData)
+      await classAPI.updateClass(classToEdit.id, classData)
+      
+      // Mettre à jour la liste locale
+      setAvailableClasses(prev => prev.map(c => 
+        c.id === classToEdit.id ? { ...c, ...classData } : c
+      ))
+      
+      setShowEditClassModal(false)
+      setClassToEdit(null)
+      showSuccess(`Classe "${classData.name}" modifiée avec succès !`)
+    } catch (error) {
+      console.error('Erreur modification classe:', error)
+      showError('Erreur lors de la modification de la classe')
+    }
+  }
+
   const deleteClass = async (classId) => {
     try {
       await classAPI.deleteClass(classId)
       setAvailableClasses(prev => prev.filter(c => c.id !== classId))
-      alert('Classe supprimée avec succès !')
+      showSuccess('Classe supprimée avec succès !')
     } catch (error) {
       console.error('Error deleting class:', error)
-      alert('Erreur lors de la suppression de la classe')
+      showError('Erreur lors de la suppression de la classe')
     }
   }
 
@@ -618,18 +807,18 @@ export function Admin() {
       if (classModalMode === 'add') {
         await classAPI.createClass(classData)
         setAvailableClasses(prev => [...prev, classData])
-        alert('Classe ajoutée avec succès !')
+        showSuccess('Classe ajoutée avec succès !')
       } else {
         await classAPI.updateClass(selectedClassData.id, classData)
         setAvailableClasses(prev => prev.map(c => 
           c.id === selectedClassData.id ? { ...c, ...classData } : c
         ))
-        alert('Classe modifiée avec succès !')
+        showSuccess('Classe modifiée avec succès !')
       }
       setShowClassModal(false)
     } catch (error) {
       console.error('Error managing class:', error)
-      alert('Erreur lors de la gestion de la classe')
+      showError('Erreur lors de la gestion de la classe')
     }
   }
 
@@ -637,10 +826,7 @@ export function Admin() {
   const selectClassForAdmin = (classData) => {
     setSelectedAdminClass(classData)
     setAdminMode('classManagement')
-    // Charger les données de cette classe spécifique
-    loadDocuments()
-    loadKolles()
-    loadProgression()
+    // Les données seront chargées automatiquement par le useEffect
   }
 
   const backToClassSelection = () => {
@@ -659,6 +845,218 @@ export function Admin() {
 
   if (!isAuthenticated) {
     return null // La redirection est gérée dans checkAuthentication
+  }
+
+  // Interface des paramètres généraux
+  const renderGeneralSettings = () => {
+    console.log('🎨 [DEBUG] Rendu de renderGeneralSettings')
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-black text-white p-6 shadow-2xl border-b-4 border-indigo-500">
+          <div className="flex justify-between items-center max-w-7xl mx-auto">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => {
+                  console.log('🏠 [DEBUG] Retour vers classSelection')
+                  setAdminMode('classSelection')
+                }}
+                className="p-3 bg-white/20 hover:bg-white/30 rounded-xl transition-colors shadow-lg"
+                title="Retour à l'administration"
+              >
+                <Home size={24} className="text-white" />
+              </button>
+              <div className="p-3 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl shadow-lg">
+                <Settings size={24} className="text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">Paramètres généraux - {generateSiteName(generalSettings.siteName)}</h1>
+                <p className="text-slate-300 text-sm">Gestion globale du système</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <a href="/" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+                <Home size={16} /> Voir le site
+              </a>
+              <button 
+                onClick={logout}
+                className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              >
+                <LogOut size={16} />
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Contenu des paramètres */}
+        <div className="max-w-7xl mx-auto p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Gestion des utilisateurs */}
+            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
+                  <Users size={20} className="text-white" />
+                </div>
+                Gestion des utilisateurs
+              </h3>
+              
+              <div className="space-y-4">
+                {users.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Users size={48} className="mx-auto mb-4 text-gray-300" />
+                    <p>Aucun utilisateur chargé</p>
+                    <button 
+                      onClick={() => {
+                        console.log('👥 [DEBUG] Clic sur charger utilisateurs')
+                        loadUsers()
+                      }}
+                      className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Charger les utilisateurs
+                    </button>
+                  </div>
+                ) : (
+                  users.filter(user => 
+                    // Admins voient tout, professeurs ne voient que leur compte
+                    currentUser?.role === 'admin' || user.id === currentUser?.id
+                  ).map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                      <div>
+                        <p className="font-medium text-gray-800">{user.username}</p>
+                        <p className="text-sm text-gray-600">
+                          Rôle: <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            user.role === 'admin' 
+                              ? 'bg-red-100 text-red-600' 
+                              : user.role === 'professeur'
+                              ? 'bg-green-100 text-green-600'
+                              : 'bg-blue-100 text-blue-600'
+                          }`}>
+                            {user.role === 'admin' ? 'Administrateur' : user.role === 'professeur' ? 'Professeur' : user.role}
+                          </span>
+                        </p>
+                        {user.id === currentUser?.id && (
+                          <span className="text-xs text-blue-600 font-medium">• Votre compte</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Admins peuvent tout modifier, professeurs seulement leur propre compte */}
+                        {(currentUser?.role === 'admin' || user.id === currentUser?.id) && (
+                          <button 
+                            onClick={() => {
+                              console.log('✏️ [DEBUG] Modifier utilisateur (liste):', user.username)
+                              setSelectedUser(user)
+                              setModalMode('edit')
+                              setShowUserModal(true)
+                              console.log('✏️ [DEBUG] État après modification - showUserModal:', true, 'selectedUser:', user)
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                            title={user.id === currentUser?.id && currentUser?.role === 'professeur' ? 'Modifier votre mot de passe' : 'Modifier l\'utilisateur'}
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                        )}
+                        {/* Seuls les admins peuvent supprimer, et pas leur propre compte */}
+                        {currentUser?.role === 'admin' && user.id !== currentUser?.id && (
+                          <button 
+                            onClick={() => {
+                              console.log('🗑️ [DEBUG] Supprimer utilisateur (liste):', user.username)
+                              console.log('🗑️ [DEBUG] Appel showGenericDeleteConfirm avec user:', user)
+                              showGenericDeleteConfirm(user, async () => {
+                                console.log('🗑️ [DEBUG] Action de suppression exécutée pour user:', user.username)
+                                await authAPI.deleteUser(user.id)
+                                showSuccess(`Utilisateur "${user.username}" supprimé avec succès !`)
+                                loadUsers()
+                              }, 'utilisateur')
+                            }}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+                {/* Seuls les admins peuvent ajouter des utilisateurs */}
+                {currentUser?.role === 'admin' && (
+                  <button 
+                    onClick={() => {
+                      console.log('➕ [DEBUG] Ajouter utilisateur')
+                      setSelectedUser(null)
+                      setModalMode('add')
+                      setShowUserModal(true)
+                    }}
+                    className="w-full py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 shadow-lg"
+                  >
+                    <UserPlus size={18} />
+                    Ajouter un utilisateur
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Paramètres du site */}
+            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+              <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg">
+                    <Settings size={20} className="text-white" />
+                  </div>
+                  Configuration du site
+                </div>
+                <button 
+                  onClick={openGeneralSettingsModal}
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                  title="Modifier la configuration du site"
+                >
+                  <Edit3 size={18} />
+                </button>
+              </h3>
+              
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="text-sm font-semibold text-gray-700 mb-1">Nom du site</div>
+                  <div className="text-gray-900">{generateSiteName(generalSettings.siteName)}</div>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <div className="text-sm font-semibold text-gray-700 mb-1">Année scolaire</div>
+                  <div className="text-gray-900">{generalSettings.schoolYear}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Informations système */}
+            <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 lg:col-span-2">
+              <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
+                <div className="p-2 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg">
+                  <BarChart3 size={20} className="text-white" />
+                </div>
+                Informations système
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">v2.1</div>
+                  <div className="text-sm text-gray-600 font-medium">Version</div>
+                </div>
+                <div className="text-center p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                  <div className="text-3xl font-bold text-green-600 mb-2">99%</div>
+                  <div className="text-sm text-gray-600 font-medium">Uptime</div>
+                </div>
+                <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                  <div className="text-3xl font-bold text-purple-600 mb-2">{stats.documents + stats.evaluations}</div>
+                  <div className="text-sm text-gray-600 font-medium">Fichiers</div>
+                </div>
+                <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-red-50 rounded-lg border border-orange-200">
+                  <div className="text-3xl font-bold text-orange-600 mb-2">2.3GB</div>
+                  <div className="text-sm text-gray-600 font-medium">Stockage</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Interface de sélection de classe pour l'admin
@@ -683,17 +1081,33 @@ export function Admin() {
 
         {/* Actions globales */}
         <div className="flex justify-between items-center mb-8">
-          <button
-            onClick={() => {
-              setSelectedClassData(null)
-              setClassModalMode('add')
-              setShowClassModal(true)
-            }}
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
-          >
-            <Plus size={20} />
-            Créer une nouvelle classe
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedClassData(null)
+                setClassModalMode('add')
+                setShowClassModal(true)
+              }}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+            >
+              <Plus size={20} />
+              Créer une nouvelle classe
+            </button>
+            
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                console.log('🔧 [DEBUG] Clic sur Paramètres généraux')
+                setAdminMode('generalSettings')
+                console.log('🔧 [DEBUG] adminMode défini sur: generalSettings')
+              }}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+            >
+              <Settings size={20} />
+              Paramètres généraux
+            </button>
+          </div>
           
           <button 
             onClick={logout}
@@ -706,7 +1120,25 @@ export function Admin() {
 
         {/* Classes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {availableClasses.map((classData) => {
+          {classesLoading ? (
+            // État de chargement
+            <div className="col-span-full flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Chargement des classes...</p>
+              </div>
+            </div>
+          ) : availableClasses.length === 0 ? (
+            // Aucune classe trouvée
+            <div className="col-span-full text-center py-12">
+              <div className="text-gray-500 mb-4">
+                <School size={48} className="mx-auto mb-4" />
+                <p>Aucune classe disponible.</p>
+                <p className="text-sm">Contactez l'administrateur pour configurer les classes.</p>
+              </div>
+            </div>
+          ) : (
+            availableClasses.map((classData) => {
             const getColorClasses = (color) => {
               const colorMap = {
                 blue: { bg: 'from-blue-500 to-blue-600', border: 'border-blue-200', hover: 'hover:border-blue-300' },
@@ -724,26 +1156,28 @@ export function Admin() {
             return (
               <div key={classData.id} className={`group relative bg-white rounded-xl border-2 ${colors.border} ${colors.hover} shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}>
                 {/* Actions flottantes */}
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-4 right-4 flex gap-2 opacity-100 transition-opacity z-10">
                   <button
                     onClick={(e) => {
+                      console.log('✏️ Modifier classe:', classData.name)
                       e.stopPropagation()
-                      setSelectedClassData(classData)
-                      setClassModalMode('edit')
-                      setShowClassModal(true)
+                      setClassToEdit(classData)
+                      setShowEditClassModal(true)
                     }}
-                    className="p-2 bg-white rounded-lg shadow-md text-blue-600 hover:bg-blue-50 transition-colors"
+                    className="p-2 bg-white rounded-lg shadow-md text-blue-600 hover:bg-blue-50 transition-colors relative z-20 pointer-events-auto"
+                    title={`Modifier la classe ${classData.name}`}
                   >
                     <Edit3 size={16} />
                   </button>
                   <button
                     onClick={(e) => {
+                      console.log('🗑️ Supprimer classe:', classData.name)
                       e.stopPropagation()
-                      if (confirm(`Êtes-vous sûr de vouloir supprimer la classe ${classData.name} ?`)) {
-                        deleteClass(classData.id)
-                      }
+                      setClassToDelete(classData)
+                      setShowDeleteClassModal(true)
                     }}
-                    className="p-2 bg-white rounded-lg shadow-md text-red-600 hover:bg-red-50 transition-colors"
+                    className="p-2 bg-white rounded-lg shadow-md text-red-600 hover:bg-red-50 transition-colors relative z-20 pointer-events-auto"
+                    title={`Supprimer la classe ${classData.name}`}
                   >
                     <Trash2 size={16} />
                   </button>
@@ -783,7 +1217,8 @@ export function Admin() {
                 </button>
               </div>
             )
-          })}
+          }))
+          }
         </div>
 
         {/* Statistiques globales */}
@@ -793,7 +1228,9 @@ export function Admin() {
               <School size={24} className="text-blue-600" />
               <h3 className="font-semibold text-gray-800">Classes configurées</h3>
             </div>
-            <div className="text-3xl font-bold text-blue-600">{availableClasses.length}</div>
+            <div className="text-3xl font-bold text-blue-600">
+              {classesLoading ? '...' : availableClasses.length}
+            </div>
             <div className="text-gray-500 text-sm">classes disponibles</div>
           </div>
           
@@ -802,7 +1239,9 @@ export function Admin() {
               <GraduationCap size={24} className="text-green-600" />
               <h3 className="font-semibold text-gray-800">Classes actives</h3>
             </div>
-            <div className="text-3xl font-bold text-green-600">{availableClasses.length}</div>
+            <div className="text-3xl font-bold text-green-600">
+              {classesLoading ? '...' : availableClasses.length}
+            </div>
             <div className="text-gray-500 text-sm">prêtes à utiliser</div>
           </div>
           
@@ -812,7 +1251,7 @@ export function Admin() {
               <h3 className="font-semibold text-gray-800">Filières</h3>
             </div>
             <div className="text-3xl font-bold text-purple-600">
-              {new Set(availableClasses.map(c => c.id.replace(/\d+$/, ''))).size}
+              {classesLoading ? '...' : new Set(availableClasses.map(c => c.id.replace(/\d+$/, ''))).size}
             </div>
             <div className="text-gray-500 text-sm">types de classes</div>
           </div>
@@ -839,8 +1278,22 @@ export function Admin() {
               <Wrench size={24} className="text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Administration - {selectedAdminClass?.name}</h1>
-              <p className="text-slate-300 text-sm">{selectedAdminClass?.description}</p>
+              <h1 className="text-3xl font-bold tracking-tight">Administration - {currentClass?.name || 'Classe'}</h1>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-slate-300 text-sm">Classe actuelle:</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  selectedAdminClass?.color === 'blue' ? 'bg-blue-500 text-white' :
+                  selectedAdminClass?.color === 'green' ? 'bg-green-500 text-white' :
+                  selectedAdminClass?.color === 'purple' ? 'bg-purple-500 text-white' :
+                  selectedAdminClass?.color === 'red' ? 'bg-red-500 text-white' :
+                  selectedAdminClass?.color === 'yellow' ? 'bg-yellow-500 text-black' :
+                  selectedAdminClass?.color === 'indigo' ? 'bg-indigo-500 text-white' :
+                  'bg-gray-500 text-white'
+                }`}>
+                  {selectedAdminClass?.name}
+                </span>
+              </div>
+              <p className="text-slate-400 text-xs mt-1">{selectedAdminClass?.description}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -872,15 +1325,14 @@ export function Admin() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex flex-wrap gap-3 mb-8 bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-xl border border-gray-200">
             {[
-              { id: 'documents', label: 'Documents', icon: <FileText size={18} /> },
-              { id: 'evaluations', label: 'Évaluations', icon: <Target size={18} /> },
-              { id: 'kolles', label: 'Khôlles', icon: <Calendar size={18} /> },
-              { id: 'chapters', label: 'Chapitres', icon: <BookOpen size={18} /> },
-              { id: 'progression', label: 'Progression', icon: <BarChart3 size={18} /> },
-              { id: 'classes', label: 'Classes', icon: <School size={18} /> },
-              { id: 'settings', label: 'Paramètres', icon: <Settings size={18} /> }
+              { id: 'documents', label: 'Documents', icon: <FileText size={18} />, color: 'from-blue-500 to-blue-600' },
+              { id: 'evaluations', label: 'Évaluations', icon: <Target size={18} />, color: 'from-orange-500 to-red-600' },
+              { id: 'kolles', label: 'Khôlles', icon: <Calendar size={18} />, color: 'from-green-500 to-emerald-600' },
+              { id: 'chapters', label: 'Chapitres', icon: <BookOpen size={18} />, color: 'from-purple-500 to-indigo-600' },
+              { id: 'progression', label: 'Progression', icon: <BarChart3 size={18} />, color: 'from-teal-500 to-cyan-600' },
+              { id: 'settings', label: 'Paramètres', icon: <Settings size={18} />, color: 'from-gray-500 to-slate-600' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -889,10 +1341,10 @@ export function Admin() {
                   if (tab.id === 'documents') loadDocuments()
                   if (tab.id === 'kolles') loadKolles()
                 }}
-                className={`px-6 py-3 rounded-lg font-medium text-sm transition-all duration-300 flex items-center gap-2 ${
+                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 ${
                   activeTab === tab.id 
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                    ? `bg-gradient-to-r ${tab.color} text-white shadow-lg ring-2 ring-white ring-opacity-30` 
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
                 }`}
               >
                 {tab.icon}
@@ -1164,19 +1616,21 @@ export function Admin() {
                 </h3>
                 
                 <div className="space-y-4">
-                  {(!documents || (Array.isArray(documents) ? documents.length === 0 : Object.keys(documents).length === 0)) ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <Target size={48} className="mx-auto mb-4 text-gray-300" />
-                      <p>Aucune évaluation chargée. Cliquez sur "Charger" pour voir les évaluations.</p>
-                      <button 
-                        onClick={loadDocuments}
-                        className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-colors duration-200"
-                      >
-                        Charger les évaluations
-                      </button>
-                    </div>
-                  ) : (
-                    (Array.isArray(documents) ? documents : Object.values(documents).flat()).filter(doc => ['ds', 'dm', 'ap', 'interro'].includes(doc.type)).map((evaluation, index) => (
+                  {(() => {
+                    const evaluations = documents ? (Array.isArray(documents) ? documents : Object.values(documents).flat()).filter(doc => ['ds', 'dm', 'ap', 'interro'].includes(doc.type)) : []
+                    return evaluations.length === 0 ? (
+                      <div className="text-center py-12 text-gray-500">
+                        <Target size={48} className="mx-auto mb-4 text-gray-300" />
+                        <p>Aucune évaluation chargée. Cliquez sur "Charger" pour voir les évaluations.</p>
+                        <button 
+                          onClick={loadDocuments}
+                          className="mt-4 bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-colors duration-200"
+                        >
+                          Charger les évaluations
+                        </button>
+                      </div>
+                    ) : (
+                      evaluations.map((evaluation, index) => (
                       <div key={index} className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-lg border border-orange-200 hover:shadow-md transition-all duration-300">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -1221,8 +1675,9 @@ export function Admin() {
                           </div>
                         </div>
                       </div>
-                    ))
-                  )}
+                      ))
+                    )
+                  })()}
                 </div>
               </div>
             </div>
@@ -1537,11 +1992,11 @@ export function Admin() {
                     
                     try {
                       await chaptersAPI.addChapter(chapterData)
-                      alert('Nouveau chapitre ajouté avec succès !')
+                      showSuccess('Nouveau chapitre ajouté avec succès !')
                       e.target.reset()
                       loadChapters()
                     } catch (error) {
-                      alert('Erreur: ' + error.message)
+                      showError('Erreur: ' + error.message)
                     }
                   }} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input 
@@ -1590,14 +2045,14 @@ export function Admin() {
 
                 {/* Chapters List */}
                 <div className="grid gap-4">
-                  {chapters.sort((a, b) => {
+                  {chapters.filter(chapter => chapter && typeof chapter === 'object').sort((a, b) => {
                     switch(chapterSortBy) {
                       case 'name':
-                        return a.name.localeCompare(b.name);
+                        return (a.name || '').localeCompare(b.name || '');
                       case 'name-desc':
-                        return b.name.localeCompare(a.name);
+                        return (b.name || '').localeCompare(a.name || '');
                       case 'id':
-                        return a.id.localeCompare(b.id);
+                        return (a.id || '').localeCompare(b.id || '');
                       case 'description':
                         return (a.description || '').localeCompare(b.description || '');
                       default:
@@ -1671,12 +2126,29 @@ export function Admin() {
                   <p className="text-blue-700 text-sm">
                     Les chapitres passent automatiquement de "À venir" à "En cours" dès qu'un document est ajouté dans cette thématique.
                   </p>
-                  <button 
-                    onClick={updateProgressionFromDocuments}
-                    className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                  >
-                    Actualiser maintenant
-                  </button>
+                  <div className="flex gap-3 mt-3">
+                    <button 
+                      onClick={updateProgressionFromDocuments}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Actualiser maintenant
+                    </button>
+                    <button 
+                      onClick={async () => {
+                        try {
+                          await progressionAPI.updateProgression(selectedAdminClass.id, { chapters: progressionChapters })
+                          showSuccess('Progression sauvegardée avec succès !')
+                        } catch (error) {
+                          console.error('Error saving progression:', error)
+                          showError('Erreur lors de la sauvegarde de la progression')
+                        }
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                    >
+                      <CheckSquare size={16} />
+                      Sauvegarder la progression
+                    </button>
+                  </div>
                 </div>
 
                 {/* Liste des chapitres de progression */}
@@ -1794,7 +2266,7 @@ export function Admin() {
             </div>
           )}
 
-          {activeTab === 'classes' && (
+          {activeTab === 'classes-disabled' && (
             <div>
               <div className="bg-gradient-to-br from-cyan-50 to-blue-50 p-8 rounded-xl mb-8 border border-cyan-200">
                 <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
@@ -1882,9 +2354,9 @@ export function Admin() {
                             <div className="flex items-center gap-2">
                               <button 
                                 onClick={() => {
-                                  setSelectedClassData(classData)
-                                  setClassModalMode('edit')
-                                  setShowClassModal(true)
+                                  console.log('✏️ Modifier classe (liste):', classData.name)
+                                  setClassToEdit(classData)
+                                  setShowEditClassModal(true)
                                 }}
                                 className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                               >
@@ -1914,7 +2386,7 @@ export function Admin() {
                       <h4 className="font-semibold text-blue-800">Classes configurées</h4>
                     </div>
                     <div className="text-3xl font-bold text-blue-600">
-                      {availableClasses.length}
+                      {classesLoading ? '...' : availableClasses.length}
                     </div>
                     <div className="text-blue-600 text-sm">classes disponibles</div>
                   </div>
@@ -1982,65 +2454,6 @@ export function Admin() {
                     </div>
                   </div>
 
-                  {/* User Management */}
-                  <div className="bg-white p-6 rounded-lg border border-gray-200">
-                    <h4 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                      <Users size={18} className="text-gray-600" />
-                      Gestion des utilisateurs
-                    </h4>
-                    <div className="space-y-4">
-                      {users.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          <Users size={48} className="mx-auto mb-4 text-gray-300" />
-                          <p>Aucun utilisateur chargé</p>
-                          <button 
-                            onClick={loadUsers}
-                            className="mt-2 text-blue-600 hover:text-blue-700"
-                          >
-                            Charger les utilisateurs
-                          </button>
-                        </div>
-                      ) : (
-                        users.map((user) => (
-                          <div key={user.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                            <div>
-                              <p className="font-medium text-gray-800">{user.username}</p>
-                              <p className="text-sm text-gray-600">
-                                Rôle: <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  user.role === 'admin' 
-                                    ? 'bg-red-100 text-red-600' 
-                                    : 'bg-blue-100 text-blue-600'
-                                }`}>
-                                  {user.role}
-                                </span>
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button 
-                                onClick={() => editUser(user)}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-                              >
-                                <Edit3 size={16} />
-                              </button>
-                              <button 
-                                onClick={() => confirmDeleteUser(user)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                      <button 
-                        onClick={addUser}
-                        className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors duration-200 flex items-center justify-center gap-2"
-                      >
-                        <UserPlus size={18} />
-                        Ajouter un utilisateur
-                      </button>
-                    </div>
-                  </div>
 
                   {/* System Information */}
                   <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -2142,128 +2555,6 @@ export function Admin() {
           </div>
         </div>
       </div>
-
-      {/* User Modal */}
-      {showUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4 shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-800">
-                {modalMode === 'add' ? 'Ajouter un utilisateur' : 'Modifier l\'utilisateur'}
-              </h3>
-              <button 
-                onClick={() => setShowUserModal(false)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleUserSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Nom d'utilisateur
-                </label>
-                <input 
-                  type="text" 
-                  name="username" 
-                  defaultValue={selectedUser?.username || ''}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Mot de passe {modalMode === 'edit' ? '(laisser vide pour ne pas changer)' : ''}
-                </label>
-                <input 
-                  type="password" 
-                  name="password" 
-                  required={modalMode === 'add'}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Rôle
-                </label>
-                <select 
-                  name="role" 
-                  defaultValue={selectedUser?.role || 'user'}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                >
-                  <option value="user">Utilisateur</option>
-                  <option value="admin">Administrateur</option>
-                </select>
-              </div>
-              
-              <div className="flex items-center gap-4 pt-4">
-                <button 
-                  type="submit" 
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  <UserPlus size={18} />
-                  {modalMode === 'add' ? 'Ajouter' : 'Modifier'}
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowUserModal(false)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold transition-all duration-300"
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4 shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-800">
-                Confirmer la suppression
-              </h3>
-              <button 
-                onClick={() => setShowDeleteModal(false)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="mb-6">
-              <p className="text-gray-600">
-                Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{userToDelete?.username}</strong> ?
-              </p>
-              <p className="text-sm text-red-600 mt-2">
-                Cette action est irréversible.
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={handleDeleteUser}
-                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <Trash2 size={18} />
-                Supprimer
-              </button>
-              <button 
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold transition-all duration-300"
-              >
-                Annuler
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Generic Delete Modal */}
       {showGenericDeleteModal && (
@@ -2707,5 +2998,323 @@ export function Admin() {
   )
 
   // Return principal qui décide quelle interface afficher
-  return adminMode === 'classSelection' ? renderClassSelection() : renderClassManagement()
+  console.log('🔍 [DEBUG] adminMode actuel:', adminMode)
+  
+  return (
+    <>
+      {adminMode === 'classSelection' 
+        ? renderClassSelection() 
+        : adminMode === 'generalSettings'
+        ? renderGeneralSettings()
+        : renderClassManagement()}
+      <NotificationContainer notifications={notifications} removeNotification={removeNotification} />
+      
+      {/* Modal de confirmation de suppression de classe */}
+      {showDeleteClassModal && classToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4 shadow-2xl">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Supprimer la classe
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Êtes-vous sûr de vouloir supprimer la classe <strong>{classToDelete.name}</strong> ? 
+                Cette action est irréversible et supprimera également tous les documents, khôlles et données associées.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={async () => {
+                    console.log('🗑️ Confirmation suppression classe:', classToDelete.name)
+                    try {
+                      await deleteClass(classToDelete.id)
+                      setShowDeleteClassModal(false)
+                      setClassToDelete(null)
+                      showSuccess(`Classe "${classToDelete.name}" supprimée avec succès !`)
+                    } catch (error) {
+                      console.error('Erreur suppression:', error)
+                      showError('Erreur lors de la suppression de la classe')
+                    }
+                  }}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Supprimer
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeleteClassModal(false)
+                    setClassToDelete(null)
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Annuler
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal d'édition de classe */}
+      {showEditClassModal && classToEdit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
+                <Edit3 className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Modifier la classe
+              </h3>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.target)
+              handleEditClass(formData)
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Identifiant de la classe
+                </label>
+                <input 
+                  type="text" 
+                  name="id" 
+                  defaultValue={classToEdit.id}
+                  disabled
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-gray-100 text-gray-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">L'identifiant ne peut pas être modifié</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nom de la classe
+                </label>
+                <input 
+                  type="text" 
+                  name="name" 
+                  defaultValue={classToEdit.name}
+                  placeholder="Ex: TSI 1ère année"
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description
+                </label>
+                <input 
+                  type="text" 
+                  name="description" 
+                  defaultValue={classToEdit.description || ''}
+                  placeholder="Ex: Première année de Technologie et Sciences Industrielles"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Couleur
+                </label>
+                <select 
+                  name="color" 
+                  defaultValue={classToEdit.color || 'blue'}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                >
+                  <option value="blue">Bleu</option>
+                  <option value="green">Vert</option>
+                  <option value="purple">Violet</option>
+                  <option value="red">Rouge</option>
+                  <option value="yellow">Jaune</option>
+                  <option value="indigo">Indigo</option>
+                </select>
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Edit3 size={18} />
+                  Modifier
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditClassModal(false)
+                    setClassToEdit(null)
+                  }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de modification des paramètres généraux */}
+      {showGeneralSettingsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 mb-4">
+                <Settings className="h-6 w-6 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Modifier les paramètres généraux
+              </h3>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.target)
+              handleSaveGeneralSettings(formData)
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nom du site
+                </label>
+                <input 
+                  type="text" 
+                  name="siteName" 
+                  defaultValue={generalSettings.siteName}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all duration-200"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Année scolaire
+                </label>
+                <input 
+                  type="text" 
+                  name="schoolYear" 
+                  defaultValue={generalSettings.schoolYear}
+                  placeholder="ex: 2024-2025"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all duration-200"
+                  required
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  <Settings size={18} />
+                  Sauvegarder
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowGeneralSettingsModal(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium transition-colors"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* User Modal */}
+      {showUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800">
+                {modalMode === 'add' ? 'Ajouter un utilisateur' : 'Modifier l\'utilisateur'}
+              </h3>
+              <button 
+                onClick={() => setShowUserModal(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleUserSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nom d'utilisateur
+                </label>
+                <input 
+                  type="text" 
+                  name="username" 
+                  defaultValue={selectedUser?.username || ''}
+                  required
+                  disabled={currentUser?.role === 'professeur' && modalMode === 'edit'}
+                  className={`w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 ${
+                    currentUser?.role === 'professeur' && modalMode === 'edit' ? 'bg-gray-100 text-gray-600' : ''
+                  }`}
+                />
+                {currentUser?.role === 'professeur' && modalMode === 'edit' && (
+                  <p className="text-xs text-gray-500 mt-1">Les professeurs ne peuvent pas modifier leur nom d'utilisateur</p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Mot de passe {modalMode === 'edit' ? '(laisser vide pour ne pas changer)' : ''}
+                </label>
+                <input 
+                  type="password" 
+                  name="password" 
+                  required={modalMode === 'add'}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Rôle
+                </label>
+                <select 
+                  name="role" 
+                  defaultValue={selectedUser?.role || 'user'}
+                  required
+                  disabled={currentUser?.role === 'professeur' && modalMode === 'edit'}
+                  className={`w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 ${
+                    currentUser?.role === 'professeur' && modalMode === 'edit' ? 'bg-gray-100 text-gray-600' : ''
+                  }`}
+                >
+                  <option value="user">Utilisateur</option>
+                  <option value="professeur">Professeur</option>
+                  <option value="admin">Administrateur</option>
+                </select>
+                {currentUser?.role === 'professeur' && modalMode === 'edit' && (
+                  <p className="text-xs text-gray-500 mt-1">Les professeurs ne peuvent pas modifier leur rôle</p>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-4 pt-4">
+                <button 
+                  type="submit" 
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  <UserPlus size={18} />
+                  {modalMode === 'add' ? 'Ajouter' : 'Modifier'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setShowUserModal(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold transition-all duration-300"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+    </>
+  )
 }
