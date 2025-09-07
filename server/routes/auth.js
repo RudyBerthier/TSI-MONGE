@@ -165,22 +165,34 @@ router.post('/change-password', authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/auth/users - Récupérer la liste des utilisateurs (admin uniquement)
+// GET /api/auth/users - Récupérer la liste des utilisateurs (admin) ou ses propres données (professeur)
 router.get('/users', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Accès refusé - Admin requis' });
-    }
-    
     const users = await readUsers();
-    // Ne pas renvoyer les mots de passe
-    const safeUsers = users.map(user => ({
-      id: user.id,
-      username: user.username,
-      role: user.role
-    }));
     
-    res.json(safeUsers);
+    if (req.user.role === 'admin') {
+      // Admin peut voir tous les utilisateurs
+      const safeUsers = users.map(user => ({
+        id: user.id,
+        username: user.username,
+        role: user.role
+      }));
+      res.json(safeUsers);
+    } else if (req.user.role === 'professeur') {
+      // Professeur peut voir seulement ses propres données
+      const currentUser = users.find(u => u.id === req.user.id);
+      if (currentUser) {
+        res.json([{
+          id: currentUser.id,
+          username: currentUser.username,
+          role: currentUser.role
+        }]);
+      } else {
+        res.json([]);
+      }
+    } else {
+      return res.status(403).json({ error: 'Accès refusé' });
+    }
   } catch (error) {
     console.error('Erreur récupération utilisateurs:', error);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -208,7 +220,7 @@ router.post('/users', authenticateToken, async (req, res) => {
       });
     }
     
-    const validRoles = ['admin', 'user'];
+    const validRoles = ['admin', 'user', 'professeur'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ 
         error: 'Rôle invalide. Utiliser: admin ou user' 
@@ -255,14 +267,21 @@ router.post('/users', authenticateToken, async (req, res) => {
   }
 });
 
-// PUT /api/auth/users/:id - Modifier un utilisateur (admin uniquement)
+// PUT /api/auth/users/:id - Modifier un utilisateur (admin ou professeur pour son propre compte)
 router.put('/users/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Accès refusé - Admin requis' });
+    const userId = req.params.id;
+    
+    // Admin peut modifier tout le monde, professeur peut modifier seulement son propre compte
+    if (req.user.role !== 'admin' && req.user.role !== 'professeur') {
+      return res.status(403).json({ error: 'Accès refusé' });
     }
     
-    const userId = req.params.id;
+    // Si c'est un professeur, il ne peut modifier que son propre compte
+    if (req.user.role === 'professeur' && userId !== req.user.id) {
+      return res.status(403).json({ error: 'Vous ne pouvez modifier que votre propre compte' });
+    }
+    
     const { username, role, password } = req.body;
     
     const users = await readUsers();
@@ -276,6 +295,13 @@ router.put('/users/:id', authenticateToken, async (req, res) => {
     
     // Mise à jour des champs
     if (username && username !== user.username) {
+      // Les professeurs ne peuvent pas changer leur nom d'utilisateur
+      if (req.user.role === 'professeur') {
+        return res.status(403).json({ 
+          error: 'Les professeurs ne peuvent pas modifier leur nom d\'utilisateur' 
+        });
+      }
+      
       // Vérifier si le nouveau nom d'utilisateur existe déjà
       if (users.find(u => u.username === username && u.id !== userId)) {
         return res.status(400).json({ 
@@ -286,12 +312,20 @@ router.put('/users/:id', authenticateToken, async (req, res) => {
     }
     
     if (role && role !== user.role) {
-      const validRoles = ['admin', 'user'];
+      const validRoles = ['admin', 'user', 'professeur'];
       if (!validRoles.includes(role)) {
         return res.status(400).json({ 
-          error: 'Rôle invalide. Utiliser: admin ou user' 
+          error: 'Rôle invalide. Utiliser: admin, user ou professeur' 
         });
       }
+      
+      // Les professeurs ne peuvent pas changer leur rôle
+      if (req.user.role === 'professeur') {
+        return res.status(403).json({ 
+          error: 'Les professeurs ne peuvent pas modifier leur rôle' 
+        });
+      }
+      
       user.role = role;
     }
     

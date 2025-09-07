@@ -79,7 +79,7 @@ export function ClassSelector() {
         </div>
 
         {/* Classes Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 justify-items-center">
           {availableClasses.map((classData) => {
             const colors = getColorClasses(classData.color)
             const isSelected = selectedClassId === classData.id
@@ -88,7 +88,7 @@ export function ClassSelector() {
               <button
                 key={classData.id}
                 onClick={() => handleClassSelect(classData)}
-                className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${
+                className={`w-full max-w-sm p-6 rounded-xl border-2 transition-all duration-300 text-left ${
                   isSelected 
                     ? `${colors.border} bg-white shadow-lg scale-105 ring-4 ring-opacity-20 ring-${classData.color}-500`
                     : `border-gray-200 bg-white ${colors.hover} shadow-sm hover:shadow-md`

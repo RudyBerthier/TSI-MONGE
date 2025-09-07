@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react'
 import { Upload, Settings, LogOut, Home, FileText, Target, BarChart3, Wrench, Calendar, FolderPlus, Edit3, Trash2, Plus, BookOpen, Users, Palette, Calculator, Compass, Activity, TrendingUp, Hash, Brain, Dice6, Zap, Type, X, UserPlus, CheckCircle, Clock, PlayCircle, CheckSquare, ArrowUp, ArrowDown, School, GraduationCap } from 'lucide-react'
 
-const categories = {
-  geometrie: { name: 'Géométrie', icon: <Compass size={24} /> },
-  calculs: { name: 'Calculs', icon: <Calculator size={24} /> },
-  fonctions: { name: 'Fonctions', icon: <TrendingUp size={24} /> },
-  suites: { name: 'Suites', icon: <Hash size={24} /> },
-  ensembles: { name: 'Ensembles et raisonnements', icon: <Brain size={24} /> },
-  probabilites: { name: 'Probabilités', icon: <Dice6 size={24} /> },
-  complexes: { name: 'Nombres complexes', icon: <Zap size={24} /> },
-  algebre: { name: 'Algèbre', icon: <Type size={24} /> }
+// Créer les catégories dynamiquement à partir des chapitres
+const getCategories = (chapters) => {
+  const categories = {}
+  chapters.forEach(chapter => {
+    categories[chapter.id] = {
+      name: chapter.name,
+      icon: <BookOpen size={24} />
+    }
+  })
+  return categories
 }
 import { documentsAPI, kollesAPI, authAPI, chaptersAPI, classAPI, progressionAPI, settingsAPI } from '../services/api'
 import { useClass, AVAILABLE_CLASSES } from '../contexts/ClassContext'
@@ -20,8 +21,15 @@ export function Admin() {
   const { currentClass, resetClassSelection } = useClass()
   const { notifications, showSuccess, showError, showInfo, showWarning, removeNotification } = useNotifications()
   const [stats, setStats] = useState({ documents: 0, themes: 8, kolles: 0, evaluations: 0 })
-  const [activeTab, setActiveTab] = useState('documents')
-  const [selectedAdminClass, setSelectedAdminClass] = useState(null) // Classe sélectionnée pour l'admin
+  const [activeTab, setActiveTab] = useState(() => {
+    // Récupérer l'onglet depuis localStorage ou utiliser 'documents' par défaut
+    return localStorage.getItem('adminActiveTab') || 'documents'
+  })
+  const [selectedAdminClass, setSelectedAdminClass] = useState(() => {
+    // Récupérer la classe sélectionnée depuis localStorage
+    const savedClass = localStorage.getItem('selectedAdminClass')
+    return savedClass ? JSON.parse(savedClass) : null
+  })
   const [adminMode, setAdminModeState] = useState(() => {
     // Récupérer l'état du menu depuis localStorage ou utiliser 'classSelection' par défaut
     return localStorage.getItem('adminMode') || 'classSelection'
@@ -32,6 +40,24 @@ export function Admin() {
     console.log('🔄 [DEBUG] Changement adminMode vers:', newMode)
     localStorage.setItem('adminMode', newMode)
     setAdminModeState(newMode)
+  }
+
+  // Fonction wrapper pour setActiveTab qui sauvegarde aussi dans localStorage
+  const setActiveTabAndSave = (newTab) => {
+    console.log('🔄 [DEBUG] Changement activeTab vers:', newTab)
+    localStorage.setItem('adminActiveTab', newTab)
+    setActiveTab(newTab)
+  }
+
+  // Fonction wrapper pour setSelectedAdminClass qui sauvegarde aussi dans localStorage
+  const setSelectedAdminClassAndSave = (newClass) => {
+    console.log('🔄 [DEBUG] Changement selectedAdminClass vers:', newClass?.name || 'null')
+    if (newClass) {
+      localStorage.setItem('selectedAdminClass', JSON.stringify(newClass))
+    } else {
+      localStorage.removeItem('selectedAdminClass')
+    }
+    setSelectedAdminClass(newClass)
   }
   const [availableClasses, setAvailableClasses] = useState([])
   const [classesLoading, setClassesLoading] = useState(true)
@@ -121,6 +147,13 @@ export function Admin() {
     console.log('🗑️ [DEBUG STATE] showGenericDeleteModal a changé:', showGenericDeleteModal)
     console.log('🗑️ [DEBUG STATE] itemToDelete:', itemToDelete)
   }, [showGenericDeleteModal, itemToDelete])
+  
+  // Debug pour surveiller les changements d'état du modal de classe
+  useEffect(() => {
+    console.log('🏫 [DEBUG STATE] showClassModal a changé:', showClassModal)
+    console.log('🏫 [DEBUG STATE] classModalMode:', classModalMode)
+    console.log('🏫 [DEBUG STATE] selectedClassData:', selectedClassData)
+  }, [showClassModal, classModalMode, selectedClassData])
 
   useEffect(() => {
     console.log('⏳ [DEBUG STATE] classesLoading a changé:', classesLoading)
@@ -141,7 +174,19 @@ export function Admin() {
   // Charger les données spécifiques à la classe quand elle est sélectionnée
   useEffect(() => {
     console.log('🔧 [DEBUG USEEFFECT] selectedAdminClass a changé:', selectedAdminClass)
-    if (selectedAdminClass && isAuthenticated) {
+    console.log('🔧 [DEBUG USEEFFECT] isAuthenticated:', isAuthenticated)
+    console.log('🔧 [DEBUG USEEFFECT] adminMode:', adminMode)
+    console.log('🔧 [DEBUG USEEFFECT] loading:', loading)
+    
+    // Vérifier la cohérence : si on est en mode classManagement mais sans classe sélectionnée
+    if (isAuthenticated && !loading && adminMode === 'classManagement' && !selectedAdminClass) {
+      console.log('🔧 [DEBUG USEEFFECT] Mode classManagement sans classe → Retour classSelection')
+      setAdminMode('classSelection')
+      return
+    }
+    
+    // Charger les données si on a une classe et qu'on est authentifié
+    if (selectedAdminClass && isAuthenticated && !loading) {
       console.log('🔧 [DEBUG USEEFFECT] Chargement des données pour la classe:', selectedAdminClass.name)
       loadDocuments()
       loadKolles()
@@ -149,7 +194,8 @@ export function Admin() {
       loadProgression()
       loadAnnualPrograms()
     }
-  }, [selectedAdminClass, isAuthenticated])
+  }, [selectedAdminClass, isAuthenticated, loading]) // Ajouté loading pour éviter les chargements prématurés
+
 
 
   const checkAuthentication = async () => {
@@ -389,8 +435,10 @@ export function Admin() {
   const deleteChapter = async (chapterId) => {
     try {
       await chaptersAPI.deleteChapter(chapterId)
+      
       showSuccess('Chapitre supprimé avec succès !')
       loadChapters()
+      loadProgression() // Recharger la progression pour synchroniser
     } catch (error) {
       showError('Erreur: ' + error.message)
     }
@@ -421,6 +469,7 @@ export function Admin() {
       }
       setShowChapterModal(false)
       loadChapters()
+      loadProgression() // Recharger la progression pour synchroniser
     } catch (error) {
       showError('Erreur: ' + error.message)
     }
@@ -641,14 +690,46 @@ export function Admin() {
     if (!selectedAdminClass) return
     
     try {
+      // Charger les chapitres depuis l'API des chapitres (source de vérité)
+      const apiChapters = await chaptersAPI.getChapters()
+      
+      // Charger la progression sauvegardée (statut et ordre uniquement)
       const progression = await progressionAPI.getProgression(selectedAdminClass.id)
-      if (progression && progression.chapters) {
-        setProgressionChapters(progression.chapters)
-        localStorage.setItem('progressionChapters', JSON.stringify(progression.chapters))
-      }
+      
+      // Synchroniser : utiliser les chapitres de l'API comme base
+      const synchronizedChapters = apiChapters.map((chapter, index) => {
+        // Chercher si ce chapitre existe dans la progression sauvegardée
+        const savedChapter = progression?.chapters?.find(p => p.id === chapter.id)
+        
+        return {
+          id: chapter.id,
+          name: chapter.name,
+          description: chapter.description,
+          status: savedChapter?.status || 'a-venir', // Statut de la progression ou défaut
+          order: savedChapter?.order || index + 1 // Ordre sauvegardé ou position dans l'API
+        }
+      })
+      
+      setProgressionChapters(synchronizedChapters)
+      localStorage.setItem('progressionChapters', JSON.stringify(synchronizedChapters))
+      
+      console.log('✅ Progression synchronisée avec', synchronizedChapters.length, 'chapitres depuis l\'API')
     } catch (error) {
-      console.log('Pas de progression sauvegardée, utilisation des valeurs par défaut')
-      // Garder les valeurs par défaut
+      console.log('Erreur lors du chargement de la progression:', error)
+      // En cas d'erreur, charger au moins les chapitres de base
+      try {
+        const apiChapters = await chaptersAPI.getChapters()
+        const basicProgression = apiChapters.map((chapter, index) => ({
+          id: chapter.id,
+          name: chapter.name,
+          description: chapter.description,
+          status: 'a-venir',
+          order: index + 1
+        }))
+        setProgressionChapters(basicProgression)
+      } catch (chaptersError) {
+        console.error('Erreur lors du chargement des chapitres:', chaptersError)
+      }
     }
   }
 
@@ -668,8 +749,10 @@ export function Admin() {
       // Sauvegarder dans localStorage pour synchroniser avec la page Documents
       localStorage.setItem('progressionChapters', JSON.stringify(updatedChapters))
       console.log(`Statut du chapitre ${chapterId} mis à jour: ${newStatus}`)
+      showSuccess('Progression sauvegardée automatiquement')
     } catch (error) {
       console.error('Error updating chapter status:', error)
+      showError('Erreur lors de la sauvegarde automatique')
       // Revenir à l'état précédent en cas d'erreur
       setProgressionChapters(progressionChapters)
     }
@@ -691,9 +774,10 @@ export function Admin() {
       try {
         await progressionAPI.updateChapterOrder(selectedAdminClass.id, sortedChapters)
         localStorage.setItem('progressionChapters', JSON.stringify(sortedChapters))
+        showSuccess('Ordre sauvegardé automatiquement')
       } catch (error) {
         console.error('Error updating chapter order:', error)
-        console.log('Erreur lors du changement d\'ordre, fonctionnement en mode local')
+        showError('Erreur lors de la sauvegarde automatique')
         // Revenir à l'état précédent
         setProgressionChapters(progressionChapters)
       }
@@ -716,9 +800,10 @@ export function Admin() {
       try {
         await progressionAPI.updateChapterOrder(selectedAdminClass.id, sortedChapters)
         localStorage.setItem('progressionChapters', JSON.stringify(sortedChapters))
+        showSuccess('Ordre sauvegardé automatiquement')
       } catch (error) {
         console.error('Error updating chapter order:', error)
-        console.log('Erreur lors du changement d\'ordre, fonctionnement en mode local')
+        showError('Erreur lors de la sauvegarde automatique')
         // Revenir à l'état précédent
         setProgressionChapters(progressionChapters)
       }
@@ -824,15 +909,15 @@ export function Admin() {
 
   // Fonctions de gestion des modes admin
   const selectClassForAdmin = (classData) => {
-    setSelectedAdminClass(classData)
+    setSelectedAdminClassAndSave(classData)
     setAdminMode('classManagement')
     // Les données seront chargées automatiquement par le useEffect
   }
 
   const backToClassSelection = () => {
     setAdminMode('classSelection')
-    setSelectedAdminClass(null)
-    setActiveTab('documents')
+    setSelectedAdminClassAndSave(null)
+    setActiveTabAndSave('documents')
   }
 
   if (loading) {
@@ -1264,47 +1349,50 @@ export function Admin() {
   const renderClassManagement = () => (
     <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
       {/* Header Admin */}
-      <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-black text-white p-6 shadow-2xl border-b-4 border-indigo-500">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <div className="flex items-center gap-4">
+      <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-200 max-w-7xl mx-auto mt-8 mb-8">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-6">
             <button
               onClick={backToClassSelection}
-              className="p-3 bg-white/20 hover:bg-white/30 rounded-xl transition-colors shadow-lg"
+              className="p-3 bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
               title="Retour aux classes"
             >
-              <Home size={24} className="text-white" />
+              <Home size={24} />
             </button>
-            <div className="p-3 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl shadow-lg">
-              <Wrench size={24} className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Administration - {currentClass?.name || 'Classe'}</h1>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-slate-300 text-sm">Classe actuelle:</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  selectedAdminClass?.color === 'blue' ? 'bg-blue-500 text-white' :
-                  selectedAdminClass?.color === 'green' ? 'bg-green-500 text-white' :
-                  selectedAdminClass?.color === 'purple' ? 'bg-purple-500 text-white' :
-                  selectedAdminClass?.color === 'red' ? 'bg-red-500 text-white' :
-                  selectedAdminClass?.color === 'yellow' ? 'bg-yellow-500 text-black' :
-                  selectedAdminClass?.color === 'indigo' ? 'bg-indigo-500 text-white' :
-                  'bg-gray-500 text-white'
-                }`}>
-                  {selectedAdminClass?.name}
-                </span>
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
+                <Wrench size={28} className="text-white" />
               </div>
-              <p className="text-slate-400 text-xs mt-1">{selectedAdminClass?.description}</p>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Administration</h1>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-gray-600 text-sm font-medium">Classe actuelle:</span>
+                  <span className={`px-4 py-2 rounded-xl text-sm font-semibold shadow-sm ${
+                    selectedAdminClass?.color === 'blue' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' :
+                    selectedAdminClass?.color === 'green' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' :
+                    selectedAdminClass?.color === 'purple' ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white' :
+                    selectedAdminClass?.color === 'red' ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' :
+                    selectedAdminClass?.color === 'yellow' ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-800' :
+                    selectedAdminClass?.color === 'indigo' ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white' :
+                    'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
+                  }`}>
+                    {selectedAdminClass?.name}
+                  </span>
+                </div>
+                <p className="text-gray-500 text-sm mt-1">{selectedAdminClass?.description}</p>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-              <Home size={16} /> Voir le site
+            <a href="/" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5">
+              <Home size={18} /> 
+              Voir le site
             </a>
             <button 
               onClick={logout}
-              className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
             >
-              <LogOut size={16} />
+              <LogOut size={18} />
               Déconnexion
             </button>
           </div>
@@ -1337,7 +1425,7 @@ export function Admin() {
               <button
                 key={tab.id}
                 onClick={() => {
-                  setActiveTab(tab.id)
+                  setActiveTabAndSave(tab.id)
                   if (tab.id === 'documents') loadDocuments()
                   if (tab.id === 'kolles') loadKolles()
                 }}
@@ -1376,14 +1464,11 @@ export function Admin() {
                         style={{ width: '100%', padding: '1rem', border: '2px solid #e1e5e9', borderRadius: '8px', fontSize: '0.95rem' }}
                       >
                         <option value="">Choisir une thématique</option>
-                        <option value="geometrie">Géométrie</option>
-                        <option value="fonctions">Fonctions</option>
-                        <option value="suites">Suites</option>
-                        <option value="ensembles">Ensembles et raisonnements</option>
-                        <option value="probabilites">Probabilités</option>
-                        <option value="calculs">Calculs</option>
-                        <option value="complexes">Nombres complexes</option>
-                        <option value="algebre">Algèbre</option>
+                        {chapters.map(chapter => (
+                          <option key={chapter.id} value={chapter.id}>
+                            {chapter.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -1472,7 +1557,7 @@ export function Admin() {
                               <h4 className="text-lg font-semibold text-gray-800">{doc.title || 'Document sans titre'}</h4>
                               <div className="flex items-center gap-4 mt-1">
                                 <span className="text-sm text-gray-600 bg-gray-200 px-2 py-1 rounded-full">
-                                  {categories[doc.category]?.name || doc.category || 'Non catégorisé'}
+                                  {getCategories(chapters)[doc.category]?.name || doc.category || 'Non catégorisé'}
                                 </span>
                                 <span className="text-sm text-gray-600 bg-blue-100 px-2 py-1 rounded-full">
                                   {doc.type || 'Document'}
@@ -1545,14 +1630,11 @@ export function Admin() {
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-gray-700 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 transition-all duration-200"
                       >
                         <option value="">Choisir une thématique</option>
-                        <option value="geometrie">Géométrie</option>
-                        <option value="fonctions">Fonctions</option>
-                        <option value="suites">Suites</option>
-                        <option value="ensembles">Ensembles et raisonnements</option>
-                        <option value="probabilites">Probabilités</option>
-                        <option value="calculs">Calculs</option>
-                        <option value="complexes">Nombres complexes</option>
-                        <option value="algebre">Algèbre</option>
+                        {chapters.map(chapter => (
+                          <option key={chapter.id} value={chapter.id}>
+                            {chapter.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -1649,7 +1731,7 @@ export function Admin() {
                                   }[evaluation.type] || evaluation.type}
                                 </span>
                                 <span className="text-sm text-gray-600 bg-gray-200 px-2 py-1 rounded-full">
-                                  {categories[evaluation.category]?.name || evaluation.category || 'Non catégorisé'}
+                                  {getCategories(chapters)[evaluation.category]?.name || evaluation.category || 'Non catégorisé'}
                                 </span>
                                 {evaluation.filename && (
                                   <span className="text-xs text-gray-500">{evaluation.filename}</span>
@@ -1991,10 +2073,12 @@ export function Admin() {
                     }
                     
                     try {
-                      await chaptersAPI.addChapter(chapterData)
+                      const newChapter = await chaptersAPI.addChapter(chapterData)
+                      
                       showSuccess('Nouveau chapitre ajouté avec succès !')
                       e.target.reset()
                       loadChapters()
+                      loadProgression() // Recharger la progression pour synchroniser
                     } catch (error) {
                       showError('Erreur: ' + error.message)
                     }
@@ -2133,21 +2217,6 @@ export function Admin() {
                     >
                       Actualiser maintenant
                     </button>
-                    <button 
-                      onClick={async () => {
-                        try {
-                          await progressionAPI.updateProgression(selectedAdminClass.id, { chapters: progressionChapters })
-                          showSuccess('Progression sauvegardée avec succès !')
-                        } catch (error) {
-                          console.error('Error saving progression:', error)
-                          showError('Erreur lors de la sauvegarde de la progression')
-                        }
-                      }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                    >
-                      <CheckSquare size={16} />
-                      Sauvegarder la progression
-                    </button>
                   </div>
                 </div>
 
@@ -2189,8 +2258,10 @@ export function Admin() {
                               </button>
                             </div>
                             <div>
-                              <h4 className="text-lg font-semibold text-gray-800">{chapter.title}</h4>
-                              <p className="text-gray-600 text-sm">{chapter.subtitle}</p>
+                              <h4 className="text-lg font-semibold text-gray-800">
+                                Chapitre {chapter.order} - {chapter.name}
+                              </h4>
+                              <p className="text-gray-600 text-sm">{chapter.description}</p>
                             </div>
                           </div>
                           
@@ -2558,7 +2629,7 @@ export function Admin() {
 
       {/* Generic Delete Modal */}
       {showGenericDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-800">
@@ -2602,7 +2673,7 @@ export function Admin() {
 
       {/* Document Edit Modal */}
       {showDocumentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-800">
@@ -2696,7 +2767,7 @@ export function Admin() {
 
       {/* Kolle Edit Modal */}
       {showKolleModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-800">
@@ -2760,7 +2831,7 @@ export function Admin() {
 
       {/* Chapter Modal */}
       {showChapterModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-800">
@@ -2826,7 +2897,7 @@ export function Admin() {
 
       {/* Annual Program Edit Modal */}
       {showAnnualProgramModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-800">
@@ -2890,110 +2961,6 @@ export function Admin() {
         </div>
       )}
 
-      {/* Class Modal */}
-      {showClassModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-800">
-                {classModalMode === 'add' ? 'Ajouter une classe' : 'Modifier la classe'}
-              </h3>
-              <button 
-                onClick={() => setShowClassModal(false)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleClassModalSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Identifiant de la classe
-                </label>
-                <input 
-                  type="text" 
-                  name="id" 
-                  defaultValue={selectedClassData?.id || ''}
-                  placeholder="Ex: tsi1, mpsi, pc..."
-                  required
-                  disabled={classModalMode === 'edit'}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-200 disabled:bg-gray-100"
-                />
-                {classModalMode === 'edit' && (
-                  <p className="text-xs text-gray-500 mt-1">L'identifiant ne peut pas être modifié</p>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Nom de la classe
-                </label>
-                <input 
-                  type="text" 
-                  name="name" 
-                  defaultValue={selectedClassData?.name || ''}
-                  placeholder="Ex: TSI 1ère année"
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-200"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea 
-                  name="description" 
-                  defaultValue={selectedClassData?.description || ''}
-                  placeholder="Ex: Technologie et Sciences Industrielles - 1ère année"
-                  required
-                  rows="3"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-200"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Couleur du thème
-                </label>
-                <select 
-                  name="color" 
-                  defaultValue={selectedClassData?.color || 'blue'}
-                  required
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-200"
-                >
-                  <option value="blue">Bleu</option>
-                  <option value="green">Vert</option>
-                  <option value="purple">Violet</option>
-                  <option value="red">Rouge</option>
-                  <option value="yellow">Jaune</option>
-                  <option value="indigo">Indigo</option>
-                  <option value="pink">Rose</option>
-                  <option value="gray">Gris</option>
-                </select>
-              </div>
-              
-              <div className="flex items-center gap-4 pt-4">
-                <button 
-                  type="submit" 
-                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  {classModalMode === 'add' ? <Plus size={18} /> : <Edit3 size={18} />}
-                  {classModalMode === 'add' ? 'Ajouter' : 'Modifier'}
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setShowClassModal(false)}
-                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold transition-all duration-300"
-                >
-                  Annuler
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 
@@ -3011,7 +2978,7 @@ export function Admin() {
       
       {/* Modal de confirmation de suppression de classe */}
       {showDeleteClassModal && classToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4 shadow-2xl">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
@@ -3059,7 +3026,7 @@ export function Admin() {
 
       {/* Modal d'édition de classe */}
       {showEditClassModal && classToEdit && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
             <div className="text-center mb-6">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
@@ -3160,7 +3127,7 @@ export function Admin() {
 
       {/* Modal de modification des paramètres généraux */}
       {showGeneralSettingsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
             <div className="text-center mb-6">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 mb-4">
@@ -3226,7 +3193,7 @@ export function Admin() {
 
       {/* User Modal */}
       {showUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-gray-800">
@@ -3305,6 +3272,162 @@ export function Admin() {
                 <button 
                   type="button" 
                   onClick={() => setShowUserModal(false)}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold transition-all duration-300"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation de suppression générique */}
+      {showGenericDeleteModal && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-full max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800">
+                Confirmer la suppression
+              </h3>
+              <button 
+                onClick={() => setShowGenericDeleteModal(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <Trash2 className="h-6 w-6 text-red-600" />
+              </div>
+              <p className="text-gray-600 mb-6">
+                Êtes-vous sûr de vouloir supprimer {itemToDelete?.type} "{itemToDelete?.username || itemToDelete?.name || 'sans titre'}" ?
+                <br />
+                <span className="text-sm text-red-600 font-medium">Cette action est irréversible.</span>
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setShowGenericDeleteModal(false)}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold transition-all duration-300"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={async () => {
+                  if (deleteAction) {
+                    await deleteAction()
+                  }
+                  setShowGenericDeleteModal(false)
+                }}
+                className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+              >
+                <Trash2 size={18} />
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de création/édition de classe */}
+      {showClassModal && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 w-full max-w-lg mx-4 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800">
+                {classModalMode === 'add' ? 'Ajouter une classe' : 'Modifier la classe'}
+              </h3>
+              <button 
+                onClick={() => setShowClassModal(false)}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleClassModalSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Identifiant de la classe
+                </label>
+                <input 
+                  type="text" 
+                  name="id" 
+                  defaultValue={selectedClassData?.id || ''}
+                  placeholder="Ex: tsi1, mpsi, pc..."
+                  required
+                  disabled={classModalMode === 'edit'}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-200 disabled:bg-gray-100"
+                />
+                {classModalMode === 'edit' && (
+                  <p className="text-xs text-gray-500 mt-1">L'identifiant ne peut pas être modifié</p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nom de la classe
+                </label>
+                <input 
+                  type="text" 
+                  name="name" 
+                  defaultValue={selectedClassData?.name || ''}
+                  placeholder="Ex: TSI 1ère année"
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-200"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea 
+                  name="description" 
+                  defaultValue={selectedClassData?.description || ''}
+                  placeholder="Ex: Technologie et Sciences Industrielles - 1ère année"
+                  required
+                  rows="3"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-200"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Couleur du thème
+                </label>
+                <select 
+                  name="color" 
+                  defaultValue={selectedClassData?.color || 'blue'}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all duration-200"
+                >
+                  <option value="blue">Bleu</option>
+                  <option value="green">Vert</option>
+                  <option value="purple">Violet</option>
+                  <option value="red">Rouge</option>
+                  <option value="yellow">Jaune</option>
+                  <option value="indigo">Indigo</option>
+                  <option value="pink">Rose</option>
+                  <option value="gray">Gris</option>
+                </select>
+              </div>
+              
+              <div className="flex items-center gap-4 pt-4">
+                <button 
+                  type="submit" 
+                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                >
+                  {classModalMode === 'add' ? <Plus size={18} /> : <Edit3 size={18} />}
+                  {classModalMode === 'add' ? 'Ajouter' : 'Modifier'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setShowClassModal(false)}
                   className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold transition-all duration-300"
                 >
                   Annuler

@@ -12,9 +12,9 @@
     "role": "admin"
   },
   {
-    "id": "dlmskf",
-    "username": "dlmskf",
-    "password": "$2b$10$a0gE6w5i/WZa9XICJ9439u8WyTuh8YzgNz153JrUL4./UuqMDVZw2",
-    "role": "user"
+    "id": "Berthier",
+    "username": "Berthier",
+    "password": "$2b$10$.VtwzkuqwZe8QfkCSbGWhextXQVEQmA4dkC/P8zPYZGI.rMFUac3O",
+    "role": "professeur"
   }
 ]

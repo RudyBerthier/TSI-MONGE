@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useState } from 'react'
-import { Compass, Menu, X, ChevronDown, Settings } from 'lucide-react'
+import { Compass, Menu, X, ChevronDown, Settings, Shield } from 'lucide-react'
 import { useClass } from '../contexts/ClassContext'
 
 export function Header() {
@@ -60,7 +60,7 @@ export function Header() {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center">
-            <ul className="flex list-none gap-6">
+            <ul className="flex list-none gap-6 items-center">
               <li>
                 <Link 
                   to="/" 
@@ -100,6 +100,17 @@ export function Header() {
                 >
                   Lycée
                 </a>
+              </li>
+              <li>
+                <Link 
+                  to="/login" 
+                  className={`text-gray-600 font-medium px-4 py-2 rounded-lg transition-all hover:text-blue-600 hover:bg-blue-50 flex items-center gap-2 ${
+                    isActive('/login') ? 'text-blue-600 bg-blue-50' : ''
+                  }`}
+                >
+                  <Shield size={16} />
+                  Administration
+                </Link>
               </li>
             </ul>
           </nav>
@@ -161,6 +172,18 @@ export function Header() {
                   >
                     Lycée
                   </a>
+                </li>
+                <li>
+                  <Link 
+                    to="/login" 
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block text-gray-600 font-medium px-4 py-3 rounded-lg transition-all hover:text-blue-600 hover:bg-blue-50 flex items-center gap-2 ${
+                      isActive('/login') ? 'text-blue-600 bg-blue-50' : ''
+                    }`}
+                  >
+                    <Shield size={16} />
+                    Administration
+                  </Link>
                 </li>
               </ul>
             </nav>

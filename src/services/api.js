@@ -167,10 +167,27 @@ export const kollesAPI = {
     return response.json()
   },
 
-  async getActiveAnnualProgram() {
-    const response = await fetch(`${API_BASE}/kolles/annual-programs/active`)
-    if (!response.ok) throw new Error('Erreur lors du chargement du programme annuel actif')
-    return response.json()
+  async getActiveAnnualProgram(classId = null) {
+    const url = classId 
+      ? `${API_BASE}/kolles/annual-programs/active?class=${classId}`
+      : `${API_BASE}/kolles/annual-programs/active`
+    
+    console.log('🔍 [DEBUG API] Fetching active annual programs from:', url)
+    const response = await fetch(url)
+    if (!response.ok) {
+      console.log('❌ [DEBUG API] Failed to fetch active annual programs:', response.status, response.statusText)
+      throw new Error('Erreur lors du chargement des programmes annuels actifs')
+    }
+    const data = await response.json()
+    console.log('📋 [DEBUG API] Active annual programs response:', data)
+    
+    // Si une classe est spécifiée, retourner le premier programme trouvé (ou null)
+    // Si pas de classe, retourner tous les programmes actifs
+    if (classId) {
+      return data && data.length > 0 ? data[0] : null
+    } else {
+      return data
+    }
   }
 }
 

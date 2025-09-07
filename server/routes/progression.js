@@ -112,9 +112,38 @@ router.put('/:classId/chapters/:chapterId/status', async (req, res) => {
     }
     
     const progressions = await readProgressions();
+    const allChapters = await readChapters();
     
+    // Initialiser la progression si elle n'existe pas
     if (!progressions[classId]) {
-      return res.status(404).json({ error: 'Progression non trouvée pour cette classe' });
+      progressions[classId] = {
+        classId,
+        chapters: allChapters.map((chapter, index) => ({
+          id: chapter.id,
+          name: chapter.name,
+          description: chapter.description,
+          status: 'a-venir',
+          order: index + 1
+        })),
+        updated_at: new Date().toISOString()
+      };
+    }
+    
+    // Synchroniser avec les chapitres de l'API si nécessaire
+    const existingChapterIds = progressions[classId].chapters.map(ch => ch.id);
+    const missingChapters = allChapters.filter(ch => !existingChapterIds.includes(ch.id));
+    
+    if (missingChapters.length > 0) {
+      // Ajouter les chapitres manquants
+      missingChapters.forEach((chapter, index) => {
+        progressions[classId].chapters.push({
+          id: chapter.id,
+          name: chapter.name,
+          description: chapter.description,
+          status: 'a-venir',
+          order: progressions[classId].chapters.length + index + 1
+        });
+      });
     }
     
     // Mettre à jour le statut du chapitre
@@ -156,9 +185,21 @@ router.put('/:classId/order', async (req, res) => {
     }
     
     const progressions = await readProgressions();
+    const allChapters = await readChapters();
     
+    // Initialiser la progression si elle n'existe pas
     if (!progressions[classId]) {
-      return res.status(404).json({ error: 'Progression non trouvée pour cette classe' });
+      progressions[classId] = {
+        classId,
+        chapters: allChapters.map((chapter, index) => ({
+          id: chapter.id,
+          name: chapter.name,
+          description: chapter.description,
+          status: 'a-venir',
+          order: index + 1
+        })),
+        updated_at: new Date().toISOString()
+      };
     }
     
     // Mettre à jour l'ordre des chapitres

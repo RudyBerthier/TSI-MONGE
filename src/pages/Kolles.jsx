@@ -14,38 +14,63 @@ export function Kolles() {
   const [error, setError] = useState(null)
 
   const weekDates = {
-    1: '16 au 20 septembre', 2: '23 au 27 septembre', 3: '30 septembre au 4 octobre',
-    4: '7 au 11 octobre', 5: '14 au 18 octobre', 6: '4 au 8 novembre',
-    7: '12 au 16 novembre', 8: '18 au 22 novembre', 9: '25 au 29 novembre',
-    10: '2 au 6 décembre', 11: '9 au 13 décembre', 12: '16 au 20 décembre',
-    13: '6 au 10 janvier', 14: '13 au 17 janvier', 15: '27 au 31 janvier',
-    16: '3 au 7 février', 17: '10 au 14 février', 18: '17 au 21 février',
-    19: '10 au 14 mars', 20: '17 au 21 mars', 21: '24 au 28 mars',
-    22: '31 mars au 4 avril', 23: '7 au 11 avril', 24: '14 au 18 avril',
-    25: '5 au 9 mai', 26: '12 au 16 mai', 27: '19 au 23 mai', 28: '2 au 6 juin'
+    1: '15 au 19 septembre', 2: '22 au 26 septembre', 3: '29 septembre au 3 octobre',
+    4: '6 au 10 octobre', 5: '13 au 17 octobre', 6: '20 au 24 octobre',
+    7: '27 au 31 octobre', 8: '3 au 7 novembre', 9: '10 au 14 novembre',
+    10: '17 au 21 novembre', 11: '24 au 28 novembre', 12: '1 au 5 décembre',
+    13: '8 au 12 décembre', 14: '15 au 19 décembre', 15: '5 au 9 janvier',
+    16: '12 au 16 janvier', 17: '19 au 23 janvier', 18: '26 au 30 janvier',
+    19: '2 au 6 février', 20: '9 au 13 février', 21: '16 au 20 février',
+    22: '23 au 27 février', 23: '2 au 6 mars', 24: '9 au 13 mars',
+    25: '16 au 20 mars', 26: '23 au 27 mars', 27: '30 mars au 3 avril',
+    28: '6 au 10 avril', 29: '13 au 17 avril', 30: '20 au 24 avril',
+    31: '27 avril au 1 mai', 32: '4 au 8 mai', 33: '11 au 15 mai',
+    34: '18 au 22 mai', 35: '25 au 29 mai', 36: '1 au 5 juin'
   }
 
   const trimesters = [
-    { name: 'Premier trimestre', badge: 'bg-blue-100 text-blue-800', period: 'Sept - Déc', weeks: [1,2,3,4,5,6,7,8,9,10,11,12] },
-    { name: 'Deuxième trimestre', badge: 'bg-yellow-100 text-yellow-800', period: 'Jan - Mar', weeks: [13,14,15,16,17,18,19,20,21] },
-    { name: 'Troisième trimestre', badge: 'bg-green-100 text-green-800', period: 'Avr - Juin', weeks: [22,23,24,25,26,27,28] }
+    { name: 'Premier trimestre', badge: 'bg-blue-100 text-blue-800', period: 'Sept - Déc', weeks: [1,2,3,4,5,6,7,8,9,10,11,12,13,14] },
+    { name: 'Deuxième trimestre', badge: 'bg-yellow-100 text-yellow-800', period: 'Jan - Mar', weeks: [15,16,17,18,19,20,21,22,23,24,25,26] },
+    { name: 'Troisième trimestre', badge: 'bg-green-100 text-green-800', period: 'Avr - Juin', weeks: [27,28,29,30,31,32,33,34,35,36] }
   ]
 
   useEffect(() => {
     loadData()
   }, [])
 
+  // Recharger les données quand la classe change
+  useEffect(() => {
+    if (currentClass) {
+      loadData()
+    }
+  }, [currentClass])
+
   const loadData = async () => {
     try {
       setLoading(true)
+      console.log('🔍 [DEBUG KOLLES] Starting loadData with current class:', currentClass)
+      console.log('🔍 [DEBUG KOLLES] Current class ID:', currentClass?.id)
+      
       const [kollesData, activePlanningData] = await Promise.all([
         kollesAPI.getKolles(),
-        kollesAPI.getActiveAnnualProgram()
+        kollesAPI.getActiveAnnualProgram(currentClass?.id)
       ])
       
+      console.log('🔍 [DEBUG KOLLES] Current class after API call:', currentClass)
+      console.log('🔍 [DEBUG KOLLES] API response for active annual program:', activePlanningData)
+      
       setKolles(kollesData)
-      setPlanningDocument(activePlanningData)
+      
+      // L'API retourne déjà le programme filtré par classe (ou null si pas trouvé)
+      if (activePlanningData) {
+        console.log('✅ [DEBUG KOLLES] Planning found for current class:', currentClass?.id)
+        setPlanningDocument(activePlanningData)
+      } else {
+        console.log('❌ [DEBUG KOLLES] No planning found for current class:', currentClass?.id)
+        setPlanningDocument(null)
+      }
     } catch (err) {
+      console.error('🚨 [DEBUG KOLLES] Error loading data:', err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -103,7 +128,7 @@ export function Kolles() {
             ) : (
               <div className="inline-flex items-center gap-2 bg-gray-200 text-gray-500 px-6 py-3 rounded-lg font-medium cursor-not-allowed">
                 <Calendar size={20} />
-                Planning annuel (indisponible)
+                Planning annuel (pas encore disponible pour {currentClass?.name || 'cette classe'})
               </div>
             )}
             <a href="https://www.icolle.fr/lyceemonge/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-blue-700 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 border border-blue-400 transition-colors">
@@ -148,7 +173,11 @@ export function Kolles() {
                       </SecurePDFLink>
                     </div>
                   ) : (
-                    <div className="text-gray-500">Aucun planning disponible pour le moment</div>
+                    <div className="text-gray-500 text-center p-4">
+                      <Calendar size={48} className="mx-auto mb-2 text-gray-400" />
+                      <p className="font-medium">Pas encore de planning annuel disponible</p>
+                      <p className="text-sm">pour la classe {currentClass?.name || 'sélectionnée'}</p>
+                    </div>
                   )}
                 </div>
               </div>

@@ -452,22 +452,52 @@ router.patch('/annual-programs/:id/toggle', async (req, res) => {
   }
 });
 
-// GET /api/kolles/annual-programs/active - Récupérer le programme annuel actif
+// GET /api/kolles/annual-programs/active - Récupérer les programmes annuels actifs (optionnel: ?class=tsi1)
 router.get('/annual-programs/active', async (req, res) => {
   try {
-    const programs = await readAnnualPrograms();
-    const activeProgram = programs.find(p => p.isActive);
+    console.log('🚀 [DEBUG SERVER] ROUTE CALLED: /annual-programs/active');
+    console.log('🚀 [DEBUG SERVER] QUERY PARAMS:', req.query);
     
-    if (!activeProgram) {
-      return res.json(null);
+    const programs = await readAnnualPrograms();
+    console.log('🚀 [DEBUG SERVER] RAW PROGRAMS FROM FILE:', JSON.stringify(programs, null, 2));
+    
+    const requestedClass = req.query.class;
+    
+    console.log('🚀 [DEBUG SERVER] REQUESTED CLASS:', requestedClass, 'TYPE:', typeof requestedClass);
+    
+    console.log('🔍 [DEBUG SERVER] All annual programs:', programs.map(p => ({id: p.id, class: p.class, isActive: p.isActive, title: p.title})));
+    console.log('🔍 [DEBUG SERVER] Requested class:', requestedClass);
+    
+    let activePrograms;
+    if (requestedClass) {
+      // Chercher les programmes actifs pour une classe spécifique
+      console.log('🔍 [DEBUG SERVER] Looking for active programs with class:', requestedClass);
+      
+      activePrograms = programs.filter(p => {
+        console.log(`🔍 [DEBUG SERVER] Checking program ${p.id}: isActive=${p.isActive}, class=${p.class}, requestedClass=${requestedClass}, match=${p.isActive && p.class === requestedClass}`);
+        return p.isActive && p.class === requestedClass;
+      });
+      
+      console.log('🔍 [DEBUG SERVER] Matching programs:', activePrograms.map(p => ({id: p.id, class: p.class, title: p.title})));
+    } else {
+      // Chercher tous les programmes actifs (nouveau comportement)
+      console.log('🔍 [DEBUG SERVER] No class specified, returning ALL active programs');
+      activePrograms = programs.filter(p => p.isActive);
     }
     
-    res.json({
-      ...activeProgram,
-      file_url: `/uploads/annual_programs/${activeProgram.filename}`
-    });
+    console.log('📋 [DEBUG SERVER] Active programs found:', activePrograms.map(p => ({id: p.id, class: p.class, title: p.title})));
+    
+    // Ajouter file_url à chaque programme
+    const response = activePrograms.map(program => ({
+      ...program,
+      file_url: `/uploads/annual_programs/${program.filename}`
+    }));
+    
+    console.log('📤 [DEBUG SERVER] Sending active programs:', response.map(p => ({id: p.id, class: p.class, title: p.title})));
+    
+    res.json(response);
   } catch (error) {
-    console.error('Erreur récupération programme actif:', error);
+    console.error('Erreur récupération programmes actifs:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });

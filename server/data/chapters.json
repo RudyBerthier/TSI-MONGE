@@ -1,27 +1,56 @@
 [
   {
-    "id": "chapitre-1",
-    "title": "Nombres complexes",
-    "description": "Introduction aux nombres complexes et applications"
+    "id": "fonctions",
+    "name": "Fonctions",
+    "description": " ",
+    "icon": "BookOpen"
   },
   {
-    "id": "chapitre-2", 
-    "title": "Suites numériques",
-    "description": "Suites convergentes et divergentes"
+    "id": "suites",
+    "name": "Suites",
+    "description": " ",
+    "icon": "BookOpen"
   },
   {
-    "id": "chapitre-3",
-    "title": "Fonctions d'une variable réelle",
-    "description": "Limite, continuité et dérivabilité"
+    "id": "ensembles-et-raisonnements",
+    "name": "Ensembles et raisonnements",
+    "description": " ",
+    "icon": "BookOpen"
   },
   {
-    "id": "chapitre-4",
-    "title": "Intégration",
-    "description": "Intégrale de Riemann et applications"
+    "id": "probabilites",
+    "name": "Probabilités",
+    "description": " ",
+    "icon": "BookOpen"
   },
   {
-    "id": "chapitre-5",
-    "title": "Algèbre linéaire",
-    "description": "Espaces vectoriels et applications linéaires"
+    "id": "calculs",
+    "name": "Calculs",
+    "description": " ",
+    "icon": "BookOpen"
+  },
+  {
+    "id": "nombres-complexes",
+    "name": "Nombres complexes",
+    "description": " ",
+    "icon": "BookOpen"
+  },
+  {
+    "id": "geometrie",
+    "name": "Géométrie",
+    "description": " ",
+    "icon": "BookOpen"
+  },
+  {
+    "id": "algebre",
+    "name": "Algèbre",
+    "description": " ",
+    "icon": "BookOpen"
+  },
+  {
+    "id": "ss",
+    "name": "ss",
+    "description": "ss",
+    "icon": "BookOpen"
   }
 ]

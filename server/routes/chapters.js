@@ -50,9 +50,6 @@ router.get('/', async (req, res) => {
 // POST /api/chapters - Ajouter un nouveau chapitre (admin uniquement)
 router.post('/', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Accès refusé - Admin requis' });
-    }
 
     const { name, description, icon = 'BookOpen' } = req.body;
     
@@ -108,9 +105,6 @@ router.post('/', authenticateToken, async (req, res) => {
 // PUT /api/chapters/:id - Modifier un chapitre (admin uniquement)
 router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Accès refusé - Admin requis' });
-    }
 
     const chapterId = req.params.id;
     const { name, description, icon } = req.body;
@@ -153,9 +147,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
 // DELETE /api/chapters/:id - Supprimer un chapitre (admin uniquement)
 router.delete('/:id', authenticateToken, async (req, res) => {
   try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Accès refusé - Admin requis' });
-    }
 
     const chapterId = req.params.id;
     const chapters = await readChapters();

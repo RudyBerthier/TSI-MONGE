@@ -1,18 +1,20 @@
 import { useState, useEffect } from 'react'
-import { documentsAPI, progressionAPI } from '../services/api'
+import { documentsAPI, progressionAPI, chaptersAPI } from '../services/api'
 import { useClass } from '../contexts/ClassContext'
 import { Download, Compass, TrendingUp, Hash, Brain, Dice6, Calculator, Zap, Type, FileText, AlertTriangle, BookOpen, SortAsc, BarChart3, Target, Home, Calendar, ChevronDown, ChevronUp } from 'lucide-react'
 import { SecurePDFLink } from '../utils/pdfUtils.jsx'
 
-const categories = {
-  geometrie: { name: 'Géométrie', icon: <Compass size={24} />, desc: '4 chapitres • Vecteurs, repères, droites' },
-  calculs: { name: 'Calculs', icon: <Calculator size={24} />, desc: 'Techniques de calcul' },
-  fonctions: { name: 'Fonctions', icon: <TrendingUp size={24} />, desc: 'Étude complète des fonctions' },
-  suites: { name: 'Suites', icon: <Hash size={24} />, desc: 'Suites numériques et récurrences' },
-  ensembles: { name: 'Ensembles et raisonnements', icon: <Brain size={24} />, desc: 'Logique et théorie des ensembles' },
-  probabilites: { name: 'Probabilités', icon: <Dice6 size={24} />, desc: 'Calculs de probabilités' },
-  complexes: { name: 'Nombres complexes', icon: <Zap size={24} />, desc: 'Algèbre des nombres complexes' },
-  algebre: { name: 'Algèbre', icon: <Type size={24} />, desc: 'Systèmes, matrices' }
+// Fonction pour créer les catégories dynamiquement depuis les chapitres de l'API
+const createCategoriesFromChapters = (chapters) => {
+  const categories = {}
+  chapters.forEach(chapter => {
+    categories[chapter.id] = {
+      name: chapter.name,
+      icon: <BookOpen size={24} />,
+      desc: chapter.description || 'Chapitre ajouté depuis l\'administration'
+    }
+  })
+  return categories
 }
 
 const typeLabels = {
@@ -36,34 +38,63 @@ export function Documents() {
   const [showAllEvals, setShowAllEvals] = useState(false)
   const [evalSortBy, setEvalSortBy] = useState('chapitre')
   const [expandedCategories, setExpandedCategories] = useState('')
-  const [progressionStatus, setProgressionStatus] = useState({
-    // Valeurs par défaut pendant le chargement
-    'geometrie-1': 'en-cours',
-    'calculs-1': 'en-cours', 
-    'fonctions-1': 'en-cours',
-    'suites-1': 'a-venir',
-    'algebre-1': 'a-venir',
-    'geometrie-2': 'a-venir',
-    'calculs-2': 'a-venir',
-    'fonctions-2': 'a-venir'
-  })
+  const [categories, setCategories] = useState({})
+  const [progressionChapters, setProgressionChapters] = useState([])
+  const [progressionStatus, setProgressionStatus] = useState({})
   const [progressionLoading, setProgressionLoading] = useState(true)
 
-  // Fonction pour charger la progression depuis l'API
+  // Fonction pour charger la progression et les chapitres depuis l'API
   const loadProgression = async () => {
     if (!currentClass?.id) return
     
     try {
-      console.log('📚 [DEBUG DOCUMENTS] Loading progression for class:', currentClass.id)
+      console.log('📚 [DEBUG DOCUMENTS] Loading chapters and progression for class:', currentClass.id)
       setProgressionLoading(true)
+      
+      // Charger les chapitres depuis l'API
+      const chapters = await chaptersAPI.getChapters()
+      const dynamicCategories = createCategoriesFromChapters(chapters)
+      setCategories(dynamicCategories)
+      
+      // Charger la progression
       const progression = await progressionAPI.getProgression(currentClass.id)
       
       if (progression && progression.chapters) {
+        // Synchroniser les chapitres avec l'API chapters
+        const synchronizedChapters = chapters.map(chapter => {
+          const savedChapter = progression.chapters.find(p => p.id === chapter.id)
+          return {
+            id: chapter.id,
+            name: chapter.name,
+            description: chapter.description,
+            status: savedChapter?.status || 'a-venir',
+            order: savedChapter?.order || chapters.indexOf(chapter) + 1
+          }
+        }).sort((a, b) => a.order - b.order)
+        
+        setProgressionChapters(synchronizedChapters)
+        
         const statusMap = {}
-        progression.chapters.forEach(chapter => {
+        synchronizedChapters.forEach(chapter => {
           statusMap[chapter.id] = chapter.status
         })
         console.log('📚 [DEBUG DOCUMENTS] Progression loaded:', statusMap)
+        setProgressionStatus(statusMap)
+      } else {
+        // Pas de progression sauvegardée, utiliser les chapitres par défaut
+        const defaultChapters = chapters.map((chapter, index) => ({
+          id: chapter.id,
+          name: chapter.name,
+          description: chapter.description,
+          status: 'a-venir',
+          order: index + 1
+        }))
+        setProgressionChapters(defaultChapters)
+        
+        const statusMap = {}
+        defaultChapters.forEach(chapter => {
+          statusMap[chapter.id] = 'a-venir'
+        })
         setProgressionStatus(statusMap)
       }
     } catch (error) {
@@ -76,6 +107,7 @@ export function Documents() {
 
   useEffect(() => {
     loadDocuments()
+    loadProgression() // Charger les chapitres au démarrage
   }, [])
 
   // Charger la progression quand la classe change
@@ -308,31 +340,26 @@ export function Documents() {
               </div>
             ) : (
             <div className="space-y-4">
-              {[
-                { id: 'geometrie-1', title: 'I. Géométrie 1 :', subtitle: 'Vecteurs, bases et repères' },
-                { id: 'calculs-1', title: 'II. Calculs 1 :', subtitle: 'Trigonométrie' },
-                { id: 'fonctions-1', title: 'III. Fonctions 1 :', subtitle: 'Généralités et structure' },
-                { id: 'suites-1', title: 'IV. Suites 1 :', subtitle: 'Définitions et propriétés' },
-                { id: 'algebre-1', title: 'V. Algèbre 1 :', subtitle: 'Polynômes et fractions rationnelles' },
-                { id: 'geometrie-2', title: 'VI. Géométrie 2 :', subtitle: 'Géométrie dans l espace' },
-                { id: 'calculs-2', title: 'VII. Calculs 2 :', subtitle: 'Dérivation et intégration' },
-                { id: 'fonctions-2', title: 'VIII. Fonctions 2 :', subtitle: 'Fonctions usuelles' }
-              ].sort((a, b) => {
-                const statusA = progressionStatus[a.id] || 'a-venir'
-                const statusB = progressionStatus[b.id] || 'a-venir'
+              {progressionChapters.sort((a, b) => {
                 const statusOrder = { 'en-cours': 0, 'termine': 1, 'a-venir': 2 }
-                return statusOrder[statusA] - statusOrder[statusB]
+                const orderA = statusOrder[a.status] !== undefined ? statusOrder[a.status] : 2
+                const orderB = statusOrder[b.status] !== undefined ? statusOrder[b.status] : 2
+                return orderA - orderB || a.order - b.order
               }).map((chapter) => {
-                const status = progressionStatus[chapter.id] || 'a-venir'
                 const statusConfig = {
                   'termine': { bg: 'bg-green-100', text: 'text-green-800', label: 'Terminé' },
                   'en-cours': { bg: 'bg-yellow-100', text: 'text-yellow-800', label: 'En cours' },
                   'a-venir': { bg: 'bg-blue-100', text: 'text-blue-800', label: 'À venir' }
-                }[status]
+                }[chapter.status]
                 
                 return (
                   <div key={chapter.id} className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md border border-gray-100">
-                    <div><strong>{chapter.title}</strong> {chapter.subtitle}</div>
+                    <div>
+                      <strong>Chapitre {chapter.order} - {chapter.name}</strong>
+                      {chapter.description && chapter.description.trim() !== '' && (
+                        <span className="text-gray-600 ml-1">: {chapter.description}</span>
+                      )}
+                    </div>
                     <span className={`px-3 py-1 ${statusConfig.bg} ${statusConfig.text} text-sm font-medium rounded-full`}>
                       {statusConfig.label}
                     </span>

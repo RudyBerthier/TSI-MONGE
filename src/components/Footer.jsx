@@ -8,7 +8,7 @@ export function Footer() {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div>
-            <p className="text-gray-300">&copy; 2025 {currentClass?.name || 'Classe'} Mathématiques - Lycée Monge Chambéry</p>
+            <p className="text-gray-300">&copy; RUDY BERTHIER - 2025 {currentClass?.name || 'Classe'} Mathématiques - Lycée Monge Chambéry</p>
           </div>
           <ul className="flex space-x-6 mt-4 md:mt-0">
             <li><Link to="/" className="text-gray-300 hover:text-white transition-colors">Accueil</Link></li>
