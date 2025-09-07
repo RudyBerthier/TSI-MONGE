@@ -72,6 +72,7 @@ export function Admin() {
   const [kolles, setKolles] = useState([])
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
   const [users, setUsers] = useState([])
   const [showUserModal, setShowUserModal] = useState(false)
@@ -188,10 +189,14 @@ export function Admin() {
     // Charger les données si on a une classe et qu'on est authentifié
     if (selectedAdminClass && isAuthenticated && !loading) {
       console.log('🔧 [DEBUG USEEFFECT] Chargement des données pour la classe:', selectedAdminClass.name)
+      setInitialLoadComplete(false) // Reset pendant le chargement
       loadDocuments()
       loadKolles()
       loadChapters()
-      loadProgression()
+      loadProgression().then(() => {
+        console.log('🔧 [DEBUG] Initial load complete')
+        setInitialLoadComplete(true)
+      })
       loadAnnualPrograms()
     }
   }, [selectedAdminClass, isAuthenticated, loading]) // Ajouté loading pour éviter les chargements prématurés
@@ -633,6 +638,7 @@ export function Admin() {
       await kollesAPI.uploadAnnualProgram(formData, selectedAdminClass?.id)
       showSuccess('Programme annuel ajouté avec succès !')
       e.target.reset()
+      // Recharger seulement les programmes annuels, pas toute la progression
       loadAnnualPrograms()
     } catch (error) {
       console.error('Error uploading annual program:', error)
@@ -695,11 +701,14 @@ export function Admin() {
       
       // Charger la progression sauvegardée (statut et ordre uniquement)
       const progression = await progressionAPI.getProgression(selectedAdminClass.id)
+      console.log('🔍 [DEBUG PROGRESSION] Loaded progression from API:', progression)
       
       // Synchroniser : utiliser les chapitres de l'API comme base
       const synchronizedChapters = apiChapters.map((chapter, index) => {
         // Chercher si ce chapitre existe dans la progression sauvegardée
         const savedChapter = progression?.chapters?.find(p => p.id === chapter.id)
+        
+        console.log(`🔍 [DEBUG PROGRESSION] Chapter ${chapter.id}: savedChapter=`, savedChapter, `status=${savedChapter?.status || 'a-venir'}`)
         
         return {
           id: chapter.id,
@@ -812,7 +821,12 @@ export function Admin() {
 
   const updateProgressionFromDocuments = async () => {
     // Logique automatique : si un chapitre a des documents, il passe en "en-cours"
-    if (!documents || Object.keys(documents).length === 0 || !selectedAdminClass) return
+    if (!documents || Object.keys(documents).length === 0 || !selectedAdminClass) {
+      console.log('🔄 [DEBUG] updateProgressionFromDocuments skipped: documents=', !!documents, 'documentsCount=', documents ? Object.keys(documents).length : 0, 'selectedAdminClass=', !!selectedAdminClass)
+      return
+    }
+    
+    console.log('🔄 [DEBUG] updateProgressionFromDocuments running with', progressionChapters.length, 'chapters')
 
     const updatedChapters = progressionChapters.map(chapter => {
       const categoryKey = chapter.id.split('-')[0] // Ex: 'geometrie-1' -> 'geometrie'
@@ -829,16 +843,22 @@ export function Admin() {
     try {
       await progressionAPI.updateProgression(selectedAdminClass.id, { chapters: updatedChapters })
       localStorage.setItem('progressionChapters', JSON.stringify(updatedChapters))
+      showSuccess('Progression mise à jour automatiquement depuis les documents')
     } catch (error) {
       console.error('Error updating progression from documents:', error)
+      showError('Erreur lors de la mise à jour de la progression')
       // Continuer même en cas d'erreur API, pour permettre le fonctionnement hors ligne
     }
   }
 
   // Mise à jour automatique quand les documents changent
   useEffect(() => {
-    updateProgressionFromDocuments()
-  }, [documents])
+    // Ne pas mettre à jour si le chargement initial n'est pas terminé
+    if (initialLoadComplete && progressionChapters.length > 0 && documents && Object.keys(documents).length > 0) {
+      console.log('🔄 [DEBUG] Mise à jour automatique de la progression depuis les documents')
+      updateProgressionFromDocuments()
+    }
+  }, [documents, initialLoadComplete])
 
   // Fonctions de gestion des classes
   const handleEditClass = async (formData) => {

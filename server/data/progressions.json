@@ -57,16 +57,9 @@
         "description": " ",
         "status": "a-venir",
         "order": 8
-      },
-      {
-        "id": "ss",
-        "name": "ss",
-        "description": "ss",
-        "status": "a-venir",
-        "order": 9
       }
     ],
-    "updated_at": "2025-09-07T14:23:59.581Z"
+    "updated_at": "2025-09-07T17:57:29.827Z"
   },
   "tsi2": {
     "classId": "tsi2",
