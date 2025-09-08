@@ -38,7 +38,6 @@ const authenticatedFetch = async (url, options = {}) => {
 export const documentsAPI = {
   async getDocuments(classFilter = null) {
     const currentClass = classFilter || getCurrentClass()
-    console.log('📄 [DEBUG API] getDocuments called with classFilter:', classFilter, 'using class:', currentClass)
     const response = await fetch(`${API_BASE}/documents?class=${currentClass}`)
     if (!response.ok) throw new Error('Erreur lors du chargement des documents')
     return response.json()
@@ -82,7 +81,6 @@ export const documentsAPI = {
 export const kollesAPI = {
   async getKolles(classFilter = null) {
     const currentClass = classFilter || getCurrentClass()
-    console.log('📚 [DEBUG API] getKolles called with classFilter:', classFilter, 'using class:', currentClass)
     const response = await fetch(`${API_BASE}/kolles?class=${currentClass}`)
     if (!response.ok) throw new Error('Erreur lors du chargement des programmes de khôlles')
     return response.json()
@@ -124,7 +122,6 @@ export const kollesAPI = {
 
   async getAnnualPrograms(classFilter = null) {
     const currentClass = classFilter || getCurrentClass()
-    console.log('📅 [DEBUG API] getAnnualPrograms called with classFilter:', classFilter, 'using class:', currentClass)
     const response = await fetch(`${API_BASE}/kolles/annual-programs?class=${currentClass}`)
     if (!response.ok) throw new Error('Erreur lors du chargement des programmes annuels')
     return response.json()
@@ -133,7 +130,6 @@ export const kollesAPI = {
   async uploadAnnualProgram(formData, classOverride = null) {
     const currentClass = classOverride || getCurrentClass()
     formData.append('class', currentClass)
-    console.log('📅 [DEBUG API] uploadAnnualProgram for class:', currentClass)
     const response = await authenticatedFetch(`${API_BASE}/kolles/annual-programs`, {
       method: 'POST',
       body: formData
@@ -172,14 +168,11 @@ export const kollesAPI = {
       ? `${API_BASE}/kolles/annual-programs/active?class=${classId}`
       : `${API_BASE}/kolles/annual-programs/active`
     
-    console.log('🔍 [DEBUG API] Fetching active annual programs from:', url)
     const response = await fetch(url)
     if (!response.ok) {
-      console.log('❌ [DEBUG API] Failed to fetch active annual programs:', response.status, response.statusText)
       throw new Error('Erreur lors du chargement des programmes annuels actifs')
     }
     const data = await response.json()
-    console.log('📋 [DEBUG API] Active annual programs response:', data)
     
     // Si une classe est spécifiée, retourner le premier programme trouvé (ou null)
     // Si pas de classe, retourner tous les programmes actifs
@@ -309,29 +302,17 @@ export const chaptersAPI = {
 
 export const classAPI = {
   async getAvailableClasses() {
-    console.log('🌐 [DEBUG API] Appel GET /api/classes...')
-    console.log('🌐 [DEBUG API] URL complète:', `${API_BASE}/classes`)
     try {
       const response = await fetch(`${API_BASE}/classes`)
-      console.log('🌐 [DEBUG API] Réponse reçue:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        headers: Object.fromEntries(response.headers.entries())
-      })
       
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('❌ [DEBUG API] Réponse d\'erreur:', errorText)
         throw new Error(`Erreur lors du chargement des classes: ${response.status} ${response.statusText}`)
       }
       
       const data = await response.json()
-      console.log('✅ [DEBUG API] Données JSON reçues:', data)
-      console.log('✅ [DEBUG API] Type des données:', typeof data, 'Array:', Array.isArray(data))
       return data
     } catch (error) {
-      console.error('❌ [DEBUG API] Erreur dans getAvailableClasses:', error)
       throw error
     }
   },
@@ -436,14 +417,12 @@ export const progressionAPI = {
 // API pour la gestion des paramètres du site
 export const settingsAPI = {
   async getSettings() {
-    console.log('⚙️ [DEBUG API] getSettings called')
     const response = await authenticatedFetch(`${API_BASE}/settings`)
     if (!response.ok) throw new Error('Erreur lors du chargement des paramètres')
     return response.json()
   },
 
   async updateSettings(settings) {
-    console.log('⚙️ [DEBUG API] updateSettings called with:', settings)
     const response = await authenticatedFetch(`${API_BASE}/settings`, {
       method: 'PUT',
       body: JSON.stringify(settings)

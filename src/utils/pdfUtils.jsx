@@ -4,15 +4,11 @@ import React from 'react'
 // Fonction simple pour Safari iOS qui évite les blobs
 export const openPDFDirectly = (fileUrl, filename = 'document.pdf') => {
   try {
-    console.log('Tentative d\'ouverture directe:', fileUrl)
-    
     // Pour Safari iOS, essayer window.open immédiatement (doit être synchrone)
     const newWindow = window.open(fileUrl, '_blank', 'noopener,noreferrer')
     
     // Vérifier si window.open a réussi
     if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      console.log('window.open bloqué, essai avec lien temporaire')
-      
       // Fallback avec lien temporaire
       const tempLink = document.createElement('a')
       tempLink.href = fileUrl
@@ -28,7 +24,6 @@ export const openPDFDirectly = (fileUrl, filename = 'document.pdf') => {
       }, 10)
     }
   } catch (error) {
-    console.error('Erreur ouverture directe PDF:', error)
     // Dernier recours : essayer de télécharger
     try {
       const downloadLink = document.createElement('a')
@@ -87,7 +82,6 @@ export const downloadSecurePDF = async (fileUrl, filename = 'document.pdf') => {
     }, 100)
     
   } catch (error) {
-    console.error('Erreur lors du téléchargement sécurisé:', error)
     alert('Erreur lors du téléchargement du fichier')
   }
 }
@@ -102,8 +96,6 @@ export const openSecurePDFInNewTab = async (fileUrl, filename = 'document.pdf') 
     
     // Pour Safari iOS, utiliser une approche simple sans blob
     if (isSafari && isIOS) {
-      console.log('Safari iOS détecté, ouverture directe')
-      
       // Essayer d'ouvrir directement l'URL dans Safari iOS
       try {
         const newWindow = window.open(fileUrl, '_blank', 'noopener,noreferrer')
@@ -121,7 +113,6 @@ export const openSecurePDFInNewTab = async (fileUrl, filename = 'document.pdf') 
         }
         return
       } catch (error) {
-        console.error('Erreur ouverture directe Safari iOS:', error)
         alert('Impossible d\'ouvrir le document. Vérifiez votre connexion.')
         return
       }
@@ -177,7 +168,6 @@ export const openSecurePDFInNewTab = async (fileUrl, filename = 'document.pdf') 
       const newWindow = window.open(blobUrl, '_blank', 'noopener,noreferrer')
       
       if (!newWindow) {
-        console.warn('Popup bloqué, fallback vers téléchargement')
         downloadSecurePDF(fileUrl, filename)
       } else {
         newWindow.addEventListener('beforeunload', () => {
@@ -192,7 +182,6 @@ export const openSecurePDFInNewTab = async (fileUrl, filename = 'document.pdf') 
     }, 5 * 60 * 1000)
     
   } catch (error) {
-    console.error('Erreur lors de l\'ouverture sécurisée:', error)
     
     // Fallback final : essayer d'ouvrir directement l'URL
     try {
@@ -201,7 +190,6 @@ export const openSecurePDFInNewTab = async (fileUrl, filename = 'document.pdf') 
       try {
         await downloadSecurePDF(fileUrl, filename)
       } catch (downloadError) {
-        console.error('Erreur lors du téléchargement fallback:', downloadError)
         alert('Erreur lors de l\'ouverture du fichier')
       }
     }
@@ -234,14 +222,12 @@ export const SecurePDFLink = ({ fileUrl, filename, children, className, onClick,
       
       if (isSafari && isIOS) {
         // Pour Safari iOS, utiliser l'ouverture directe simple
-        console.log('Safari iOS: ouverture directe simple')
         openPDFDirectly(fileUrl, filename)
       } else {
         // Pour les autres navigateurs, utiliser l'approche async
         await openSecurePDFInNewTab(fileUrl, filename)
       }
     } catch (error) {
-      console.error('Erreur dans SecurePDFLink:', error)
       // Fallback final
       try {
         window.open(fileUrl, '_blank', 'noopener,noreferrer')

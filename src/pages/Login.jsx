@@ -17,10 +17,8 @@ export function Login() {
       if (token) {
         try {
           await authAPI.verifyToken()
-          console.log('🔐 [LOGIN] Token valide détecté, redirection vers admin...')
           navigate('/admin')
         } catch (error) {
-          console.log('🔐 [LOGIN] Token invalide, nettoyage...')
           localStorage.removeItem('token')
           localStorage.removeItem('user')
         }

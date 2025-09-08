@@ -37,21 +37,18 @@ export function Admin() {
 
   // Fonction wrapper pour setAdminMode qui sauvegarde aussi dans localStorage
   const setAdminMode = (newMode) => {
-    console.log('🔄 [DEBUG] Changement adminMode vers:', newMode)
     localStorage.setItem('adminMode', newMode)
     setAdminModeState(newMode)
   }
 
   // Fonction wrapper pour setActiveTab qui sauvegarde aussi dans localStorage
   const setActiveTabAndSave = (newTab) => {
-    console.log('🔄 [DEBUG] Changement activeTab vers:', newTab)
     localStorage.setItem('adminActiveTab', newTab)
     setActiveTab(newTab)
   }
 
   // Fonction wrapper pour setSelectedAdminClass qui sauvegarde aussi dans localStorage
   const setSelectedAdminClassAndSave = (newClass) => {
-    console.log('🔄 [DEBUG] Changement selectedAdminClass vers:', newClass?.name || 'null')
     if (newClass) {
       localStorage.setItem('selectedAdminClass', JSON.stringify(newClass))
     } else {
@@ -131,70 +128,48 @@ export function Admin() {
 
   // Debug pour surveiller les changements d'état des classes
   useEffect(() => {
-    console.log('🎯 [DEBUG STATE] availableClasses a changé:', availableClasses)
-    console.log('🎯 [DEBUG STATE] Nombre de classes:', availableClasses?.length || 0)
-    console.log('🎯 [DEBUG STATE] Type:', typeof availableClasses, 'Array:', Array.isArray(availableClasses))
   }, [availableClasses])
 
   // Debug pour surveiller les changements d'état du modal utilisateur
   useEffect(() => {
-    console.log('👤 [DEBUG STATE] showUserModal a changé:', showUserModal)
-    console.log('👤 [DEBUG STATE] selectedUser:', selectedUser)
-    console.log('👤 [DEBUG STATE] modalMode:', modalMode)
   }, [showUserModal, selectedUser, modalMode])
 
   // Debug pour surveiller les changements d'état du modal de suppression générique
   useEffect(() => {
-    console.log('🗑️ [DEBUG STATE] showGenericDeleteModal a changé:', showGenericDeleteModal)
-    console.log('🗑️ [DEBUG STATE] itemToDelete:', itemToDelete)
   }, [showGenericDeleteModal, itemToDelete])
   
   // Debug pour surveiller les changements d'état du modal de classe
   useEffect(() => {
-    console.log('🏫 [DEBUG STATE] showClassModal a changé:', showClassModal)
-    console.log('🏫 [DEBUG STATE] classModalMode:', classModalMode)
-    console.log('🏫 [DEBUG STATE] selectedClassData:', selectedClassData)
   }, [showClassModal, classModalMode, selectedClassData])
 
   useEffect(() => {
-    console.log('⏳ [DEBUG STATE] classesLoading a changé:', classesLoading)
   }, [classesLoading])
 
   useEffect(() => {
-    console.log('🔧 [DEBUG USEEFFECT] isAuthenticated a changé:', isAuthenticated)
     if (isAuthenticated) {
-      console.log('🔧 [DEBUG USEEFFECT] Utilisateur authentifié, chargement des données générales...')
       loadClasses()
       loadUsers()
       loadGeneralSettings()
     } else {
-      console.log('🔧 [DEBUG USEEFFECT] Utilisateur non authentifié, pas de chargement')
     }
   }, [isAuthenticated])
 
   // Charger les données spécifiques à la classe quand elle est sélectionnée
   useEffect(() => {
-    console.log('🔧 [DEBUG USEEFFECT] selectedAdminClass a changé:', selectedAdminClass)
-    console.log('🔧 [DEBUG USEEFFECT] isAuthenticated:', isAuthenticated)
-    console.log('🔧 [DEBUG USEEFFECT] adminMode:', adminMode)
-    console.log('🔧 [DEBUG USEEFFECT] loading:', loading)
     
     // Vérifier la cohérence : si on est en mode classManagement mais sans classe sélectionnée
     if (isAuthenticated && !loading && adminMode === 'classManagement' && !selectedAdminClass) {
-      console.log('🔧 [DEBUG USEEFFECT] Mode classManagement sans classe → Retour classSelection')
       setAdminMode('classSelection')
       return
     }
     
     // Charger les données si on a une classe et qu'on est authentifié
     if (selectedAdminClass && isAuthenticated && !loading) {
-      console.log('🔧 [DEBUG USEEFFECT] Chargement des données pour la classe:', selectedAdminClass.name)
       setInitialLoadComplete(false) // Reset pendant le chargement
       loadDocuments()
       loadKolles()
       loadChapters()
       loadProgression().then(() => {
-        console.log('🔧 [DEBUG] Initial load complete')
         setInitialLoadComplete(true)
       })
       loadAnnualPrograms()
@@ -204,28 +179,23 @@ export function Admin() {
 
 
   const checkAuthentication = async () => {
-    console.log('🔐 [DEBUG AUTH] Vérification de l\'authentification...')
     try {
       await authAPI.verifyToken()
-      console.log('✅ [DEBUG AUTH] Token valide, utilisateur authentifié')
       
       // Récupérer les infos de l'utilisateur connecté
       const userInfo = localStorage.getItem('user')
       if (userInfo) {
         const user = JSON.parse(userInfo)
         setCurrentUser(user)
-        console.log('👤 [DEBUG AUTH] Utilisateur connecté:', user)
       }
       
       setIsAuthenticated(true)
       loadStats()
     } catch (error) {
-      console.log('❌ [DEBUG AUTH] Token invalide ou erreur:', error)
       // Rediriger vers la page de login si non authentifié
       navigate('/login')
     } finally {
       setLoading(false)
-      console.log('🏁 [DEBUG AUTH] Vérification terminée, loading = false')
     }
   }
 
@@ -259,7 +229,6 @@ export function Admin() {
         evaluations: evaluationsCount
       })
     } catch (error) {
-      console.error('Error loading stats:', error)
     }
   }
 
@@ -268,7 +237,6 @@ export function Admin() {
       const docs = await documentsAPI.getDocuments(selectedAdminClass?.id)
       setDocuments(docs)
     } catch (error) {
-      console.error('Error loading documents:', error)
     }
   }
 
@@ -277,33 +245,20 @@ export function Admin() {
       const kollesList = await kollesAPI.getKolles(selectedAdminClass?.id)
       setKolles(kollesList)
     } catch (error) {
-      console.error('Error loading kolles:', error)
     }
   }
 
   const loadClasses = async () => {
-    console.log('🔄 [DEBUG] Début du chargement des classes...')
     try {
       setClassesLoading(true)
-      console.log('🔄 [DEBUG] Appel de classAPI.getAvailableClasses()...')
       const classes = await classAPI.getAvailableClasses()
-      console.log('✅ [DEBUG] Classes reçues de l\'API:', classes)
-      console.log('✅ [DEBUG] Type des classes:', typeof classes, 'Array:', Array.isArray(classes))
       setAvailableClasses(classes)
-      console.log('✅ [DEBUG] Classes définies dans l\'état')
     } catch (error) {
-      console.error('❌ [DEBUG] Erreur lors du chargement des classes:', error)
-      console.error('❌ [DEBUG] Détails de l\'erreur:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      })
+      // En cas d'erreur API, continuer
       // En cas d'erreur, laisser le tableau vide - les classes doivent être récupérées via l'API
       setAvailableClasses([])
-      console.log('⚠️ [DEBUG] Classes définies comme tableau vide après erreur')
     } finally {
       setClassesLoading(false)
-      console.log('🏁 [DEBUG] Chargement des classes terminé, classesLoading = false')
     }
   }
 
@@ -318,7 +273,6 @@ export function Admin() {
       loadStats() // Recharger les statistiques
       loadDocuments() // Recharger la liste
     } catch (error) {
-      console.error('Error uploading document:', error)
       showError('Erreur lors de l\'upload: ' + error.message)
     }
   }
@@ -334,7 +288,6 @@ export function Admin() {
       loadStats() // Recharger les statistiques
       loadKolles() // Recharger la liste
     } catch (error) {
-      console.error('Error uploading kolle program:', error)
       showError('Erreur lors de l\'upload: ' + error.message)
     }
   }
@@ -343,7 +296,6 @@ export function Admin() {
     try {
       await authAPI.logout()
     } catch (error) {
-      console.error('Logout error:', error)
     } finally {
       navigate('/login')
     }
@@ -356,7 +308,6 @@ export function Admin() {
       loadDocuments()
       showSuccess('Document supprimé avec succès !')
     } catch (error) {
-      console.error('Error deleting document:', error)
       showError('Erreur lors de la suppression')
     }
   }
@@ -368,7 +319,6 @@ export function Admin() {
       loadKolles()
       showSuccess('Programme supprimé avec succès !')
     } catch (error) {
-      console.error('Error deleting kolle:', error)
       showError('Erreur lors de la suppression')
     }
   }
@@ -427,7 +377,6 @@ export function Admin() {
       const chaptersList = await chaptersAPI.getChapters()
       setChapters(chaptersList)
     } catch (error) {
-      console.error('Error loading chapters:', error)
     }
   }
 
@@ -486,7 +435,6 @@ export function Admin() {
       const usersList = await authAPI.getUsers()
       setUsers(usersList)
     } catch (error) {
-      console.error('Error loading users:', error)
     }
   }
 
@@ -537,11 +485,9 @@ export function Admin() {
 
 
   const showGenericDeleteConfirm = (item, action, type) => {
-    console.log('🗑️ [DEBUG] showGenericDeleteConfirm appelée avec:', { item, type })
     setItemToDelete({...item, type})
     setDeleteAction(() => action)
     setShowGenericDeleteModal(true)
-    console.log('🗑️ [DEBUG] setShowGenericDeleteModal(true) appelé')
   }
 
   const handleDeleteUser = async () => {
@@ -569,7 +515,6 @@ export function Admin() {
 
   // Fonctions de gestion des paramètres généraux
   const openGeneralSettingsModal = () => {
-    console.log('🎨 [DEBUG] Ouverture modal paramètres généraux')
     setShowGeneralSettingsModal(true)
   }
 
@@ -585,15 +530,12 @@ export function Admin() {
 
   const loadGeneralSettings = async () => {
     try {
-      console.log('⚙️ [DEBUG] Chargement des paramètres généraux')
       const settings = await settingsAPI.getSettings()
       setGeneralSettings({
         siteName: settings.siteName,
         schoolYear: settings.schoolYear
       })
-      console.log('✅ Paramètres généraux chargés:', settings)
     } catch (error) {
-      console.warn('⚠️ Erreur lors du chargement des paramètres, utilisation des valeurs par défaut:', error.message)
       // Garder les valeurs par défaut en cas d'erreur
     }
   }
@@ -605,7 +547,6 @@ export function Admin() {
         schoolYear: formData.get('schoolYear')
       }
       
-      console.log('💾 Sauvegarde paramètres généraux:', settings)
       
       // Sauvegarder via l'API
       await settingsAPI.updateSettings(settings)
@@ -622,11 +563,9 @@ export function Admin() {
 
   const loadAnnualPrograms = async () => {
     try {
-      console.log('📅 [DEBUG] loadAnnualPrograms called with selectedAdminClass:', selectedAdminClass?.id)
       const programsList = await kollesAPI.getAnnualPrograms(selectedAdminClass?.id)
       setAnnualPrograms(programsList)
     } catch (error) {
-      console.error('Error loading annual programs:', error)
     }
   }
 
@@ -641,7 +580,6 @@ export function Admin() {
       // Recharger seulement les programmes annuels, pas toute la progression
       loadAnnualPrograms()
     } catch (error) {
-      console.error('Error uploading annual program:', error)
       showError('Erreur lors de l\'upload: ' + error.message)
     }
   }
@@ -652,7 +590,6 @@ export function Admin() {
       showSuccess('Programme annuel supprimé avec succès !')
       loadAnnualPrograms()
     } catch (error) {
-      console.error('Error deleting annual program:', error)
       showError('Erreur lors de la suppression')
     }
   }
@@ -686,7 +623,6 @@ export function Admin() {
       showSuccess('Programme annuel activé avec succès !')
       loadAnnualPrograms()
     } catch (error) {
-      console.error('Error toggling annual program:', error)
       showError('Erreur lors de l\'activation')
     }
   }
@@ -701,14 +637,12 @@ export function Admin() {
       
       // Charger la progression sauvegardée (statut et ordre uniquement)
       const progression = await progressionAPI.getProgression(selectedAdminClass.id)
-      console.log('🔍 [DEBUG PROGRESSION] Loaded progression from API:', progression)
       
       // Synchroniser : utiliser les chapitres de l'API comme base
       const synchronizedChapters = apiChapters.map((chapter, index) => {
         // Chercher si ce chapitre existe dans la progression sauvegardée
         const savedChapter = progression?.chapters?.find(p => p.id === chapter.id)
         
-        console.log(`🔍 [DEBUG PROGRESSION] Chapter ${chapter.id}: savedChapter=`, savedChapter, `status=${savedChapter?.status || 'a-venir'}`)
         
         return {
           id: chapter.id,
@@ -722,9 +656,7 @@ export function Admin() {
       setProgressionChapters(synchronizedChapters)
       localStorage.setItem('progressionChapters', JSON.stringify(synchronizedChapters))
       
-      console.log('✅ Progression synchronisée avec', synchronizedChapters.length, 'chapitres depuis l\'API')
     } catch (error) {
-      console.log('Erreur lors du chargement de la progression:', error)
       // En cas d'erreur, charger au moins les chapitres de base
       try {
         const apiChapters = await chaptersAPI.getChapters()
@@ -737,7 +669,6 @@ export function Admin() {
         }))
         setProgressionChapters(basicProgression)
       } catch (chaptersError) {
-        console.error('Erreur lors du chargement des chapitres:', chaptersError)
       }
     }
   }
@@ -757,10 +688,8 @@ export function Admin() {
       await progressionAPI.updateChapterStatus(selectedAdminClass.id, chapterId, newStatus)
       // Sauvegarder dans localStorage pour synchroniser avec la page Documents
       localStorage.setItem('progressionChapters', JSON.stringify(updatedChapters))
-      console.log(`Statut du chapitre ${chapterId} mis à jour: ${newStatus}`)
       showSuccess('Progression sauvegardée automatiquement')
     } catch (error) {
-      console.error('Error updating chapter status:', error)
       showError('Erreur lors de la sauvegarde automatique')
       // Revenir à l'état précédent en cas d'erreur
       setProgressionChapters(progressionChapters)
@@ -785,7 +714,6 @@ export function Admin() {
         localStorage.setItem('progressionChapters', JSON.stringify(sortedChapters))
         showSuccess('Ordre sauvegardé automatiquement')
       } catch (error) {
-        console.error('Error updating chapter order:', error)
         showError('Erreur lors de la sauvegarde automatique')
         // Revenir à l'état précédent
         setProgressionChapters(progressionChapters)
@@ -811,7 +739,6 @@ export function Admin() {
         localStorage.setItem('progressionChapters', JSON.stringify(sortedChapters))
         showSuccess('Ordre sauvegardé automatiquement')
       } catch (error) {
-        console.error('Error updating chapter order:', error)
         showError('Erreur lors de la sauvegarde automatique')
         // Revenir à l'état précédent
         setProgressionChapters(progressionChapters)
@@ -822,11 +749,9 @@ export function Admin() {
   const updateProgressionFromDocuments = async () => {
     // Logique automatique : si un chapitre a des documents, il passe en "en-cours"
     if (!documents || Object.keys(documents).length === 0 || !selectedAdminClass) {
-      console.log('🔄 [DEBUG] updateProgressionFromDocuments skipped: documents=', !!documents, 'documentsCount=', documents ? Object.keys(documents).length : 0, 'selectedAdminClass=', !!selectedAdminClass)
       return
     }
     
-    console.log('🔄 [DEBUG] updateProgressionFromDocuments running with', progressionChapters.length, 'chapters')
 
     const updatedChapters = progressionChapters.map(chapter => {
       const categoryKey = chapter.id.split('-')[0] // Ex: 'geometrie-1' -> 'geometrie'
@@ -845,7 +770,6 @@ export function Admin() {
       localStorage.setItem('progressionChapters', JSON.stringify(updatedChapters))
       showSuccess('Progression mise à jour automatiquement depuis les documents')
     } catch (error) {
-      console.error('Error updating progression from documents:', error)
       showError('Erreur lors de la mise à jour de la progression')
       // Continuer même en cas d'erreur API, pour permettre le fonctionnement hors ligne
     }
@@ -855,7 +779,6 @@ export function Admin() {
   useEffect(() => {
     // Ne pas mettre à jour si le chargement initial n'est pas terminé
     if (initialLoadComplete && progressionChapters.length > 0 && documents && Object.keys(documents).length > 0) {
-      console.log('🔄 [DEBUG] Mise à jour automatique de la progression depuis les documents')
       updateProgressionFromDocuments()
     }
   }, [documents, initialLoadComplete])
@@ -870,7 +793,6 @@ export function Admin() {
         color: formData.get('color')
       }
       
-      console.log('✏️ Sauvegarde modification classe:', classData)
       await classAPI.updateClass(classToEdit.id, classData)
       
       // Mettre à jour la liste locale
@@ -882,7 +804,6 @@ export function Admin() {
       setClassToEdit(null)
       showSuccess(`Classe "${classData.name}" modifiée avec succès !`)
     } catch (error) {
-      console.error('Erreur modification classe:', error)
       showError('Erreur lors de la modification de la classe')
     }
   }
@@ -893,7 +814,6 @@ export function Admin() {
       setAvailableClasses(prev => prev.filter(c => c.id !== classId))
       showSuccess('Classe supprimée avec succès !')
     } catch (error) {
-      console.error('Error deleting class:', error)
       showError('Erreur lors de la suppression de la classe')
     }
   }
@@ -922,7 +842,6 @@ export function Admin() {
       }
       setShowClassModal(false)
     } catch (error) {
-      console.error('Error managing class:', error)
       showError('Erreur lors de la gestion de la classe')
     }
   }
@@ -954,7 +873,6 @@ export function Admin() {
 
   // Interface des paramètres généraux
   const renderGeneralSettings = () => {
-    console.log('🎨 [DEBUG] Rendu de renderGeneralSettings')
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         {/* Header */}
@@ -963,7 +881,6 @@ export function Admin() {
             <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => {
-                  console.log('🏠 [DEBUG] Retour vers classSelection')
                   setAdminMode('classSelection')
                 }}
                 className="p-2 sm:p-3 bg-white/20 hover:bg-white/30 rounded-xl transition-colors shadow-lg flex-shrink-0"
@@ -1013,7 +930,6 @@ export function Admin() {
                     <p>Aucun utilisateur chargé</p>
                     <button 
                       onClick={() => {
-                        console.log('👥 [DEBUG] Clic sur charger utilisateurs')
                         loadUsers()
                       }}
                       className="mt-2 text-blue-600 hover:text-blue-700 font-medium"
@@ -1049,11 +965,9 @@ export function Admin() {
                         {(currentUser?.role === 'admin' || user.id === currentUser?.id) && (
                           <button 
                             onClick={() => {
-                              console.log('✏️ [DEBUG] Modifier utilisateur (liste):', user.username)
                               setSelectedUser(user)
                               setModalMode('edit')
                               setShowUserModal(true)
-                              console.log('✏️ [DEBUG] État après modification - showUserModal:', true, 'selectedUser:', user)
                             }}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
                             title={user.id === currentUser?.id && currentUser?.role === 'professeur' ? 'Modifier votre mot de passe' : 'Modifier l\'utilisateur'}
@@ -1065,10 +979,7 @@ export function Admin() {
                         {currentUser?.role === 'admin' && user.id !== currentUser?.id && (
                           <button 
                             onClick={() => {
-                              console.log('🗑️ [DEBUG] Supprimer utilisateur (liste):', user.username)
-                              console.log('🗑️ [DEBUG] Appel showGenericDeleteConfirm avec user:', user)
                               showGenericDeleteConfirm(user, async () => {
-                                console.log('🗑️ [DEBUG] Action de suppression exécutée pour user:', user.username)
                                 await authAPI.deleteUser(user.id)
                                 showSuccess(`Utilisateur "${user.username}" supprimé avec succès !`)
                                 loadUsers()
@@ -1087,7 +998,6 @@ export function Admin() {
                 {currentUser?.role === 'admin' && (
                   <button 
                     onClick={() => {
-                      console.log('➕ [DEBUG] Ajouter utilisateur')
                       setSelectedUser(null)
                       setModalMode('add')
                       setShowUserModal(true)
@@ -1203,9 +1113,7 @@ export function Admin() {
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                console.log('🔧 [DEBUG] Clic sur Paramètres généraux')
                 setAdminMode('generalSettings')
-                console.log('🔧 [DEBUG] adminMode défini sur: generalSettings')
               }}
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 sm:gap-3 shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto justify-center"
             >
@@ -1264,7 +1172,6 @@ export function Admin() {
                 <div className="absolute top-4 right-4 flex gap-2 opacity-100 transition-opacity z-10">
                   <button
                     onClick={(e) => {
-                      console.log('✏️ Modifier classe:', classData.name)
                       e.stopPropagation()
                       setClassToEdit(classData)
                       setShowEditClassModal(true)
@@ -1276,7 +1183,6 @@ export function Admin() {
                   </button>
                   <button
                     onClick={(e) => {
-                      console.log('🗑️ Supprimer classe:', classData.name)
                       e.stopPropagation()
                       setClassToDelete(classData)
                       setShowDeleteClassModal(true)
@@ -2449,7 +2355,6 @@ export function Admin() {
                             <div className="flex items-center gap-2">
                               <button 
                                 onClick={() => {
-                                  console.log('✏️ Modifier classe (liste):', classData.name)
                                   setClassToEdit(classData)
                                   setShowEditClassModal(true)
                                 }}
@@ -2989,7 +2894,6 @@ export function Admin() {
   )
 
   // Return principal qui décide quelle interface afficher
-  console.log('🔍 [DEBUG] adminMode actuel:', adminMode)
   
   return (
     <>
@@ -3018,14 +2922,12 @@ export function Admin() {
               <div className="flex gap-3">
                 <button
                   onClick={async () => {
-                    console.log('🗑️ Confirmation suppression classe:', classToDelete.name)
                     try {
                       await deleteClass(classToDelete.id)
                       setShowDeleteClassModal(false)
                       setClassToDelete(null)
                       showSuccess(`Classe "${classToDelete.name}" supprimée avec succès !`)
                     } catch (error) {
-                      console.error('Erreur suppression:', error)
                       showError('Erreur lors de la suppression de la classe')
                     }
                   }}

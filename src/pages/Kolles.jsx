@@ -48,29 +48,22 @@ export function Kolles() {
   const loadData = async () => {
     try {
       setLoading(true)
-      console.log('🔍 [DEBUG KOLLES] Starting loadData with current class:', currentClass)
-      console.log('🔍 [DEBUG KOLLES] Current class ID:', currentClass?.id)
       
       const [kollesData, activePlanningData] = await Promise.all([
         kollesAPI.getKolles(),
         kollesAPI.getActiveAnnualProgram(currentClass?.id)
       ])
       
-      console.log('🔍 [DEBUG KOLLES] Current class after API call:', currentClass)
-      console.log('🔍 [DEBUG KOLLES] API response for active annual program:', activePlanningData)
       
       setKolles(kollesData)
       
       // L'API retourne déjà le programme filtré par classe (ou null si pas trouvé)
       if (activePlanningData) {
-        console.log('✅ [DEBUG KOLLES] Planning found for current class:', currentClass?.id)
         setPlanningDocument(activePlanningData)
       } else {
-        console.log('❌ [DEBUG KOLLES] No planning found for current class:', currentClass?.id)
         setPlanningDocument(null)
       }
     } catch (err) {
-      console.error('🚨 [DEBUG KOLLES] Error loading data:', err)
       setError(err.message)
     } finally {
       setLoading(false)

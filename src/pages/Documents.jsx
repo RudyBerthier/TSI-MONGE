@@ -48,7 +48,6 @@ export function Documents() {
     if (!currentClass?.id) return
     
     try {
-      console.log('📚 [DEBUG DOCUMENTS] Loading chapters and progression for class:', currentClass.id)
       setProgressionLoading(true)
       
       // Charger les chapitres depuis l'API
@@ -78,7 +77,6 @@ export function Documents() {
         synchronizedChapters.forEach(chapter => {
           statusMap[chapter.id] = chapter.status
         })
-        console.log('📚 [DEBUG DOCUMENTS] Progression loaded:', statusMap)
         setProgressionStatus(statusMap)
       } else {
         // Pas de progression sauvegardée, utiliser les chapitres par défaut
@@ -98,7 +96,6 @@ export function Documents() {
         setProgressionStatus(statusMap)
       }
     } catch (error) {
-      console.error('📚 [DEBUG DOCUMENTS] Error loading progression:', error)
       // Garder les valeurs par défaut en cas d'erreur
     } finally {
       setProgressionLoading(false)

@@ -54,14 +54,11 @@ export function ClassProvider({ children }) {
   useEffect(() => {
     const loadClasses = async () => {
       try {
-        console.log('🏫 [DEBUG CONTEXT] Loading classes from API...')
         const classes = await classAPI.getAvailableClasses()
-        console.log('🏫 [DEBUG CONTEXT] Classes loaded:', classes)
         if (classes && classes.length > 0) {
           setAvailableClasses(classes)
         }
       } catch (error) {
-        console.error('🏫 [DEBUG CONTEXT] Error loading classes, using fallback:', error)
         // Garder les classes par défaut en cas d'erreur
       } finally {
         setClassesLoaded(true)
@@ -78,27 +75,22 @@ export function ClassProvider({ children }) {
     const savedClass = localStorage.getItem('selectedClass')
     const hasVisited = localStorage.getItem('hasVisitedBefore')
     
-    console.log('🏫 [DEBUG CONTEXT] Checking saved class:', savedClass)
     
     if (savedClass) {
       // Vérifier que la classe sauvegardée existe toujours
       const classExists = availableClasses.find(cls => cls.id === savedClass)
       if (classExists) {
-        console.log('🏫 [DEBUG CONTEXT] Found saved class:', classExists)
         setCurrentClass(classExists)
       } else {
         // La classe n'existe plus, forcer la sélection
-        console.log('🏫 [DEBUG CONTEXT] Saved class not found, forcing selection')
         setIsFirstVisit(true)
         localStorage.removeItem('selectedClass')
       }
     } else if (!hasVisited) {
       // Première visite
-      console.log('🏫 [DEBUG CONTEXT] First visit detected')
       setIsFirstVisit(true)
     } else {
       // Utilisateur revient mais n'a pas de classe sélectionnée
-      console.log('🏫 [DEBUG CONTEXT] No saved class, forcing selection')
       setIsFirstVisit(true)
     }
     
