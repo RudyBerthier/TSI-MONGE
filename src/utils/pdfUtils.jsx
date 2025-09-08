@@ -1,6 +1,49 @@
 // Utilitaires pour sécuriser les téléchargements PDF
 import React from 'react'
 
+// Fonction simple pour Safari iOS qui évite les blobs
+export const openPDFDirectly = (fileUrl, filename = 'document.pdf') => {
+  try {
+    console.log('Tentative d\'ouverture directe:', fileUrl)
+    
+    // Pour Safari iOS, essayer window.open immédiatement (doit être synchrone)
+    const newWindow = window.open(fileUrl, '_blank', 'noopener,noreferrer')
+    
+    // Vérifier si window.open a réussi
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      console.log('window.open bloqué, essai avec lien temporaire')
+      
+      // Fallback avec lien temporaire
+      const tempLink = document.createElement('a')
+      tempLink.href = fileUrl
+      tempLink.target = '_blank'
+      tempLink.rel = 'noopener noreferrer'
+      tempLink.style.display = 'none'
+      
+      // Sur Safari iOS, parfois un petit délai aide
+      document.body.appendChild(tempLink)
+      setTimeout(() => {
+        tempLink.click()
+        document.body.removeChild(tempLink)
+      }, 10)
+    }
+  } catch (error) {
+    console.error('Erreur ouverture directe PDF:', error)
+    // Dernier recours : essayer de télécharger
+    try {
+      const downloadLink = document.createElement('a')
+      downloadLink.href = fileUrl
+      downloadLink.download = filename
+      downloadLink.style.display = 'none'
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      document.body.removeChild(downloadLink)
+    } catch (downloadError) {
+      alert('Impossible d\'ouvrir le document. Vérifiez votre connexion.')
+    }
+  }
+}
+
 export const downloadSecurePDF = async (fileUrl, filename = 'document.pdf') => {
   try {
     // Récupérer le fichier via une requête sécurisée
@@ -51,10 +94,40 @@ export const downloadSecurePDF = async (fileUrl, filename = 'document.pdf') => {
 
 export const openSecurePDFInNewTab = async (fileUrl, filename = 'document.pdf') => {
   try {
-    // Détecter si on est sur mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    // Détecter le navigateur et le type d'appareil
+    const userAgent = navigator.userAgent
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+    const isSafari = /Safari/.test(userAgent) && !/Chrome|CriOS|FxiOS/.test(userAgent)
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent)
     
-    // Récupérer le fichier via une requête sécurisée
+    // Pour Safari iOS, utiliser une approche simple sans blob
+    if (isSafari && isIOS) {
+      console.log('Safari iOS détecté, ouverture directe')
+      
+      // Essayer d'ouvrir directement l'URL dans Safari iOS
+      try {
+        const newWindow = window.open(fileUrl, '_blank', 'noopener,noreferrer')
+        if (!newWindow) {
+          // Si window.open échoue, créer un lien et le cliquer
+          const tempLink = document.createElement('a')
+          tempLink.href = fileUrl
+          tempLink.target = '_blank'
+          tempLink.rel = 'noopener noreferrer'
+          tempLink.style.display = 'none'
+          
+          document.body.appendChild(tempLink)
+          tempLink.click()
+          document.body.removeChild(tempLink)
+        }
+        return
+      } catch (error) {
+        console.error('Erreur ouverture directe Safari iOS:', error)
+        alert('Impossible d\'ouvrir le document. Vérifiez votre connexion.')
+        return
+      }
+    }
+    
+    // Pour les autres navigateurs, utiliser l'approche avec blob
     const response = await fetch(fileUrl, {
       method: 'GET',
       credentials: 'include',
@@ -79,62 +152,58 @@ export const openSecurePDFInNewTab = async (fileUrl, filename = 'document.pdf') 
     const blobUrl = URL.createObjectURL(blob)
     
     if (isMobile) {
-      // Sur mobile, utiliser une approche plus compatible
-      // Créer un lien temporaire et le cliquer
+      // Sur mobile (non Safari iOS), utiliser une approche compatible
       const tempLink = document.createElement('a')
       tempLink.href = blobUrl
       tempLink.target = '_blank'
       tempLink.rel = 'noopener noreferrer'
       tempLink.style.display = 'none'
       
-      // Ajouter au DOM temporairement
       document.body.appendChild(tempLink)
-      
-      // Simuler un clic utilisateur
       tempLink.click()
-      
-      // Nettoyer
       document.body.removeChild(tempLink)
       
-      // Si ça ne fonctionne pas, essayer directement l'URL puis téléchargement
+      // Fallback après un délai
       setTimeout(() => {
         try {
-          // Essayer d'ouvrir directement l'URL
           window.open(fileUrl, '_blank', 'noopener,noreferrer')
         } catch (directError) {
-          // Dernier recours : téléchargement
           downloadSecurePDF(fileUrl, filename)
         }
       }, 1000)
       
     } else {
-      // Sur desktop, utiliser window.open
+      // Sur desktop
       const newWindow = window.open(blobUrl, '_blank', 'noopener,noreferrer')
       
       if (!newWindow) {
         console.warn('Popup bloqué, fallback vers téléchargement')
         downloadSecurePDF(fileUrl, filename)
       } else {
-        // Nettoyer l'URL blob après que la fenêtre soit fermée
         newWindow.addEventListener('beforeunload', () => {
           URL.revokeObjectURL(blobUrl)
         })
       }
     }
     
-    // Nettoyer après 5 minutes au cas où
+    // Nettoyer après 5 minutes
     setTimeout(() => {
       URL.revokeObjectURL(blobUrl)
     }, 5 * 60 * 1000)
     
   } catch (error) {
     console.error('Erreur lors de l\'ouverture sécurisée:', error)
-    // Fallback vers téléchargement en cas d'erreur
+    
+    // Fallback final : essayer d'ouvrir directement l'URL
     try {
-      await downloadSecurePDF(fileUrl, filename)
-    } catch (downloadError) {
-      console.error('Erreur lors du téléchargement fallback:', downloadError)
-      alert('Erreur lors de l\'ouverture du fichier')
+      window.open(fileUrl, '_blank', 'noopener,noreferrer')
+    } catch (directError) {
+      try {
+        await downloadSecurePDF(fileUrl, filename)
+      } catch (downloadError) {
+        console.error('Erreur lors du téléchargement fallback:', downloadError)
+        alert('Erreur lors de l\'ouverture du fichier')
+      }
     }
   }
 }
@@ -150,6 +219,11 @@ export const SecurePDFLink = ({ fileUrl, filename, children, className, onClick,
     // Éviter les clics multiples
     if (isLoading) return
     
+    // Détecter Safari iOS pour une gestion spéciale
+    const userAgent = navigator.userAgent
+    const isSafari = /Safari/.test(userAgent) && !/Chrome|CriOS|FxiOS/.test(userAgent)
+    const isIOS = /iPad|iPhone|iPod/.test(userAgent)
+    
     try {
       setIsLoading(true)
       
@@ -158,8 +232,22 @@ export const SecurePDFLink = ({ fileUrl, filename, children, className, onClick,
         onClick(e)
       }
       
-      // Ouvrir le PDF de manière sécurisée (télécharge ET ouvre)
-      await openSecurePDFInNewTab(fileUrl, filename)
+      if (isSafari && isIOS) {
+        // Pour Safari iOS, utiliser l'ouverture directe simple
+        console.log('Safari iOS: ouverture directe simple')
+        openPDFDirectly(fileUrl, filename)
+      } else {
+        // Pour les autres navigateurs, utiliser l'approche async
+        await openSecurePDFInNewTab(fileUrl, filename)
+      }
+    } catch (error) {
+      console.error('Erreur dans SecurePDFLink:', error)
+      // Fallback final
+      try {
+        window.open(fileUrl, '_blank', 'noopener,noreferrer')
+      } catch (fallbackError) {
+        alert('Impossible d\'ouvrir le document')
+      }
     } finally {
       // Retirer le loading après 2 secondes
       setTimeout(() => {
