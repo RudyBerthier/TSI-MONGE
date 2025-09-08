@@ -958,45 +958,45 @@ export function Admin() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-black text-white p-6 shadow-2xl border-b-4 border-indigo-500">
-          <div className="flex justify-between items-center max-w-7xl mx-auto">
-            <div className="flex items-center gap-4">
+        <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-black text-white p-4 sm:p-6 shadow-2xl border-b-4 border-indigo-500">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center max-w-7xl mx-auto gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <button
                 onClick={() => {
                   console.log('🏠 [DEBUG] Retour vers classSelection')
                   setAdminMode('classSelection')
                 }}
-                className="p-3 bg-white/20 hover:bg-white/30 rounded-xl transition-colors shadow-lg"
+                className="p-2 sm:p-3 bg-white/20 hover:bg-white/30 rounded-xl transition-colors shadow-lg flex-shrink-0"
                 title="Retour à l'administration"
               >
-                <Home size={24} className="text-white" />
+                <Home size={20} className="sm:w-6 sm:h-6 text-white" />
               </button>
-              <div className="p-3 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl shadow-lg">
-                <Settings size={24} className="text-white" />
+              <div className="p-2 sm:p-3 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-xl shadow-lg flex-shrink-0">
+                <Settings size={20} className="sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Paramètres généraux - {generateSiteName(generalSettings.siteName)}</h1>
-                <p className="text-slate-300 text-sm">Gestion globale du système</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight truncate">Paramètres généraux - {generateSiteName(generalSettings.siteName)}</h1>
+                <p className="text-slate-300 text-xs sm:text-sm">Gestion globale du système</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <a href="/" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-                <Home size={16} /> Voir le site
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <a href="/" className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1 sm:gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex-1 sm:flex-initial justify-center">
+                <Home size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Voir le site</span><span className="sm:hidden">Site</span>
               </a>
               <button 
                 onClick={logout}
-                className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1 sm:gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex-1 sm:flex-initial justify-center"
               >
-                <LogOut size={16} />
-                Déconnexion
+                <LogOut size={14} className="sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Déconnexion</span><span className="sm:hidden">Déco</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* Contenu des paramètres */}
-        <div className="max-w-7xl mx-auto p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Gestion des utilisateurs */}
             <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200">
               <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center gap-3">
@@ -1169,24 +1169,24 @@ export function Admin() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mb-6 shadow-lg">
-            <Settings size={40} className="text-white" />
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl mb-4 sm:mb-6 shadow-lg">
+            <Settings size={32} className="sm:w-10 sm:h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
             Administration Multi-Classes
           </h1>
-          <p className="text-xl text-gray-600 mb-2">
+          <p className="text-lg sm:text-xl text-gray-600 mb-2 px-4">
             Sélectionnez une classe à administrer
           </p>
-          <p className="text-gray-500">
+          <p className="text-sm sm:text-base text-gray-500 px-4">
             Gestion des documents, khôlles, évaluations et progressions par classe
           </p>
         </div>
 
         {/* Actions globales */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 sm:mb-8 gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto">
             <button
               onClick={(e) => {
                 e.stopPropagation()
@@ -1194,10 +1194,10 @@ export function Admin() {
                 setClassModalMode('add')
                 setShowClassModal(true)
               }}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 sm:gap-3 shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto justify-center"
             >
-              <Plus size={20} />
-              Créer une nouvelle classe
+              <Plus size={18} className="sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Créer une nouvelle classe</span><span className="sm:hidden">Nouvelle classe</span>
             </button>
             
             <button
@@ -1207,30 +1207,30 @@ export function Admin() {
                 setAdminMode('generalSettings')
                 console.log('🔧 [DEBUG] adminMode défini sur: generalSettings')
               }}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-lg hover:shadow-xl"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 sm:gap-3 shadow-lg hover:shadow-xl text-sm sm:text-base w-full sm:w-auto justify-center"
             >
-              <Settings size={20} />
-              Paramètres généraux
+              <Settings size={18} className="sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Paramètres généraux</span><span className="sm:hidden">Paramètres</span>
             </button>
           </div>
           
           <button 
             onClick={logout}
-            className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl"
+            className="bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1 sm:gap-2 shadow-lg hover:shadow-xl w-full sm:w-auto justify-center"
           >
-            <LogOut size={16} />
-            Déconnexion
+            <LogOut size={14} className="sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Déconnexion</span><span className="sm:hidden">Déco</span>
           </button>
         </div>
 
         {/* Classes Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {classesLoading ? (
             // État de chargement
-            <div className="col-span-full flex items-center justify-center py-12">
+            <div className="col-span-full flex items-center justify-center py-8 sm:py-12">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Chargement des classes...</p>
+                <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 text-sm sm:text-base">Chargement des classes...</p>
               </div>
             </div>
           ) : availableClasses.length === 0 ? (
@@ -1369,25 +1369,25 @@ export function Admin() {
   const renderClassManagement = () => (
     <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 min-h-screen">
       {/* Header Admin */}
-      <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-200 max-w-7xl mx-auto mt-8 mb-8">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-6">
+      <div className="bg-white rounded-xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-200 max-w-7xl mx-auto mt-4 sm:mt-6 lg:mt-8 mb-4 sm:mb-6 lg:mb-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-0">
+          <div className="flex items-center gap-3 sm:gap-4 lg:gap-6 w-full lg:w-auto">
             <button
               onClick={backToClassSelection}
-              className="p-3 bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="p-2 sm:p-3 bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 flex-shrink-0"
               title="Retour aux classes"
             >
-              <Home size={24} />
+              <Home size={20} className="sm:w-6 sm:h-6" />
             </button>
-            <div className="flex items-center gap-4">
-              <div className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
-                <Wrench size={28} className="text-white" />
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+              <div className="p-3 sm:p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg flex-shrink-0">
+                <Wrench size={24} className="sm:w-7 sm:h-7 text-white" />
               </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Administration</h1>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-gray-600 text-sm font-medium">Classe actuelle:</span>
-                  <span className={`px-4 py-2 rounded-xl text-sm font-semibold shadow-sm ${
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 tracking-tight truncate">Administration</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mt-2">
+                  <span className="text-gray-600 text-xs sm:text-sm font-medium">Classe actuelle:</span>
+                  <span className={`px-3 sm:px-4 py-1 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-sm inline-block ${
                     selectedAdminClass?.color === 'blue' ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' :
                     selectedAdminClass?.color === 'green' ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' :
                     selectedAdminClass?.color === 'purple' ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white' :
@@ -1399,48 +1399,48 @@ export function Admin() {
                     {selectedAdminClass?.name}
                   </span>
                 </div>
-                <p className="text-gray-500 text-sm mt-1">{selectedAdminClass?.description}</p>
+                <p className="text-gray-500 text-xs sm:text-sm mt-1 truncate">{selectedAdminClass?.description}</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <a href="/" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5">
-              <Home size={18} /> 
-              Voir le site
+          <div className="flex items-center gap-2 sm:gap-3 w-full lg:w-auto">
+            <a href="/" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1 sm:gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex-1 lg:flex-initial justify-center">
+              <Home size={16} className="sm:w-4 sm:h-4 lg:w-[18px] lg:h-[18px]" /> 
+              <span className="hidden sm:inline">Voir le site</span><span className="sm:hidden">Site</span>
             </a>
             <button 
               onClick={logout}
-              className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-300 flex items-center gap-1 sm:gap-2 shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex-1 lg:flex-initial justify-center"
             >
-              <LogOut size={18} />
-              Déconnexion
+              <LogOut size={16} className="sm:w-4 sm:h-4 lg:w-[18px] lg:h-[18px]" />
+              <span className="hidden sm:inline">Déconnexion</span><span className="sm:hidden">Déco</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto px-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Content Section */}
-        <div className="lg:col-span-2 bg-white rounded-xl p-8 shadow-lg border border-gray-200">
-          <div className="flex items-center gap-4 mb-8 pb-4 border-b-2 border-gray-100">
-            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
-              <FileText size={28} className="text-white" />
+        <div className="lg:col-span-2 bg-white rounded-xl p-4 sm:p-6 lg:p-8 shadow-lg border border-gray-200">
+          <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8 pb-4 border-b-2 border-gray-100">
+            <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex-shrink-0">
+              <FileText size={24} className="sm:w-7 sm:h-7 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
               Gestion des contenus
             </h2>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex flex-wrap gap-3 mb-8 bg-gradient-to-r from-gray-50 to-blue-50 p-4 rounded-xl border border-gray-200">
+          <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8 bg-gradient-to-r from-gray-50 to-blue-50 p-3 sm:p-4 rounded-xl border border-gray-200 overflow-x-auto">
             {[
-              { id: 'documents', label: 'Documents', icon: <FileText size={18} />, color: 'from-blue-500 to-blue-600' },
-              { id: 'evaluations', label: 'Évaluations', icon: <Target size={18} />, color: 'from-orange-500 to-red-600' },
-              { id: 'kolles', label: 'Khôlles', icon: <Calendar size={18} />, color: 'from-green-500 to-emerald-600' },
-              { id: 'chapters', label: 'Chapitres', icon: <BookOpen size={18} />, color: 'from-purple-500 to-indigo-600' },
-              { id: 'progression', label: 'Progression', icon: <BarChart3 size={18} />, color: 'from-teal-500 to-cyan-600' },
-              { id: 'settings', label: 'Paramètres', icon: <Settings size={18} />, color: 'from-gray-500 to-slate-600' }
+              { id: 'documents', label: 'Documents', shortLabel: 'Docs', icon: <FileText size={16} className="sm:w-[18px] sm:h-[18px]" />, color: 'from-blue-500 to-blue-600' },
+              { id: 'evaluations', label: 'Évaluations', shortLabel: 'Évals', icon: <Target size={16} className="sm:w-[18px] sm:h-[18px]" />, color: 'from-orange-500 to-red-600' },
+              { id: 'kolles', label: 'Khôlles', shortLabel: 'Khôlles', icon: <Calendar size={16} className="sm:w-[18px] sm:h-[18px]" />, color: 'from-green-500 to-emerald-600' },
+              { id: 'chapters', label: 'Chapitres', shortLabel: 'Chap', icon: <BookOpen size={16} className="sm:w-[18px] sm:h-[18px]" />, color: 'from-purple-500 to-indigo-600' },
+              { id: 'progression', label: 'Progression', shortLabel: 'Prog', icon: <BarChart3 size={16} className="sm:w-[18px] sm:h-[18px]" />, color: 'from-teal-500 to-cyan-600' },
+              { id: 'settings', label: 'Paramètres', shortLabel: 'Config', icon: <Settings size={16} className="sm:w-[18px] sm:h-[18px]" />, color: 'from-gray-500 to-slate-600' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1449,14 +1449,14 @@ export function Admin() {
                   if (tab.id === 'documents') loadDocuments()
                   if (tab.id === 'kolles') loadKolles()
                 }}
-                className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center gap-2 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 ${
+                className={`px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 lg:py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-300 flex items-center gap-1 sm:gap-2 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 whitespace-nowrap ${
                   activeTab === tab.id 
                     ? `bg-gradient-to-r ${tab.color} text-white shadow-lg ring-2 ring-white ring-opacity-30` 
                     : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
                 }`}
               >
                 {tab.icon}
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span><span className="sm:hidden">{tab.shortLabel}</span>
               </button>
             ))}
           </div>
@@ -1567,23 +1567,23 @@ export function Admin() {
                     </div>
                   ) : (
                     (Array.isArray(documents) ? documents : Object.values(documents).flat()).map((doc, index) => (
-                      <div key={index} className="bg-gray-50 p-6 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-300">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
-                              <FileText size={24} className="text-blue-600" />
+                      <div key={index} className="bg-gray-50 p-4 sm:p-6 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-300">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                            <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg flex-shrink-0">
+                              <FileText size={20} className="sm:w-6 sm:h-6 text-blue-600" />
                             </div>
-                            <div>
-                              <h4 className="text-lg font-semibold text-gray-800">{doc.title || 'Document sans titre'}</h4>
-                              <div className="flex items-center gap-4 mt-1">
-                                <span className="text-sm text-gray-600 bg-gray-200 px-2 py-1 rounded-full">
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-base sm:text-lg font-semibold text-gray-800 break-words">{doc.title || 'Document sans titre'}</h4>
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                                <span className="text-xs sm:text-sm text-gray-600 bg-gray-200 px-2 py-1 rounded-full truncate max-w-[150px] sm:max-w-none">
                                   {getCategories(chapters)[doc.category]?.name || doc.category || 'Non catégorisé'}
                                 </span>
-                                <span className="text-sm text-gray-600 bg-blue-100 px-2 py-1 rounded-full">
+                                <span className="text-xs sm:text-sm text-gray-600 bg-blue-100 px-2 py-1 rounded-full">
                                   {doc.type || 'Document'}
                                 </span>
                                 {doc.filename && (
-                                  <span className="text-xs text-gray-500">{doc.filename}</span>
+                                  <span className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-none">{doc.filename}</span>
                                 )}
                               </div>
                             </div>
@@ -1887,16 +1887,18 @@ export function Admin() {
                             <div className="p-3 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg">
                               <Calendar size={24} className="text-blue-600" />
                             </div>
-                            <div>
-                              <h4 className="text-lg font-semibold text-gray-800">
-                                Semaine {kolle.week_number} - {kolle.week_dates || 'Dates non spécifiées'}
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-base sm:text-lg font-semibold text-gray-800 break-words">
+                                <span className="block sm:inline">Semaine {kolle.week_number}</span>
+                                <span className="block sm:inline sm:ml-2">- {kolle.week_dates || 'Dates non spécifiées'}</span>
                               </h4>
-                              <div className="flex items-center gap-4 mt-1">
-                                <span className="text-sm text-gray-600 bg-blue-200 px-2 py-1 rounded-full">
-                                  Programme de khôlle
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                                <span className="text-xs sm:text-sm text-gray-600 bg-blue-200 px-2 py-1 rounded-full">
+                                  <span className="hidden sm:inline">Programme de khôlle</span>
+                                  <span className="sm:hidden">Khôlle</span>
                                 </span>
                                 {kolle.filename && (
-                                  <span className="text-xs text-gray-500">{kolle.filename}</span>
+                                  <span className="text-xs text-gray-500 truncate max-w-[120px] sm:max-w-none">{kolle.filename}</span>
                                 )}
                               </div>
                             </div>
@@ -2175,15 +2177,15 @@ export function Admin() {
                     }[chapter.icon] || BookOpen
 
                     return (
-                      <div key={chapter.id} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-300">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gradient-to-br from-emerald-100 to-green-100 rounded-lg">
-                              <IconComponent size={24} className="text-emerald-600" />
+                      <div key={chapter.id} className="bg-white p-4 sm:p-6 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-300">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                            <div className="p-2 sm:p-3 bg-gradient-to-br from-emerald-100 to-green-100 rounded-lg flex-shrink-0">
+                              <IconComponent size={20} className="sm:w-6 sm:h-6 text-emerald-600" />
                             </div>
-                            <div>
-                              <h4 className="text-lg font-semibold text-gray-800">{chapter.name}</h4>
-                              <p className="text-gray-600 text-sm">{chapter.description}</p>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-base sm:text-lg font-semibold text-gray-800 break-words">{chapter.name}</h4>
+                              <p className="text-gray-600 text-xs sm:text-sm break-words">{chapter.description}</p>
                               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full mt-1 inline-block">ID: {chapter.id}</span>
                             </div>
                           </div>
@@ -2250,10 +2252,10 @@ export function Admin() {
                     }[chapter.status]
                     
                     return (
-                      <div key={chapter.id} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-300">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="flex flex-col gap-1">
+                      <div key={chapter.id} className="bg-white p-4 sm:p-6 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-300">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                          <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+                            <div className="flex flex-col gap-1 flex-shrink-0">
                               <button 
                                 onClick={() => moveChapterUp(chapter.id)}
                                 disabled={chapter.order === 1}
@@ -2277,22 +2279,23 @@ export function Admin() {
                                 <ArrowDown size={14} />
                               </button>
                             </div>
-                            <div>
-                              <h4 className="text-lg font-semibold text-gray-800">
-                                Chapitre {chapter.order} - {chapter.name}
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-base sm:text-lg font-semibold text-gray-800 break-words">
+                                <span className="block sm:inline">Chapitre {chapter.order}</span>
+                                <span className="block sm:inline sm:ml-2">- {chapter.name}</span>
                               </h4>
-                              <p className="text-gray-600 text-sm">{chapter.description}</p>
+                              <p className="text-gray-600 text-sm break-words">{chapter.description}</p>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-4">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
                             {/* Sélecteur de statut */}
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-600">Statut :</span>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
+                              <span className="text-xs sm:text-sm font-medium text-gray-600 whitespace-nowrap">Statut :</span>
                               <select
                                 value={chapter.status}
                                 onChange={(e) => updateChapterStatus(chapter.id, e.target.value)}
-                                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium focus:ring-2 focus:outline-none transition-all ${
+                                className={`w-full sm:w-auto px-2 sm:px-3 py-1 sm:py-2 rounded-lg border-2 text-xs sm:text-sm font-medium focus:ring-2 focus:outline-none transition-all ${
                                   statusConfig.color === 'green' 
                                     ? 'border-green-200 focus:border-green-500 focus:ring-green-200 bg-green-50' 
                                     : statusConfig.color === 'yellow'
@@ -2307,9 +2310,10 @@ export function Admin() {
                             </div>
                             
                             {/* Badge de statut visuel */}
-                            <div className={`flex items-center gap-2 px-3 py-2 ${statusConfig.bg} ${statusConfig.text} rounded-full font-medium text-sm`}>
+                            <div className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-2 ${statusConfig.bg} ${statusConfig.text} rounded-full font-medium text-xs sm:text-sm whitespace-nowrap`}>
                               {statusConfig.icon}
-                              {statusConfig.label}
+                              <span className="hidden sm:inline">{statusConfig.label}</span>
+                              <span className="sm:hidden">{statusConfig.label === 'En cours' ? 'En cours' : statusConfig.label === 'Terminé' ? 'Fait' : 'À venir'}</span>
                             </div>
                           </div>
                         </div>
@@ -2427,17 +2431,17 @@ export function Admin() {
                               }`}>
                                 <School size={24} className={isCurrentClass ? 'text-green-600' : 'text-gray-600'} />
                               </div>
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  <h4 className="text-lg font-semibold text-gray-800">{classData.name}</h4>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                                  <h4 className="text-base sm:text-lg font-semibold text-gray-800 truncate">{classData.name}</h4>
                                   {isCurrentClass && (
-                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">ACTUELLE</span>
+                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium self-start sm:self-auto">ACTUELLE</span>
                                   )}
                                 </div>
-                                <p className="text-gray-600 text-sm">{classData.description}</p>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">ID: {classData.id}</span>
-                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Couleur: {classData.color}</span>
+                                <p className="text-gray-600 text-xs sm:text-sm break-words">{classData.description}</p>
+                                <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-2">
+                                  <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded truncate">ID: {classData.id}</span>
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">{classData.color}</span>
                                 </div>
                               </div>
                             </div>
