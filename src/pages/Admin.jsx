@@ -450,7 +450,7 @@ export function Admin() {
     try {
       if (modalMode === 'add') {
         // Vérifier si l'utilisateur existe déjà
-        const existingUser = users.find(user => user.username.toLowerCase() === userData.username.toLowerCase())
+        const existingUser = users.find(user => user && user.username && userData.username && user.username.toLowerCase() === userData.username.toLowerCase())
         if (existingUser) {
           showError('Un utilisateur avec ce nom d\'utilisateur existe déjà !')
           return
@@ -461,6 +461,7 @@ export function Admin() {
       } else {
         // Mode édition - vérifier si le nouveau nom d'utilisateur existe déjà (sauf pour l'utilisateur actuel)
         const existingUser = users.find(user => 
+          user && user.username && user.id && selectedUser && selectedUser.id && userData.username &&
           user.username.toLowerCase() === userData.username.toLowerCase() && 
           user.id !== selectedUser.id
         )
