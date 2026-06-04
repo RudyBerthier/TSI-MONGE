@@ -1,0 +1,35 @@
+[
+  {
+    "id": "1770733606290",
+    "username": "Rudy",
+    "email": "rudyberthier@gmail.com",
+    "password": "$2b$10$ccCVCUJdxZB2SY.Gf66xEeB3dJv2Hc0E3I92hPVN9Obfk8RvV/8oC",
+    "role": "admin",
+    "emailVerified": true,
+    "createdAt": "2026-02-10T14:26:46.291Z",
+    "avatar": "/uploads/avatars/1770733606290-1770983000123.png",
+    "twoFactorEnabled": false,
+    "googleId": "108412335963867719449",
+    "googleAvatar": "https://lh3.googleusercontent.com/a/ACg8ocLl4bubQ5XU8XiomQZFodYBQbJ96pbQ0oYO7b632Nv7y2qLPBpE=s96-c"
+  },
+  {
+    "id": "test123",
+    "username": "TestUser",
+    "email": "test@test.com",
+    "password": "$2b$10$FmpfXN5sm..8ShjejXKIte7XTwq4tJFiCiLSxHcFISSz2K3miyz/.",
+    "role": "user",
+    "emailVerified": true,
+    "createdAt": "2026-02-10T15:00:00.000Z",
+    "avatar": null
+  },
+  {
+    "id": "1770831676233",
+    "username": "Test",
+    "email": "boubellederudyberthier@gmail.com",
+    "password": "$2b$10$DvbsBP199btejzq3fnAM..8Bw9c8xe3U7VPhM1QGkhM.kd3ZP6wNO",
+    "role": "user",
+    "emailVerified": true,
+    "createdAt": "2026-02-11T17:41:16.234Z",
+    "twoFactorEnabled": true
+  }
+]

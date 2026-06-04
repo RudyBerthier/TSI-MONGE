@@ -1,0 +1,68 @@
+{
+  "links": [
+    {
+      "title": "Site Lycée",
+      "description": "Le site du lycée",
+      "url": "https://www.lycee-monge.fr",
+      "icon": "Globe",
+      "id": 7,
+      "emoji": "🔗"
+    },
+    {
+      "title": "Icolle",
+      "description": "Voir les colles",
+      "url": "https://icolle.fr/lyceemonge/index.php",
+      "icon": "Globe",
+      "id": 8,
+      "emoji": "🔗"
+    },
+    {
+      "id": 1,
+      "title": "Drive Anglais",
+      "description": "Ressources et cours d'anglais",
+      "url": "https://drive.google.com/drive/folders/1DurjHeiIU_oEpJTccJK363khImMgTnzV",
+      "icon": "GraduationCap",
+      "emoji": "🇬🇧"
+    },
+    {
+      "id": 2,
+      "title": "Drive SI",
+      "description": "Sciences de l'Ingénieur",
+      "url": "https://drive.google.com/drive/folders/0B2HWUKC_SYPnYndpZHFBOE9jVGM",
+      "icon": "Cog",
+      "emoji": "⚙️"
+    },
+    {
+      "id": 3,
+      "title": "Site SI",
+      "description": "Sciences de l'Ingénieur",
+      "url": "https://sites.google.com/site/prepatsimonge",
+      "icon": "Cog",
+      "emoji": "⚙️"
+    },
+    {
+      "id": 4,
+      "title": "Site Info",
+      "description": "Informations TSI Monge",
+      "url": "http://info.tsi.monge.free.fr",
+      "icon": "Globe",
+      "emoji": "💻"
+    },
+    {
+      "id": 5,
+      "title": "Site Math",
+      "description": "Cours de mathématiques",
+      "url": "https://a-crida.toile-libre.org",
+      "icon": "Calculator",
+      "emoji": "📐"
+    },
+    {
+      "id": 6,
+      "title": "Cantine",
+      "description": "Inscription vendredi soir",
+      "url": "https://docs.google.com/spreadsheets/d/1cn2yRqYtKScow7l7WbJbV4RWIlGQYB8LHp3RwruDOoo/",
+      "icon": "ChefHat",
+      "emoji": "🍽️"
+    }
+  ]
+}

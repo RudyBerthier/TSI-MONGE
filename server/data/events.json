@@ -1,0 +1,26 @@
+{
+  "events": [],
+  "recurring": [
+    {
+      "id": "interro-maths-lundi",
+      "type": "Interro",
+      "title": "Interro Maths",
+      "matiere": "Maths",
+      "jour": "Lundi",
+      "heure": "8h - 8h15",
+      "recurring": true
+    },
+    {
+      "id": "49196071-3189-4a40-b086-9b978a90ed7d",
+      "type": "DM",
+      "title": "DM DE MATH",
+      "matiere": "Maths",
+      "jour": "Mercredi",
+      "heure": "8h - 10h",
+      "salle": "",
+      "description": "",
+      "recurring": true
+    }
+  ],
+  "pronoteIcalUrl": ""
+}

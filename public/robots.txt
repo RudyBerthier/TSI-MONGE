@@ -1,0 +1,24 @@
+User-agent: *
+Allow: /
+Allow: /places
+Allow: /sondages
+Allow: /emploi-du-temps
+Allow: /cantine
+Allow: /forum
+Allow: /countdown
+Allow: /login
+Allow: /register
+
+Disallow: /admin
+Disallow: /profile
+Disallow: /chat
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://tsi-monge.fr/sitemap.xml
+
+# TSI Monge Chambery - Site officiel
+# Classe preparatoire Technologie et Sciences de l'Ingenieur
+# CPGE TSI Lycee Monge Chambery Savoie

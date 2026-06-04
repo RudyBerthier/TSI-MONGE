@@ -1,0 +1,659 @@
+{
+  "conversations": [
+    {
+      "id": "1770733606290_test123",
+      "participants": [
+        {
+          "id": "test123",
+          "username": "TestUser",
+          "avatar": null
+        },
+        {
+          "id": "1770733606290",
+          "username": "Rudy",
+          "avatar": null
+        }
+      ],
+      "messages": [
+        {
+          "id": "1770745091813",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "con",
+          "timestamp": "2026-02-10T17:38:11.813Z",
+          "readBy": [
+            "1770733606290"
+          ]
+        },
+        {
+          "id": "1770745299561",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "gros",
+          "timestamp": "2026-02-10T17:41:39.561Z",
+          "readBy": [
+            "1770733606290"
+          ]
+        },
+        {
+          "id": "1770745333767",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "non",
+          "timestamp": "2026-02-10T17:42:13.767Z",
+          "readBy": [
+            "test123"
+          ]
+        },
+        {
+          "id": "1770745737190",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "caca",
+          "timestamp": "2026-02-10T17:48:57.190Z",
+          "readBy": [
+            "test123"
+          ]
+        },
+        {
+          "id": "1770745757424",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "non",
+          "timestamp": "2026-02-10T17:49:17.424Z",
+          "readBy": [
+            "test123"
+          ]
+        },
+        {
+          "id": "1770746395812",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "trop beau",
+          "timestamp": "2026-02-10T17:59:55.812Z",
+          "readBy": [
+            "1770733606290"
+          ]
+        },
+        {
+          "id": "1770746404824",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "chut",
+          "timestamp": "2026-02-10T18:00:04.824Z",
+          "readBy": [
+            "test123"
+          ]
+        },
+        {
+          "id": "1770746410446",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "et oh",
+          "timestamp": "2026-02-10T18:00:10.446Z",
+          "readBy": [
+            "1770733606290"
+          ]
+        },
+        {
+          "id": "1770746421694",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "gros",
+          "timestamp": "2026-02-10T18:00:21.694Z",
+          "readBy": [
+            "1770733606290"
+          ]
+        },
+        {
+          "id": "1770746436353",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "nulle",
+          "timestamp": "2026-02-10T18:00:36.353Z",
+          "readBy": [
+            "test123"
+          ],
+          "reactions": [
+            {
+              "emoji": "😂",
+              "userId": "test123",
+              "username": "TestUser"
+            }
+          ]
+        },
+        {
+          "id": "1770746919264",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "ahh",
+          "timestamp": "2026-02-10T18:08:39.264Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770746941101",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "ah",
+          "timestamp": "2026-02-10T18:09:01.101Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770747799321",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "nulle",
+          "timestamp": "2026-02-10T18:23:19.321Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": {
+            "id": "1770746436353",
+            "username": "Rudy",
+            "content": "nulle"
+          }
+        },
+        {
+          "id": "1770748014552",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "ahh",
+          "timestamp": "2026-02-10T18:26:54.552Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770748023762",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "ah",
+          "timestamp": "2026-02-10T18:27:03.762Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770752449843",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "beau",
+          "timestamp": "2026-02-10T19:40:49.843Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770752456234",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "con",
+          "timestamp": "2026-02-10T19:40:56.234Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770752464436",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "con",
+          "timestamp": "2026-02-10T19:41:04.436Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770752471351",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "mais nan",
+          "timestamp": "2026-02-10T19:41:11.351Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770752479079",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "nan",
+          "timestamp": "2026-02-10T19:41:19.079Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770752712998",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "ah",
+          "timestamp": "2026-02-10T19:45:12.998Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770752771825",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "con",
+          "timestamp": "2026-02-10T19:46:11.825Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770752782329",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "nop",
+          "timestamp": "2026-02-10T19:46:22.329Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null
+        },
+        {
+          "id": "1770753140750",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "oui",
+          "timestamp": "2026-02-10T19:52:20.750Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null,
+          "editHistory": [
+            {
+              "content": "ff",
+              "editedAt": "2026-02-10T20:01:08.448Z"
+            }
+          ],
+          "isEdited": true
+        },
+        {
+          "id": "1770753146938",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "mais oui",
+          "timestamp": "2026-02-10T19:52:26.938Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": {
+            "id": "1770753140750",
+            "username": "TestUser",
+            "content": "ff"
+          }
+        },
+        {
+          "id": "1770753759535",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "",
+          "timestamp": "2026-02-10T20:02:39.535Z",
+          "readBy": [
+            "test123"
+          ],
+          "replyTo": null,
+          "attachment": {
+            "filename": "1770753759531-424548348.jpg",
+            "originalName": "PIXECT-20260120200332.jpg",
+            "mimetype": "image/jpeg",
+            "size": 96188,
+            "url": "/uploads/chat/1770753759531-424548348.jpg"
+          }
+        },
+        {
+          "id": "1770821627187",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "bg",
+          "timestamp": "2026-02-11T14:53:47.187Z",
+          "readBy": [],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770821637218",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "",
+          "timestamp": "2026-02-11T14:53:57.218Z",
+          "readBy": [],
+          "replyTo": null,
+          "attachment": {
+            "filename": "1770821637197-709048799.png",
+            "originalName": "logo leman airways (2).png",
+            "mimetype": "image/png",
+            "size": 661512,
+            "url": "/uploads/chat/1770821637197-709048799.png"
+          }
+        },
+        {
+          "id": "1770980658452",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "bete va",
+          "timestamp": "2026-02-13T11:04:18.452Z",
+          "readBy": [],
+          "replyTo": null,
+          "attachment": null
+        }
+      ],
+      "lastMessage": {
+        "content": "bete va",
+        "senderId": "1770733606290",
+        "timestamp": "2026-02-13T11:04:18.452Z",
+        "hasAttachment": false
+      },
+      "updatedAt": "2026-02-13T11:04:18.453Z"
+    },
+    {
+      "id": "Berthier_test123",
+      "participants": [
+        {
+          "id": "test123",
+          "username": "TestUser",
+          "avatar": null
+        },
+        {
+          "id": "Berthier",
+          "username": "Berthier"
+        }
+      ],
+      "messages": [
+        {
+          "id": "1770748374135",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "con",
+          "timestamp": "2026-02-10T18:32:54.135Z",
+          "readBy": [],
+          "replyTo": null
+        },
+        {
+          "id": "1770748400617",
+          "senderId": "test123",
+          "senderUsername": "TestUser",
+          "senderAvatar": null,
+          "content": "ouu",
+          "timestamp": "2026-02-10T18:33:20.617Z",
+          "readBy": [],
+          "replyTo": null
+        }
+      ],
+      "lastMessage": {
+        "content": "ouu",
+        "senderId": "test123",
+        "timestamp": "2026-02-10T18:33:20.617Z"
+      },
+      "updatedAt": "2026-02-10T18:33:20.618Z"
+    },
+    {
+      "id": "1770733606290_1770831676233",
+      "participants": [
+        {
+          "id": "1770831676233",
+          "username": "Test",
+          "avatar": null
+        },
+        {
+          "id": "1770733606290",
+          "username": "Rudy",
+          "avatar": null
+        }
+      ],
+      "messages": [
+        {
+          "id": "1770831717767",
+          "senderId": "1770831676233",
+          "senderUsername": "Test",
+          "senderAvatar": null,
+          "content": "salut",
+          "timestamp": "2026-02-11T17:41:57.767Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770831720557",
+          "senderId": "1770831676233",
+          "senderUsername": "Test",
+          "senderAvatar": null,
+          "content": "ca va ??",
+          "timestamp": "2026-02-11T17:42:00.557Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770831745330",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "oe bg",
+          "timestamp": "2026-02-11T17:42:25.330Z",
+          "readBy": [
+            "1770831676233"
+          ],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770831760523",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "gros naze",
+          "timestamp": "2026-02-11T17:42:40.523Z",
+          "readBy": [
+            "1770831676233"
+          ],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770831765882",
+          "senderId": "1770831676233",
+          "senderUsername": "Test",
+          "senderAvatar": null,
+          "content": "oui",
+          "timestamp": "2026-02-11T17:42:45.882Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770831769383",
+          "senderId": "1770831676233",
+          "senderUsername": "Test",
+          "senderAvatar": null,
+          "content": "oui",
+          "timestamp": "2026-02-11T17:42:49.383Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770831792268",
+          "senderId": "1770831676233",
+          "senderUsername": "Test",
+          "senderAvatar": null,
+          "content": "oe",
+          "timestamp": "2026-02-11T17:43:12.268Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null,
+          "attachment": {
+            "filename": "1770831792259-441391336.png",
+            "originalName": "logo leman airways.png",
+            "mimetype": "image/png",
+            "size": 663533,
+            "url": "/uploads/chat/1770831792259-441391336.png"
+          }
+        },
+        {
+          "id": "1770831816289",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "",
+          "timestamp": "2026-02-11T17:43:36.289Z",
+          "readBy": [
+            "1770831676233"
+          ],
+          "replyTo": null,
+          "attachment": {
+            "filename": "1770831816281-280847322.png",
+            "originalName": "logo leman airways (1).png",
+            "mimetype": "image/png",
+            "size": 661782,
+            "url": "/uploads/chat/1770831816281-280847322.png"
+          }
+        },
+        {
+          "id": "1770843327539",
+          "senderId": "1770831676233",
+          "senderUsername": "Test",
+          "senderAvatar": null,
+          "content": "mais na",
+          "timestamp": "2026-02-11T20:55:27.539Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770843329451",
+          "senderId": "1770831676233",
+          "senderUsername": "Test",
+          "senderAvatar": null,
+          "content": "oui",
+          "timestamp": "2026-02-11T20:55:29.451Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770843329626",
+          "senderId": "1770831676233",
+          "senderUsername": "Test",
+          "senderAvatar": null,
+          "content": "ui",
+          "timestamp": "2026-02-11T20:55:29.626Z",
+          "readBy": [
+            "1770733606290"
+          ],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770938435728",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "et oh",
+          "timestamp": "2026-02-12T23:20:35.728Z",
+          "readBy": [],
+          "replyTo": null,
+          "attachment": null
+        },
+        {
+          "id": "1770980617118",
+          "senderId": "1770733606290",
+          "senderUsername": "Rudy",
+          "senderAvatar": null,
+          "content": "oh",
+          "timestamp": "2026-02-13T11:03:37.118Z",
+          "readBy": [],
+          "replyTo": null,
+          "attachment": null
+        }
+      ],
+      "lastMessage": {
+        "content": "oh",
+        "senderId": "1770733606290",
+        "timestamp": "2026-02-13T11:03:37.118Z",
+        "hasAttachment": false
+      },
+      "updatedAt": "2026-02-13T11:03:37.119Z"
+    },
+    {
+      "id": "1770831676233_test123",
+      "participants": [
+        {
+          "id": "1770831676233",
+          "username": "Test",
+          "avatar": null
+        },
+        {
+          "id": "test123",
+          "username": "TestUser",
+          "avatar": null
+        }
+      ],
+      "messages": [],
+      "lastMessage": null,
+      "updatedAt": "2026-02-11T19:16:34.204Z"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "sondages": [
+    {
+      "id": "8c5e91e9-e632-4aae-a043-bfd723bb9091",
+      "title": "Test",
+      "description": "",
+      "options": [
+        "oui",
+        "non"
+      ],
+      "votes": {
+        "oui": 1,
+        "non": 0
+      },
+      "active": true,
+      "createdAt": "2026-02-11T14:48:18.731Z",
+      "userVotes": {
+        "1770831676233": "oui"
+      }
+    }
+  ]
+}

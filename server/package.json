@@ -1,0 +1,44 @@
+{
+  "name": "tsi1-api",
+  "version": "1.0.0",
+  "description": "API Node.js pour le site TSI 1 Mathématiques",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@distube/ytdl-core": "^4.16.12",
+    "@supabase/supabase-js": "^2.97.0",
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.4",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.2.1",
+    "google-auth-library": "^10.5.0",
+    "jimp": "^1.6.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.2",
+    "node-ical": "^0.24.2",
+    "pdf-parse": "^2.4.5",
+    "play-dl": "^1.9.7",
+    "resend": "^6.9.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "soundcloud-downloader": "^1.0.0",
+    "tesseract.js": "^7.0.0",
+    "uuid": "^9.0.1",
+    "web-push": "^3.6.7",
+    "youtube-dl-exec": "^3.1.4",
+    "youtube-ext": "^1.1.25",
+    "yt-search": "^2.13.1"
+  },
+  "keywords": [
+    "tsi",
+    "math",
+    "api"
+  ],
+  "author": "TSI 1 Monge",
+  "license": "MIT"
+}

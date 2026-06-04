@@ -1,0 +1,77 @@
+{
+  "tsi1": {
+    "startDate": "2026-01-26",
+    "layout": {
+      "left": [
+        [
+          "Marouane",
+          "Romain"
+        ],
+        [
+          "Mathias A",
+          "Julien B"
+        ],
+        [
+          "Keyran",
+          "Momo"
+        ],
+        [
+          "Mathias P",
+          "Akram"
+        ],
+        [
+          "Kyrylo",
+          "Evan"
+        ]
+      ],
+      "center": [
+        [
+          "Ethan",
+          "Hippo",
+          "Nathan D",
+          "Nolann F"
+        ],
+        [
+          "Darius",
+          "Nathan",
+          "Raph",
+          "Lilian"
+        ],
+        [
+          "Ran",
+          "Gabriel",
+          "Aymeric",
+          "Matys"
+        ],
+        [
+          "Nolan",
+          "",
+          "Nathanaël",
+          "Esteban O"
+        ]
+      ],
+      "right": [
+        [
+          "Esteban K",
+          "Arthur"
+        ],
+        [
+          "Nathan M",
+          "Julien"
+        ],
+        [
+          "Delphine",
+          "Adam"
+        ],
+        [
+          "Samuel",
+          "Timéo"
+        ],
+        [
+          "Rudy",
+          "Louison"
+        ]
+      ]
+    }
+  }
+}
