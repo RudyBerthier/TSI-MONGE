@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
-import { io } from 'socket.io-client'
 import { useAuth } from './AuthContext'
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '')
@@ -15,6 +14,8 @@ export function SocketProvider({ children }) {
   const stableGetToken = useCallback(() => getToken(), [])
 
   useEffect(() => {
+    let isActive = true;
+
     if (!isAuthenticated) {
       if (socketRef.current) {
         socketRef.current.close()
@@ -38,32 +39,42 @@ export function SocketProvider({ children }) {
       socketRef.current.close()
     }
 
-    const newSocket = io(SOCKET_URL || window.location.origin, {
-      auth: { token },
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000
-    })
+    // Lazy load socket.io-client
+    import('socket.io-client').then(({ io }) => {
+      if (!isActive) return;
 
-    newSocket.on('connect', () => {
-      setConnected(true)
-    })
+      const newSocket = io(SOCKET_URL || window.location.origin, {
+        auth: { token },
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000
+      })
 
-    newSocket.on('disconnect', () => {
-      setConnected(false)
-    })
+      newSocket.on('connect', () => {
+        setConnected(true)
+      })
 
-    newSocket.on('connect_error', (err) => {
-      console.error('Socket connection error:', err.message)
-    })
+      newSocket.on('disconnect', () => {
+        setConnected(false)
+      })
 
-    socketRef.current = newSocket
-    setSocket(newSocket)
+      newSocket.on('connect_error', (err) => {
+        console.error('Socket connection error:', err.message)
+      })
+
+      socketRef.current = newSocket
+      setSocket(newSocket)
+    }).catch(err => {
+      console.error('Failed to load socket.io-client', err);
+    });
 
     return () => {
-      newSocket.close()
-      socketRef.current = null
+      isActive = false;
+      if (socketRef.current) {
+        socketRef.current.close()
+        socketRef.current = null
+      }
     }
   }, [isAuthenticated, stableGetToken])
 

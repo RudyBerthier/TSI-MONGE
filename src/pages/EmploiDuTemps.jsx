@@ -192,12 +192,17 @@ export function EmploiDuTemps() {
       const idx = WEEKS.findIndex(w => w.num === weekNum)
       if (idx >= 0) return idx
     }
+    const saved = sessionStorage.getItem('edt_weekIdx')
+    if (saved !== null) return parseInt(saved)
     return getCurrentWeekIdx()
   })
   const urlDayRef = useRef(searchParams.get('day'))
   const [activeDay, setActiveDay] = useState(() => {
     const day = parseInt(searchParams.get('day') ?? '-1')
-    return day >= 0 && day <= 5 ? day : 0
+    if (day >= 0 && day <= 5) return day
+    const saved = sessionStorage.getItem('edt_activeDay')
+    if (saved !== null) return parseInt(saved)
+    return 0
   })
   const [colleurs, setColleurs] = useState(FALLBACK_COLLEURS)
   const [events, setEvents] = useState({ events: [], recurring: [] })
@@ -217,7 +222,7 @@ export function EmploiDuTemps() {
   const [loadingCourses, setLoadingCourses] = useState(true)
   const [pronoteStatus, setPronoteStatus] = useState({ synced: false, lastUpdated: null, courseCount: 0, isRefreshing: false })
   const [pronoteRefreshing, setPronoteRefreshing] = useState(false)
-  const [viewMode, setViewMode] = useState('day') // 'day' or 'week'
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('edt_viewMode') || 'day') // 'day' or 'week'
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [showWeekPicker, setShowWeekPicker] = useState(false)
   const [showColorsModal, setShowColorsModal] = useState(false)
@@ -241,6 +246,13 @@ export function EmploiDuTemps() {
       setSubjectColorsState(userSettings.subject_colors)
     }
   }, [userSettings])
+
+  // Sauvegarder la position (semaine/jour/vue) lors du rafraichissement
+  useEffect(() => {
+    sessionStorage.setItem('edt_weekIdx', weekIdx)
+    sessionStorage.setItem('edt_activeDay', activeDay)
+    localStorage.setItem('edt_viewMode', viewMode)
+  }, [weekIdx, activeDay, viewMode])
 
   // Save subject color
   const updateSubjectColor = (subject, colorHex) => {
@@ -869,6 +881,7 @@ export function EmploiDuTemps() {
 
       const cb = CONCOURS_BLANC
       if (dateStr >= cb.startDate && dateStr <= cb.endDate && jour !== 'Samedi') {
+        byDay[jour] = [] // Clear all other courses for this day
         byDay[jour].push({
           kind: 'event',
           eventType: 'DS',
@@ -881,6 +894,7 @@ export function EmploiDuTemps() {
           description: 'Epreuves du concours blanc',
           id: `cb-${dateStr}`,
           weekNum: week.num,
+          isConcoursBlanc: true,
         })
       }
     })
@@ -892,7 +906,7 @@ export function EmploiDuTemps() {
       if (jour === 'Samedi') return // Pas de repas le samedi
 
       const dayItems = byDay[jour] || []
-      if (dayItems.length === 0) return // No school day
+      if (dayItems.length === 0 || dayItems.some(item => item.isConcoursBlanc)) return // No school day or Concours Blanc
 
       // Get all items that overlap with 12-14h period, sorted by start
       const lunchItems = dayItems

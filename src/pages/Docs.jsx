@@ -362,7 +362,7 @@ export function Docs() {
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <button className="docs-back-btn" onClick={() => navigate('/')}>
-            <ArrowLeft size={16} /> Accueil
+            <ArrowLeft size={16} /> <span className="docs-back-text">Accueil</span>
           </button>
           <div className="docs-logo">
             <BookOpen size={20} />

@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, Plus, MessageSquare, Search, Filter, ThumbsUp, ThumbsDown, Clock, User, Tag, Send, Trash2, X, TrendingUp, MessageCircle, Users, Shield, Image as ImageIcon, ZoomIn, ChevronDown, FileText, File, FileCode, FileArchive, Download, Paperclip, ExternalLink, LogIn } from 'lucide-react'
 import FingerprintJS from '@fingerprintjs/fingerprintjs'
 import { useAuth } from '../contexts/AuthContext'
+import { RestrictedAccess } from '../components/RestrictedAccess'
 
 // File type icons and colors
 const FILE_TYPES = {
@@ -51,7 +52,7 @@ const normalizeFiles = (files) => {
 }
 
 // Component: File attachment display
-const FileAttachment = ({ file, onView, onDownload, small = false }) => {
+const FileAttachment = ({ file, onView, small = false }) => {
   const fileType = file.type || getFileTypeFromUrl(file.url)
   const typeInfo = FILE_TYPES[fileType] || FILE_TYPES.file
   const IconComponent = typeInfo.icon
@@ -176,6 +177,7 @@ const CATEGORIES = [
 ]
 
 export function Forum() {
+  const location = useLocation();
   const { user, isAuthenticated, getToken } = useAuth()
 
   const [topics, setTopics] = useState([])
@@ -257,6 +259,7 @@ export function Forum() {
     if (fingerprint) {
       fetchUserVotes()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fingerprint])
 
   // Fetch user's votes (by fingerprint)
@@ -606,267 +609,275 @@ export function Forum() {
           </div>
         </div>
 
-        {/* Topic detail */}
-        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-          {/* Main topic card */}
-          <div className="rounded-2xl shadow-lg overflow-hidden mb-4" style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}>
-            <div className="p-6">
-              {/* Category badge */}
-              <div className="mb-3">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border ${category.color}`}>
-                  <span className={`w-2 h-2 rounded-full ${category.dot}`} />
-                  {category.name}
-                </span>
-              </div>
+        {!isAuthenticated ? (
+          <div className="max-w-4xl mx-auto px-4 py-12">
+            <RestrictedAccess
+              title="Accès restreint"
+              message="Connectez-vous pour lire ou participer à ce sujet du forum."
+            />
+          </div>
+        ) : (
+          <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+            {/* Main topic card */}
+            <div className="rounded-2xl shadow-lg overflow-hidden mb-4" style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}>
+              <div className="p-6">
+                {/* Category badge */}
+                <div className="mb-3">
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border ${category.color}`}>
+                    <span className={`w-2 h-2 rounded-full ${category.dot}`} />
+                    {category.name}
+                  </span>
+                </div>
 
-              {/* Title */}
-              <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--text)' }}>{selectedTopic.title}</h2>
+                {/* Title */}
+                <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--text)' }}>{selectedTopic.title}</h2>
 
-              {/* Content */}
-              <p className="whitespace-pre-wrap mb-4" style={{ color: 'var(--text)' }}>{selectedTopic.content}</p>
+                {/* Content */}
+                <p className="whitespace-pre-wrap mb-4" style={{ color: 'var(--text)' }}>{selectedTopic.content}</p>
 
-              {/* Files/Attachments */}
-              {((selectedTopic.files && selectedTopic.files.length > 0) || (selectedTopic.images && selectedTopic.images.length > 0)) && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Paperclip size={16} style={{ color: 'var(--text-muted)' }} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
-                      {(selectedTopic.files?.length || 0) + (selectedTopic.images?.length || 0)} fichier{((selectedTopic.files?.length || 0) + (selectedTopic.images?.length || 0)) > 1 ? 's' : ''}
+                {/* Files/Attachments */}
+                {((selectedTopic.files && selectedTopic.files.length > 0) || (selectedTopic.images && selectedTopic.images.length > 0)) && (
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Paperclip size={16} style={{ color: 'var(--text-muted)' }} />
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>
+                        {(selectedTopic.files?.length || 0) + (selectedTopic.images?.length || 0)} fichier{((selectedTopic.files?.length || 0) + (selectedTopic.images?.length || 0)) > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <FilesGrid
+                      files={[...(selectedTopic.files || []), ...(selectedTopic.images || [])]}
+                      onViewFile={(file) => setViewingImage(file)}
+                    />
+                  </div>
+                )}
+
+                {/* Meta */}
+                <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+                  <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
+                    <span className="flex items-center gap-1.5">
+                      <User size={16} />
+                      <Link to={`/social/user/${selectedTopic.author}`} className="font-medium hover:underline" style={{ color: 'var(--text)' }}>{selectedTopic.author}</Link>
+                      {isAdmin && selectedTopic.author === replyAuthor && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-600 dark:text-red-400 border border-red-200">
+                          ADMIN
+                        </span>
+                      )}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <Clock size={16} />
+                      {formatDate(selectedTopic.createdAt)}
                     </span>
                   </div>
-                  <FilesGrid
-                    files={[...(selectedTopic.files || []), ...(selectedTopic.images || [])]}
-                    onViewFile={(file) => setViewingImage(file)}
-                  />
-                </div>
-              )}
-
-              {/* Meta */}
-              <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid var(--border)' }}>
-                <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-muted)' }}>
-                  <span className="flex items-center gap-1.5">
-                    <User size={16} />
-                    <Link to={`/social/user/${selectedTopic.author}`} className="font-medium hover:underline" style={{ color: 'var(--text)' }}>{selectedTopic.author}</Link>
-                    {isAdmin && selectedTopic.author === replyAuthor && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-600 dark:text-red-400 border border-red-200">
-                        ADMIN
-                      </span>
-                    )}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock size={16} />
-                    {formatDate(selectedTopic.createdAt)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  {/* Like button */}
-                  <button
-                    onClick={() => handleVote(selectedTopic.id, 'like')}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium active:scale-95 transition-all ${getUserVote(selectedTopic.id) === 'like'
-                      ? 'bg-green-100 text-green-600'
-                      : 'text-gray-600 hover:bg-green-50 hover:text-green-600'
-                      }`}
-                    title={getUserVote(selectedTopic.id) === 'like' ? "Retirer le j'aime" : "J'aime"}
-                  >
-                    <ThumbsUp size={16} className={getUserVote(selectedTopic.id) === 'like' ? 'fill-green-600' : ''} />
-                    <span className="font-bold">{selectedTopic.likes || 0}</span>
-                  </button>
-
-                  {/* Dislike button */}
-                  <button
-                    onClick={() => handleVote(selectedTopic.id, 'dislike')}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium active:scale-95 transition-all ${getUserVote(selectedTopic.id) === 'dislike'
-                      ? 'bg-red-100 text-red-600'
-                      : 'text-gray-600 hover:bg-red-50 hover:text-red-600'
-                      }`}
-                    title={getUserVote(selectedTopic.id) === 'dislike' ? "Retirer le j'aime pas" : "J'aime pas"}
-                  >
-                    <ThumbsDown size={16} className={getUserVote(selectedTopic.id) === 'dislike' ? 'fill-red-600' : ''} />
-                    <span className="font-bold">{selectedTopic.dislikes || 0}</span>
-                  </button>
-                  {canDelete(selectedTopic.author) && (
+                  <div className="flex items-center gap-1">
+                    {/* Like button */}
                     <button
-                      onClick={() => handleDeleteTopic(selectedTopic.id, selectedTopic.author)}
-                      className="p-2 sm:px-3 sm:py-2 rounded-xl text-red-400 hover:text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 active:scale-95 transition-all flex items-center justify-center"
-                      title={isAdmin ? "Supprimer (Admin)" : "Supprimer votre sujet"}
+                      onClick={() => handleVote(selectedTopic.id, 'like')}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium active:scale-95 transition-all ${getUserVote(selectedTopic.id) === 'like'
+                        ? 'bg-green-100 text-green-600'
+                        : 'text-gray-600 hover:bg-green-50 hover:text-green-600'
+                        }`}
+                      title={getUserVote(selectedTopic.id) === 'like' ? "Retirer le j'aime" : "J'aime"}
                     >
-                      <Trash2 size={18} />
+                      <ThumbsUp size={16} className={getUserVote(selectedTopic.id) === 'like' ? 'fill-green-600' : ''} />
+                      <span className="font-bold">{selectedTopic.likes || 0}</span>
                     </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Replies section */}
-          <div className="rounded-2xl shadow-lg overflow-hidden mb-4" style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}>
-            <div className="px-6 py-4" style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>
-              <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
-                <MessageCircle size={20} style={{ color: 'var(--accent)' }} />
-                {selectedTopic.replies?.length || 0} Réponse{(selectedTopic.replies?.length || 0) !== 1 ? 's' : ''}
-              </h3>
-            </div>
-
-            {/* Replies list */}
-            <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
-              {(selectedTopic.replies || []).map((reply, idx) => (
-                <div key={idx} className="p-4 sm:p-6 transition-colors group" style={{ background: 'var(--surface)' }}>
-                  <div className="flex items-start gap-2 sm:gap-3">
-                    <Link to={`/social/user/${reply.author}`} className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold shrink-0 hover:opacity-80 transition-opacity">
-                      {reply.author.charAt(0).toUpperCase()}
-                    </Link>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <Link to={`/social/user/${reply.author}`} className="font-semibold hover:underline" style={{ color: 'var(--text)' }}>{reply.author}</Link>
-                        {isAdmin && reply.author === replyAuthor && (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-600 border border-red-200">
-                            ADMIN
-                          </span>
-                        )}
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>•</span>
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(reply.createdAt)}</span>
-                      </div>
-                      <p className="whitespace-pre-wrap mb-2" style={{ color: 'var(--text)' }}>{reply.content}</p>
-
-                      {/* Reply files */}
-                      {((reply.files && reply.files.length > 0) || (reply.images && reply.images.length > 0)) && (
-                        <div className="mt-3">
-                          <FilesGrid
-                            files={[...(reply.files || []), ...(reply.images || [])]}
-                            onViewFile={(file) => setViewingImage(file)}
-                            small
-                          />
-                        </div>
-                      )}
-                    </div>
-                    {canDelete(reply.author) && (
+                    {/* Dislike button */}
+                    <button
+                      onClick={() => handleVote(selectedTopic.id, 'dislike')}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium active:scale-95 transition-all ${getUserVote(selectedTopic.id) === 'dislike'
+                        ? 'bg-red-100 text-red-600'
+                        : 'text-gray-600 hover:bg-red-50 hover:text-red-600'
+                        }`}
+                      title={getUserVote(selectedTopic.id) === 'dislike' ? "Retirer le j'aime pas" : "J'aime pas"}
+                    >
+                      <ThumbsDown size={16} className={getUserVote(selectedTopic.id) === 'dislike' ? 'fill-red-600' : ''} />
+                      <span className="font-bold">{selectedTopic.dislikes || 0}</span>
+                    </button>
+                    {canDelete(selectedTopic.author) && (
                       <button
-                        onClick={() => handleDeleteReply(selectedTopic.id, reply.id, reply.author)}
-                        className="opacity-0 group-hover:opacity-100 p-2 rounded-lg text-red-400 hover:text-red-600 dark:text-red-400 hover:bg-red-50 dark:bg-red-900/30 transition-all shrink-0"
-                        title={isAdmin ? "Supprimer (Admin)" : "Supprimer votre réponse"}
+                        onClick={() => handleDeleteTopic(selectedTopic.id, selectedTopic.author)}
+                        className="p-2 sm:px-3 sm:py-2 rounded-xl text-red-400 hover:text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 active:scale-95 transition-all flex items-center justify-center"
+                        title={isAdmin ? "Supprimer (Admin)" : "Supprimer votre sujet"}
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={18} />
                       </button>
                     )}
                   </div>
                 </div>
-              ))}
+              </div>
+            </div>
 
-              {(selectedTopic.replies || []).length === 0 && (
-                <div className="p-12 text-center" style={{ color: 'var(--text-muted)' }}>
-                  <MessageSquare size={48} className="mx-auto mb-3 opacity-30" />
-                  <p>Aucune réponse pour le moment. Soyez le premier à répondre !</p>
+            {/* Replies section */}
+            <div className="rounded-2xl shadow-lg overflow-hidden mb-4" style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}>
+              <div className="px-6 py-4" style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--border)' }}>
+                <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
+                  <MessageCircle size={20} style={{ color: 'var(--accent)' }} />
+                  {selectedTopic.replies?.length || 0} Réponse{(selectedTopic.replies?.length || 0) !== 1 ? 's' : ''}
+                </h3>
+              </div>
+
+              {/* Replies list */}
+              <div className="divide-y" style={{ borderColor: 'var(--border)' }}>
+                {(selectedTopic.replies || []).map((reply, idx) => (
+                  <div key={idx} className="p-4 sm:p-6 transition-colors group" style={{ background: 'var(--surface)' }}>
+                    <div className="flex items-start gap-2 sm:gap-3">
+                      <Link to={`/social/user/${reply.author}`} className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold shrink-0 hover:opacity-80 transition-opacity">
+                        {reply.author.charAt(0).toUpperCase()}
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <Link to={`/social/user/${reply.author}`} className="font-semibold hover:underline" style={{ color: 'var(--text)' }}>{reply.author}</Link>
+                          {isAdmin && reply.author === replyAuthor && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 text-red-600 border border-red-200">
+                              ADMIN
+                            </span>
+                          )}
+                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>•</span>
+                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatDate(reply.createdAt)}</span>
+                        </div>
+                        <p className="whitespace-pre-wrap mb-2" style={{ color: 'var(--text)' }}>{reply.content}</p>
+
+                        {/* Reply files */}
+                        {((reply.files && reply.files.length > 0) || (reply.images && reply.images.length > 0)) && (
+                          <div className="mt-3">
+                            <FilesGrid
+                              files={[...(reply.files || []), ...(reply.images || [])]}
+                              onViewFile={(file) => setViewingImage(file)}
+                              small
+                            />
+                          </div>
+                        )}
+                      </div>
+                      {canDelete(reply.author) && (
+                        <button
+                          onClick={() => handleDeleteReply(selectedTopic.id, reply.id, reply.author)}
+                          className="opacity-0 group-hover:opacity-100 p-2 rounded-lg text-red-400 hover:text-red-600 dark:text-red-400 hover:bg-red-50 dark:bg-red-900/30 transition-all shrink-0"
+                          title={isAdmin ? "Supprimer (Admin)" : "Supprimer votre réponse"}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {(selectedTopic.replies || []).length === 0 && (
+                  <div className="p-12 text-center" style={{ color: 'var(--text-muted)' }}>
+                    <MessageSquare size={48} className="mx-auto mb-3 opacity-30" />
+                    <p>Aucune réponse pour le moment. Soyez le premier à répondre !</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Reply form */}
+            <div className="rounded-2xl shadow-lg p-4 sm:p-6" style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}>
+              <h3 className="font-bold mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base" style={{ color: 'var(--text)' }}>
+                <Send size={18} style={{ color: 'var(--accent)' }} />
+                Ajouter une réponse
+              </h3>
+
+              {isAuthenticated ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Votre réponse</label>
+                    <textarea
+                      value={newReply}
+                      onChange={(e) => setNewReply(e.target.value)}
+                      placeholder="Écrivez votre réponse..."
+                      rows={4}
+                      className="tsi-input w-full px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                    />
+                  </div>
+
+                  {/* File upload for reply */}
+                  <div>
+                    <label className="text-sm font-medium block mb-2" style={{ color: 'var(--text-muted)' }}>Fichiers (optionnel)</label>
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <label className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed hover:border-blue-400 cursor-pointer transition-all" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
+                        <Paperclip size={18} />
+                        <span className="text-sm font-medium">Ajouter des fichiers</span>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.py,.js,.html,.css,.c,.cpp,.java"
+                          onChange={handleReplyFileUpload}
+                          className="hidden"
+                        />
+                      </label>
+                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Images, PDF, documents... (max 5, 10Mo/fichier)</span>
+                    </div>
+
+                    {/* File previews */}
+                    {replyFiles.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {replyFiles.map((file, idx) => {
+                          const fileType = file.type || getFileTypeFromUrl(file.url)
+                          const typeInfo = FILE_TYPES[fileType] || FILE_TYPES.file
+                          const IconComponent = typeInfo.icon
+                          return (
+                            <div key={idx} className={`flex items-center gap-3 p-2 rounded-lg border ${typeInfo.bg}`} style={{ borderColor: 'var(--border)' }}>
+                              {fileType === 'image' ? (
+                                <img src={file.url} alt={file.name} className="w-12 h-12 object-cover rounded" />
+                              ) : (
+                                <div className={`p-2 rounded ${typeInfo.color}`}>
+                                  <IconComponent size={20} />
+                                </div>
+                              )}
+                              <span className="flex-1 text-sm truncate" style={{ color: 'var(--text)' }}>{file.name}</span>
+                              {file.size > 0 && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatFileSize(file.size)}</span>}
+                              <button
+                                onClick={() => removeReplyFile(idx)}
+                                className="p-1 rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition-all"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={handleAddReply}
+                    disabled={!newReply.trim() || !replyAuthor.trim()}
+                    className="w-full py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <Send size={18} />
+                    Envoyer la réponse
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <LogIn size={24} style={{ color: 'var(--accent)' }} />
+                  </div>
+                  <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
+                    Connectez-vous pour répondre à ce sujet.
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Link
+                      to="/login" state={{ from: location.pathname }}
+                      className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+                    >
+                      <LogIn size={16} />
+                      Connexion
+                    </Link>
+                    <Link
+                      to="/register" state={{ from: location.pathname }}
+                      className="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+                      style={{ border: '1px solid var(--border)', color: 'var(--text-muted)', background: 'var(--surface-2)' }}
+                    >
+                      S'inscrire
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
           </div>
-
-          {/* Reply form */}
-          <div className="rounded-2xl shadow-lg p-4 sm:p-6" style={{ background: 'var(--surface)', border: '2px solid var(--border)' }}>
-            <h3 className="font-bold mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base" style={{ color: 'var(--text)' }}>
-              <Send size={18} style={{ color: 'var(--accent)' }} />
-              Ajouter une réponse
-            </h3>
-
-            {isAuthenticated ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium block mb-1" style={{ color: 'var(--text-muted)' }}>Votre réponse</label>
-                  <textarea
-                    value={newReply}
-                    onChange={(e) => setNewReply(e.target.value)}
-                    placeholder="Écrivez votre réponse..."
-                    rows={4}
-                    className="tsi-input w-full px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
-                  />
-                </div>
-
-                {/* File upload for reply */}
-                <div>
-                  <label className="text-sm font-medium block mb-2" style={{ color: 'var(--text-muted)' }}>Fichiers (optionnel)</label>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <label className="flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed hover:border-blue-400 cursor-pointer transition-all" style={{ borderColor: 'var(--border)', color: 'var(--text-muted)' }}>
-                      <Paperclip size={18} />
-                      <span className="text-sm font-medium">Ajouter des fichiers</span>
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.py,.js,.html,.css,.c,.cpp,.java"
-                        onChange={handleReplyFileUpload}
-                        className="hidden"
-                      />
-                    </label>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Images, PDF, documents... (max 5, 10Mo/fichier)</span>
-                  </div>
-
-                  {/* File previews */}
-                  {replyFiles.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {replyFiles.map((file, idx) => {
-                        const fileType = file.type || getFileTypeFromUrl(file.url)
-                        const typeInfo = FILE_TYPES[fileType] || FILE_TYPES.file
-                        const IconComponent = typeInfo.icon
-                        return (
-                          <div key={idx} className={`flex items-center gap-3 p-2 rounded-lg border ${typeInfo.bg}`} style={{ borderColor: 'var(--border)' }}>
-                            {fileType === 'image' ? (
-                              <img src={file.url} alt={file.name} className="w-12 h-12 object-cover rounded" />
-                            ) : (
-                              <div className={`p-2 rounded ${typeInfo.color}`}>
-                                <IconComponent size={20} />
-                              </div>
-                            )}
-                            <span className="flex-1 text-sm truncate" style={{ color: 'var(--text)' }}>{file.name}</span>
-                            {file.size > 0 && <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatFileSize(file.size)}</span>}
-                            <button
-                              onClick={() => removeReplyFile(idx)}
-                              className="p-1 rounded-full bg-red-100 text-red-500 hover:bg-red-200 transition-all"
-                            >
-                              <X size={14} />
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  onClick={handleAddReply}
-                  disabled={!newReply.trim() || !replyAuthor.trim()}
-                  className="w-full py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <Send size={18} />
-                  Envoyer la réponse
-                </button>
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <LogIn size={24} style={{ color: 'var(--accent)' }} />
-                </div>
-                <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-                  Connectez-vous pour répondre à ce sujet.
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Link
-                    to="/login"
-                    className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
-                  >
-                    <LogIn size={16} />
-                    Connexion
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-                    style={{ border: '1px solid var(--border)', color: 'var(--text-muted)', background: 'var(--surface-2)' }}
-                  >
-                    S'inscrire
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        )}
 
         {/* File viewer lightbox (images and PDFs) */}
         {viewingImage && (() => {
@@ -940,40 +951,29 @@ export function Forum() {
 
   // Main forum view
   return (
-    <div className="pb-20" style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-      {/* Header */}
-      <div className="shadow-lg sticky top-0 z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between mb-3">
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
+      {/* Topics list header */}
+      <div className="sticky top-0 z-30 shadow-sm" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+        <div className="max-w-4xl mx-auto px-4 py-4 sm:py-5">
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Link to="/" className="hover:opacity-70 transition-opacity p-1" style={{ color: 'var(--accent)' }}>
+              <Link to="/" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
                 <ArrowLeft size={22} />
               </Link>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Forum TSI-1</h1>
-                  {isAdmin && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white animate-pulse">
-                      ADMIN
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Entraide et discussions</p>
-              </div>
+              <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
+                <MessageSquare size={24} style={{ color: 'var(--accent)' }} className="hidden sm:block" />
+                Forum TSI-1
+              </h1>
             </div>
-            <button
-              onClick={() => {
-                if (isAuthenticated) {
-                  setShowNewTopicModal(true)
-                } else {
-                  setShowLoginPrompt(true)
-                }
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-md active:scale-95"
-            >
-              <Plus size={18} />
-              <span className="hidden sm:inline">Nouveau sujet</span>
-            </button>
+            {isAuthenticated && (
+              <button
+                onClick={() => setShowNewTopicModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-md active:scale-95"
+              >
+                <Plus size={18} />
+                <span className="hidden sm:inline">Nouveau sujet</span>
+              </button>
+            )}
           </div>
 
           {/* Search and filters */}
@@ -997,127 +997,142 @@ export function Forum() {
                 onChange={(e) => setFilterCategory(e.target.value)}
                 className="tsi-input appearance-none w-full sm:w-auto pl-4 pr-10 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-medium cursor-pointer"
               >
-                <option value="all">Toutes catégories</option>
-                {CATEGORIES.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                <option value="all">Toutes les catégories</option>
+                {CATEGORIES.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
+              <Filter size={16} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
             </div>
 
-            {/* Sort - custom styled */}
-            <div className="relative">
+            {/* Sort filter */}
+            <div className="relative hidden sm:block">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="tsi-input appearance-none w-full sm:w-auto pl-4 pr-10 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-medium cursor-pointer"
               >
-                <option value="recent">Plus récents</option>
-                <option value="popular">Plus populaires</option>
-                <option value="replies">Plus de réponses</option>
+                <option value="recent">Récents</option>
+                <option value="popular">Populaires</option>
+                <option value="replies">Plus actifs</option>
               </select>
-              <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
+              <TrendingUp size={16} className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'var(--text-muted)' }} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Stats bar */}
-      <div className="max-w-6xl mx-auto px-4 py-4">
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-xl shadow-sm p-4 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <div className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>{totalTopics}</div>
-            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Sujets</div>
-          </div>
-          <div className="rounded-xl shadow-sm p-4 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <div className="text-2xl font-bold text-emerald-600">{totalReplies}</div>
-            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Réponses</div>
-          </div>
-          <div className="rounded-xl shadow-sm p-4 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
-            <div className="text-2xl font-bold text-purple-600">{activeUsers}</div>
-            <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Participants</div>
-          </div>
+      {!isAuthenticated ? (
+        <div className="max-w-4xl mx-auto px-4 py-12">
+          <RestrictedAccess
+            title="Accès restreint"
+            message="Connectez-vous pour lire ou participer au forum de la classe."
+          />
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
+            {/* Active filters display */}
+          </div>
 
-      {/* Topics list */}
-      <div className="max-w-6xl mx-auto px-4 pb-6">
-        <div className="space-y-3">
-          {filteredTopics.map(topic => {
-            const category = getCategoryInfo(topic.category)
-            return (
-              <div
-                key={topic.id}
-                onClick={() => setSelectedTopic(topic)}
-                className="rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99]"
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-              >
-                <div className="flex items-start gap-3">
-                  <Link to={`/social/user/${topic.author}`} onClick={(e) => e.stopPropagation()} className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold shrink-0 hover:opacity-80 transition-opacity">
-                    {topic.author.charAt(0).toUpperCase()}
-                  </Link>
-                  <div className="flex-1 min-w-0">
-                    {/* Category badge */}
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold border ${category.color} mb-2`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${category.dot}`} />
-                      {category.name}
-                    </span>
+          {/* Stats bar */}
+          <div className="max-w-6xl mx-auto px-4 py-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl shadow-sm p-4 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <div className="text-2xl font-bold" style={{ color: 'var(--accent)' }}>{totalTopics}</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Sujets</div>
+              </div>
+              <div className="rounded-xl shadow-sm p-4 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <div className="text-2xl font-bold text-emerald-600">{totalReplies}</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Réponses</div>
+              </div>
+              <div className="rounded-xl shadow-sm p-4 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <div className="text-2xl font-bold text-purple-600">{activeUsers}</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>Participants</div>
+              </div>
+            </div>
+          </div>
 
-                    {/* Title */}
-                    <h3 className="font-bold mb-1 truncate" style={{ color: 'var(--text)' }}>{topic.title}</h3>
+          {/* Topics list */}
+          <div className="max-w-6xl mx-auto px-4 pb-6">
+            <div className="space-y-3">
+              {filteredTopics.map(topic => {
+                const category = getCategoryInfo(topic.category)
+                return (
+                  <div
+                    key={topic.id}
+                    onClick={() => setSelectedTopic(topic)}
+                    className="rounded-xl shadow-sm hover:shadow-md p-4 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.99]"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Link to={`/social/user/${topic.author}`} onClick={(e) => e.stopPropagation()} className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold shrink-0 hover:opacity-80 transition-opacity">
+                        {topic.author.charAt(0).toUpperCase()}
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        {/* Category badge */}
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold border ${category.color} mb-2`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${category.dot}`} />
+                          {category.name}
+                        </span>
 
-                    {/* Preview */}
-                    <p className="text-sm line-clamp-2 mb-2" style={{ color: 'var(--text-muted)' }}>{topic.content}</p>
+                        {/* Title */}
+                        <h3 className="font-bold mb-1 truncate" style={{ color: 'var(--text)' }}>{topic.title}</h3>
 
-                    {/* Images preview indicator */}
-                    {topic.images && topic.images.length > 0 && (
-                      <div className="flex items-center gap-1 text-xs mb-2" style={{ color: 'var(--accent)' }}>
-                        <ImageIcon size={14} />
-                        <span className="font-medium">{topic.images.length} image{topic.images.length > 1 ? 's' : ''}</span>
+                        {/* Preview */}
+                        <p className="text-sm line-clamp-2 mb-2" style={{ color: 'var(--text-muted)' }}>{topic.content}</p>
+
+                        {/* Images preview indicator */}
+                        {topic.images && topic.images.length > 0 && (
+                          <div className="flex items-center gap-1 text-xs mb-2" style={{ color: 'var(--accent)' }}>
+                            <ImageIcon size={14} />
+                            <span className="font-medium">{topic.images.length} image{topic.images.length > 1 ? 's' : ''}</span>
+                          </div>
+                        )}
+
+                        {/* Meta */}
+                        <div className="flex items-center gap-3 sm:gap-4 text-xs flex-wrap" style={{ color: 'var(--text-muted)' }}>
+                          <span className="flex items-center gap-1">
+                            <User size={14} className="shrink-0" />
+                            <Link to={`/social/user/${topic.author}`} onClick={(e) => e.stopPropagation()} className="truncate max-w-[80px] sm:max-w-none hover:underline">{topic.author}</Link>
+                          </span>
+                          <span className="flex items-center gap-1 shrink-0">
+                            <Clock size={14} />
+                            {formatDate(topic.createdAt)}
+                          </span>
+                          <span className="flex items-center gap-1 shrink-0">
+                            <MessageSquare size={14} />
+                            {topic.replies?.length || 0}
+                          </span>
+                          <span className={`flex items-center gap-1 shrink-0 ${getUserVote(topic.id) === 'like' ? 'text-green-600 font-medium' : ''}`}>
+                            <ThumbsUp size={14} className={getUserVote(topic.id) === 'like' ? 'fill-green-600' : ''} />
+                            {topic.likes || 0}
+                          </span>
+                          <span className={`flex items-center gap-1 shrink-0 ${getUserVote(topic.id) === 'dislike' ? 'text-red-600 font-medium' : ''}`}>
+                            <ThumbsDown size={14} className={getUserVote(topic.id) === 'dislike' ? 'fill-red-600' : ''} />
+                            {topic.dislikes || 0}
+                          </span>
+                        </div>
                       </div>
-                    )}
-
-                    {/* Meta */}
-                    <div className="flex items-center gap-3 sm:gap-4 text-xs flex-wrap" style={{ color: 'var(--text-muted)' }}>
-                      <span className="flex items-center gap-1">
-                        <User size={14} className="shrink-0" />
-                        <Link to={`/social/user/${topic.author}`} onClick={(e) => e.stopPropagation()} className="truncate max-w-[80px] sm:max-w-none hover:underline">{topic.author}</Link>
-                      </span>
-                      <span className="flex items-center gap-1 shrink-0">
-                        <Clock size={14} />
-                        {formatDate(topic.createdAt)}
-                      </span>
-                      <span className="flex items-center gap-1 shrink-0">
-                        <MessageSquare size={14} />
-                        {topic.replies?.length || 0}
-                      </span>
-                      <span className={`flex items-center gap-1 shrink-0 ${getUserVote(topic.id) === 'like' ? 'text-green-600 font-medium' : ''}`}>
-                        <ThumbsUp size={14} className={getUserVote(topic.id) === 'like' ? 'fill-green-600' : ''} />
-                        {topic.likes || 0}
-                      </span>
-                      <span className={`flex items-center gap-1 shrink-0 ${getUserVote(topic.id) === 'dislike' ? 'text-red-600 font-medium' : ''}`}>
-                        <ThumbsDown size={14} className={getUserVote(topic.id) === 'dislike' ? 'fill-red-600' : ''} />
-                        {topic.dislikes || 0}
-                      </span>
                     </div>
                   </div>
-                </div>
-              </div>
-            )
-          })}
+                )
+              })}
 
-          {filteredTopics.length === 0 && (
-            <div className="rounded-xl shadow-sm p-12 text-center" style={{ background: 'var(--surface)' }}>
-              <MessageSquare size={48} className="mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
-              <p style={{ color: 'var(--text-muted)' }}>
-                {searchQuery || filterCategory !== 'all'
-                  ? 'Aucun sujet trouvé avec ces critères'
-                  : 'Aucun sujet pour le moment. Soyez le premier à créer un sujet !'}
-              </p>
+              {filteredTopics.length === 0 && (
+                <div className="rounded-xl shadow-sm p-12 text-center" style={{ background: 'var(--surface)' }}>
+                  <MessageSquare size={48} className="mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
+                  <p style={{ color: 'var(--text-muted)' }}>
+                    {searchQuery || filterCategory !== 'all'
+                      ? 'Aucun sujet trouvé avec ces critères'
+                      : 'Aucun sujet pour le moment. Soyez le premier à créer un sujet !'}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
 
       {/* New topic modal */}
       {showNewTopicModal && (
@@ -1329,7 +1344,7 @@ export function Forum() {
                 Annuler
               </button>
               <Link
-                to="/login"
+                to="/login" state={{ from: location.pathname }}
                 className="tsi-btn-primary flex-1 py-2.5 justify-center text-sm font-medium"
               >
                 <LogIn size={16} />
@@ -1338,7 +1353,7 @@ export function Forum() {
             </div>
             <p className="text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
               Pas de compte ?{' '}
-              <Link to="/register" className="hover:underline" style={{ color: 'var(--accent)' }}>
+              <Link to="/register" state={{ from: location.pathname }} className="hover:underline" style={{ color: 'var(--accent)' }}>
                 S'inscrire
               </Link>
             </p>

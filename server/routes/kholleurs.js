@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../config/supabase');
-const { requireAuth } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 const { logActivity } = require('../utils/logger');
 
 // Helper to get all profs from colloscope to validate/build stats
@@ -63,10 +63,10 @@ router.get('/stats', async (req, res) => {
         const result = Array.from(profsMap.values()).map(prof => {
             if (prof.total_reviews > 0) {
                 const sum = (prof.ratings_distribution[1] * 1) +
-                            (prof.ratings_distribution[2] * 2) +
-                            (prof.ratings_distribution[3] * 3) +
-                            (prof.ratings_distribution[4] * 4) +
-                            (prof.ratings_distribution[5] * 5);
+                    (prof.ratings_distribution[2] * 2) +
+                    (prof.ratings_distribution[3] * 3) +
+                    (prof.ratings_distribution[4] * 4) +
+                    (prof.ratings_distribution[5] * 5);
                 prof.avg_rating = sum / prof.total_reviews;
             }
             return prof;
@@ -119,7 +119,7 @@ router.get('/:name/reviews', async (req, res) => {
 });
 
 // POST /api/kholleurs/:name/reviews - Post a new review
-router.post('/:name/reviews', requireAuth, async (req, res) => {
+router.post('/:name/reviews', authenticateToken, async (req, res) => {
     try {
         const { name } = req.params;
         const { note, commentaire, is_anonymous, matiere } = req.body;
@@ -165,19 +165,19 @@ router.post('/:name/reviews', requireAuth, async (req, res) => {
 });
 
 // POST /api/kholleurs/reviews/:id/like - Like or unlike a review
-router.post('/reviews/:id/like', requireAuth, async (req, res) => {
+router.post('/reviews/:id/like', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
         const username = req.user.username;
-        
+
         // The JWT doesn't contain the avatar, so we fetch it from the database
         const { data: userRow } = await supabase
             .from('users')
             .select('avatar, google_avatar')
             .eq('id', userId)
             .single();
-            
+
         const avatar = userRow ? (userRow.avatar || userRow.google_avatar) : null;
 
         const { data: review, error: fetchErr } = await supabase
@@ -189,7 +189,7 @@ router.post('/reviews/:id/like', requireAuth, async (req, res) => {
         if (fetchErr || !review) return res.status(404).json({ error: 'Avis introuvable' });
 
         let likes = review.likes || [];
-        
+
         // Ensure likes is an array (JSONB can sometimes return null)
         if (!Array.isArray(likes)) likes = [];
 
@@ -222,7 +222,7 @@ router.post('/reviews/:id/like', requireAuth, async (req, res) => {
 });
 
 // DELETE /api/kholleurs/reviews/:id - Delete a review
-router.delete('/reviews/:id', requireAuth, async (req, res) => {
+router.delete('/reviews/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
@@ -255,7 +255,7 @@ router.delete('/reviews/:id', requireAuth, async (req, res) => {
 });
 
 // PUT /api/kholleurs/reviews/:id - Edit a review
-router.put('/reviews/:id', requireAuth, async (req, res) => {
+router.put('/reviews/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
         const { note, commentaire, is_anonymous } = req.body;

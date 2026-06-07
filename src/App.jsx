@@ -12,7 +12,9 @@ import CallUI from './components/CallUI'
 import { PWAUpdatePrompt, OfflineIndicator, InstallPrompt } from './components/PWAPrompt'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { MusicProvider } from './contexts/MusicContext'
-import MiniPlayer from './components/widgets/MiniPlayer'
+import MiniPlayer from './components/widgets/MiniPlayer.jsx'
+import { GlobalSearch } from './components/GlobalSearch'
+import { ErrorPage } from './pages/ErrorPage'
 
 // Lazy loading des pages lourdes pour le code splitting
 const IndexPage = lazy(() => import('./pages/IndexPage').then(m => ({ default: m.IndexPage })))
@@ -47,6 +49,11 @@ const Library = lazy(() => import('./pages/Library').then(m => ({ default: m.Lib
 const PlaylistDetail = lazy(() => import('./pages/PlaylistDetail').then(m => ({ default: m.PlaylistDetail })))
 const Wrapped = lazy(() => import('./pages/Wrapped').then(m => ({ default: m.Wrapped })))
 const Kholleurs = lazy(() => import('./pages/Kholleurs').then(m => ({ default: m.Kholleurs })))
+const OutilsPage = lazy(() => import('./pages/OutilsPage').then(m => ({ default: m.OutilsPage })))
+const CarpoolHub = lazy(() => import('./pages/carpool/CarpoolHub').then(m => ({ default: m.CarpoolHub })))
+const CarpoolOffer = lazy(() => import('./pages/carpool/CarpoolOffer').then(m => ({ default: m.CarpoolOffer })))
+const CarpoolHistory = lazy(() => import('./pages/carpool/CarpoolHistory').then(m => ({ default: m.CarpoolHistory })))
+const CarpoolDetails = lazy(() => import('./pages/carpool/CarpoolDetails').then(m => ({ default: m.CarpoolDetails })))
 
 
 const SocialLayout = lazy(() => import('./components/SocialLayout').then(m => ({ default: m.SocialLayout })))
@@ -134,6 +141,10 @@ function AppLayout() {
   const [showOfflineBanner, setShowOfflineBanner] = useState(!navigator.onLine)
 
   useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+
+  useEffect(() => {
     const handleOnline = () => {
       setIsOffline(false)
       setTimeout(() => setShowOfflineBanner(false), 3000)
@@ -180,6 +191,7 @@ function AppLayout() {
       <OfflineIndicator />
       <InstallPrompt />
       <MiniPlayer />
+      <GlobalSearch />
     </ErrorBoundary>
   )
 }
@@ -189,6 +201,7 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <AppLayout />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <IndexPage /> },
       { path: "places", element: <Places /> },
@@ -214,6 +227,11 @@ const router = createBrowserRouter([
       { path: "library/:id", element: <PlaylistDetail /> },
       { path: "wrapped", element: <Wrapped /> },
       { path: "kholleurs", element: <Kholleurs /> },
+      { path: "outils", element: <OutilsPage /> },
+      { path: "covoiturage", element: <CarpoolHub /> },
+      { path: "covoiturage/historique", element: <CarpoolHistory /> },
+      { path: "covoiturage/proposer", element: <CarpoolOffer /> },
+      { path: "covoiturage/:id", element: <CarpoolDetails /> },
 
       {
         path: "social",

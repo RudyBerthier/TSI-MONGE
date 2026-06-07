@@ -385,7 +385,8 @@
   .docs-content { margin-left: 0; padding: 24px 20px 60px; }
   .docs-menu-toggle { display: flex; }
   .docs-search-trigger span { display: none; }
-  .docs-search-trigger { min-width: unset; }
+  .docs-search-trigger { min-width: unset; padding: 7px; justify-content: center; }
+  .docs-search-trigger kbd { display: none; }
   .endpoint-header { flex-wrap: wrap; }
   .endpoint-summary { display: none; }
   .param-row { grid-template-columns: 140px 80px 1fr; }
@@ -393,8 +394,17 @@
 }
 
 @media (max-width: 600px) {
+  .docs-topbar { padding: 0 12px; gap: 8px; }
   .docs-content { padding: 20px 16px 60px; }
   .doc-h1 { font-size: 24px; }
   .doc-h2 { font-size: 18px; }
   .param-row { grid-template-columns: 1fr; gap: 4px; }
+  .docs-github-link { display: none; }
+  .docs-back-text { display: none; }
+  .docs-back-btn { padding: 8px; }
+  .endpoint-header-left { flex-wrap: wrap; width: 100%; gap: 6px; }
+  .endpoint-path { white-space: normal; word-break: break-all; font-size: 12px; }
+  .endpoint-header-right { width: 100%; justify-content: flex-end; }
+  .docs-search-trigger { flex: 1; }
+  .search-modal { width: 90vw; }
 }

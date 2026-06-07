@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, BarChart3, Plus, Trash2, X, Check, Lock, Unlock, LogIn, Settings, Ghost } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { RestrictedAccess } from '../components/RestrictedAccess'
 
 export function Sondages() {
+  const location = useLocation();
   const { user, isAuthenticated, getToken } = useAuth()
   const isAdmin = user?.role === 'admin'
 
@@ -139,6 +141,28 @@ export function Sondages() {
     )
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
+        <div style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+          <div className="max-w-3xl mx-auto px-4 py-5">
+            <div className="flex items-center gap-3">
+              <Link to="/" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
+                <ArrowLeft size={22} />
+              </Link>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-3xl mx-auto px-4 py-12">
+          <RestrictedAccess 
+            title="Accès restreint" 
+            message="Connectez-vous pour voir et participer aux sondages de la classe." 
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       {/* Header */}
@@ -162,27 +186,6 @@ export function Sondages() {
       </div>
 
       <div className="max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-8 space-y-4">
-        {!isAuthenticated && (
-          <div className="rounded-2xl p-5" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
-            <div className="text-center py-4">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(var(--accent-rgb), 0.1)' }}>
-                <LogIn size={28} style={{ color: 'var(--accent)' }} />
-              </div>
-              <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>
-                Connectez-vous pour voter aux sondages.
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Link to="/login" className="tsi-btn-primary text-sm">
-                  <LogIn size={16} />
-                  Connexion
-                </Link>
-                <Link to="/register" className="tsi-btn-ghost text-sm">
-                  S'inscrire
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
 
         {sondages.length === 0 && (
           <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
@@ -325,7 +328,7 @@ export function Sondages() {
                   <span>{total} vote{total > 1 ? 's' : ''}</span>
                   {voted && <span style={{ color: 'var(--accent)' }}>Vous avez voté</span>}
                   {!isAuthenticated && (
-                    <Link to="/login" className="flex items-center gap-1" style={{ color: 'var(--accent)' }}>
+                    <Link to="/login" state={{ from: location.pathname }} className="flex items-center gap-1" style={{ color: 'var(--accent)' }}>
                       <LogIn size={12} />
                       Connectez-vous pour voter
                     </Link>

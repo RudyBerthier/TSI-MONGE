@@ -27,6 +27,7 @@ export function UserProfile() {
     const [followLoading, setFollowLoading] = useState(false)
     const [showCreatePost, setShowCreatePost] = useState(false)
     const [highlights, setHighlights] = useState([]) // New state for Highlights
+    const [userTags, setUserTags] = useState({}) // New state for Carpool Tags
 
     // Saved & Tabs
     const [activeTab, setActiveTab] = useState('posts')
@@ -330,6 +331,15 @@ export function UserProfile() {
                 setHighlights(highlightsData)
             } else {
                 setHighlights([])
+            }
+
+            // Fetch Carpool Tags
+            const tagsRes = await fetch(`/api/carpool/user/${data.id}/tags`)
+            if (tagsRes.ok) {
+                const tagsData = await tagsRes.json()
+                setUserTags(tagsData)
+            } else {
+                setUserTags({})
             }
 
             // Check follow status if logged in
@@ -707,6 +717,75 @@ export function UserProfile() {
                                 {profileUser.bio || "Aucune biographie."}
                             </p>
                         </div>
+
+                        {/* Carpool Tags */}
+                        {(Object.keys(userTags?.tagCounts || {}).length > 0 || userTags?.reviewCount > 0) && (
+                            <div className="mt-4 border-t border-gray-100 dark:border-slate-800 pt-4">
+                                <p className="text-sm font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--text)' }}>
+                                    <Star size={16} className="text-yellow-400 fill-yellow-400" />
+                                    Avis Covoiturage ({userTags.averageRating ? userTags.averageRating.toFixed(1) : '-'} / 5)
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {Object.entries(userTags.tagCounts || {}).map(([tagId, count]) => {
+                                        let icon = null, label = '', color = ''
+                                        if (tagId === 'music') { icon = <Music size={14}/>; label = 'DJ'; color = 'bg-pink-100 text-pink-600' }
+                                        if (tagId === 'talkative') { icon = <MessageCircle size={14}/>; label = 'Bavard'; color = 'bg-blue-100 text-blue-600' }
+                                        if (tagId === 'quiet') { icon = <VolumeX size={14}/>; label = 'Silencieux'; color = 'bg-indigo-100 text-indigo-600' }
+                                        if (tagId === 'punctual') { icon = <Clock size={14}/>; label = 'Ponctuel'; color = 'bg-green-100 text-green-600' }
+                                        
+                                        if (!label) return null
+                                        
+                                        return (
+                                            <div key={tagId} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shadow-sm ${color}`}>
+                                                {icon} {label} <span className="bg-white/50 rounded-full px-1.5">{count}</span>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                                
+                                {userTags.reviews && userTags.reviews.length > 0 && (
+                                    <div className="mt-4 space-y-2">
+                                        <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Derniers avis reçus</p>
+                                        {userTags.reviews.slice(0, 3).map((r, i) => (
+                                            <div key={i} className="flex gap-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-800/50">
+                                                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                                                    {(r.reviewer?.avatar || r.reviewer?.google_avatar) ? (
+                                                        <img src={r.reviewer.avatar || r.reviewer.google_avatar} alt="avatar" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-bold">
+                                                            {r.reviewer?.username?.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <span className="font-bold text-sm" style={{ color: 'var(--text)' }}>{r.reviewer?.username}</span>
+                                                        <span className="text-[10px] text-gray-400">{new Date(r.created_at).toLocaleDateString('fr-FR')}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 mb-1.5">
+                                                        {[1,2,3,4,5].map(star => (
+                                                            <Star key={star} size={10} className={star <= r.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                                                        ))}
+                                                    </div>
+                                                    {r.tags && r.tags.length > 0 && (
+                                                        <div className="flex gap-1 flex-wrap">
+                                                            {r.tags.map(tag => {
+                                                                let label = ''
+                                                                if (tag === 'music') label = 'DJ'
+                                                                if (tag === 'talkative') label = 'Bavard'
+                                                                if (tag === 'quiet') label = 'Silencieux'
+                                                                if (tag === 'punctual') label = 'Ponctuel'
+                                                                return label ? <span key={tag} className="text-[10px] bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300 border dark:border-slate-600 shadow-sm">{label}</span> : null
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {renderLinks(profileUser.links)}
                     </div>

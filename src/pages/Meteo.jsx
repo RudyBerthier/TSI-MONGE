@@ -364,7 +364,7 @@ function SunArc({ sunrise, sunset, now }) {
     const pct = Math.max(0, Math.min(1, (now.getTime() - riseMs) / (setMs - riseMs)));
     const isDay = pct > 0 && pct < 1;
     const w = 200, h = 100, cx = w / 2, cy = h - 10, r = 85;
-    const sunAngle = Math.PI + (0 - Math.PI) * pct;
+    const sunAngle = Math.PI + Math.PI * pct;
     const sunX = cx + r * Math.cos(sunAngle);
     const sunY = cy + r * Math.sin(sunAngle);
 

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Trash2, Check, X, Loader2, Link as LinkIcon, Pencil, ArrowLeft } from 'lucide-react'
+import { Camera, Trash2, Check, X, Loader2, Link as LinkIcon, Pencil, ArrowLeft, Music, MessageCircle, VolumeX, Clock, Star } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 
 export function SocialProfile() {
@@ -19,6 +19,7 @@ export function SocialProfile() {
     const [bio, setBio] = useState('')
     const [links, setLinks] = useState({ instagram: '', github: '', linkedin: '', website: '' })
     const [loadingBio, setLoadingBio] = useState(false)
+    const [userTags, setUserTags] = useState({})
 
     useEffect(() => {
         if (!loading && !isAuthenticated) navigate('/login', { state: { from: window.location.pathname } })
@@ -29,6 +30,11 @@ export function SocialProfile() {
             setNewUsername(user.username)
             setBio(user.bio || '')
             setLinks(user.links || { instagram: '', github: '', linkedin: '', website: '' })
+            
+            fetch(`/api/carpool/user/${user.id}/tags`)
+                .then(r => r.ok ? r.json() : {})
+                .then(data => setUserTags(data))
+                .catch(console.error)
         }
     }, [user])
 
@@ -182,6 +188,77 @@ export function SocialProfile() {
                             </div>
                         )}
                     </div>
+                    
+                    {/* Carpool Tags */}
+                    {(Object.keys(userTags?.tagCounts || {}).length > 0 || userTags?.reviewCount > 0) && (
+                        <>
+                        <div className="w-full mb-6 border-t border-gray-100 dark:border-slate-800 pt-6">
+                            <p className="text-sm font-bold mb-3 flex items-center justify-center gap-2" style={{ color: 'var(--text)' }}>
+                                <Star size={16} className="text-yellow-400 fill-yellow-400" />
+                                Mon Ambiance Covoiturage ({userTags.averageRating ? userTags.averageRating.toFixed(1) : '-'} / 5)
+                            </p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                                {Object.entries(userTags.tagCounts || {}).map(([tagId, count]) => {
+                                    let icon = null, label = '', color = ''
+                                    if (tagId === 'music') { icon = <Music size={14}/>; label = 'DJ'; color = 'bg-pink-100 text-pink-600 border-pink-200' }
+                                    if (tagId === 'talkative') { icon = <MessageCircle size={14}/>; label = 'Bavard'; color = 'bg-blue-100 text-blue-600 border-blue-200' }
+                                    if (tagId === 'quiet') { icon = <VolumeX size={14}/>; label = 'Silencieux'; color = 'bg-indigo-100 text-indigo-600 border-indigo-200' }
+                                    if (tagId === 'punctual') { icon = <Clock size={14}/>; label = 'Ponctuel'; color = 'bg-green-100 text-green-600 border-green-200' }
+                                    
+                                    if (!label) return null
+                                    
+                                    return (
+                                        <div key={tagId} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${color}`}>
+                                            {icon} {label} <span className="bg-white/60 dark:bg-black/20 rounded-full px-1.5">{count}</span>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                        
+                        {userTags.reviews && userTags.reviews.length > 0 && (
+                            <div className="w-full mt-4 space-y-2 text-left">
+                                <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Derniers avis reçus</p>
+                                {userTags.reviews.slice(0, 3).map((r, i) => (
+                                    <div key={i} className="flex gap-3 p-3 rounded-xl bg-gray-50 dark:bg-slate-800/50">
+                                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 shrink-0">
+                                            {(r.reviewer?.avatar || r.reviewer?.google_avatar) ? (
+                                                <img src={r.reviewer.avatar || r.reviewer.google_avatar} alt="avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full bg-indigo-500 flex items-center justify-center text-white text-[10px] font-bold">
+                                                    {r.reviewer?.username?.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="font-bold text-sm" style={{ color: 'var(--text)' }}>{r.reviewer?.username}</span>
+                                                <span className="text-[10px] text-gray-400">{new Date(r.created_at).toLocaleDateString('fr-FR')}</span>
+                                            </div>
+                                            <div className="flex items-center gap-1 mb-1.5">
+                                                {[1,2,3,4,5].map(star => (
+                                                    <Star key={star} size={10} className={star <= r.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                                                ))}
+                                            </div>
+                                            {r.tags && r.tags.length > 0 && (
+                                                <div className="flex gap-1 flex-wrap">
+                                                    {r.tags.map(tag => {
+                                                        let label = ''
+                                                        if (tag === 'music') label = 'DJ'
+                                                        if (tag === 'talkative') label = 'Bavard'
+                                                        if (tag === 'quiet') label = 'Silencieux'
+                                                        if (tag === 'punctual') label = 'Ponctuel'
+                                                        return label ? <span key={tag} className="text-[10px] bg-white dark:bg-slate-700 px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300 border dark:border-slate-600 shadow-sm">{label}</span> : null
+                                                    })}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        </>
+                    )}
                 </div>
 
                 {/* Bio and Links */}
@@ -211,6 +288,62 @@ export function SocialProfile() {
                                 placeholder="https://votre-lien.com"
                                 className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                             />
+                        </div>
+                    </div>
+
+                    {/* Paiement Covoiturage */}
+                    <div className="pt-6 border-t border-gray-200 dark:border-slate-800 space-y-5">
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-2">Moyens de paiement (Covoiturage)</h3>
+                        
+                        <div>
+                            <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Numéro Lydia</label>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-bold w-10 text-center text-xs">
+                                    L
+                                </div>
+                                <input
+                                    type="tel"
+                                    value={links.lydiaPhone || ''}
+                                    onChange={e => setLinks({ ...links, lydiaPhone: e.target.value })}
+                                    placeholder="+33 6 12 34 56 78"
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Numéro Paylib</label>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 font-bold w-10 text-center text-xs">
+                                    P
+                                </div>
+                                <input
+                                    type="tel"
+                                    value={links.paylibPhone || ''}
+                                    onChange={e => setLinks({ ...links, paylibPhone: e.target.value })}
+                                    placeholder="+33 6 12 34 56 78"
+                                    className="w-full px-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Pseudo PayPal (PayPal.Me)</label>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 rounded-lg bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 font-bold w-10 text-center text-xs">
+                                    PP
+                                </div>
+                                <div className="flex-1 flex bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 transition">
+                                    <span className="px-3 py-2.5 bg-gray-100 dark:bg-slate-700/50 text-gray-500 dark:text-gray-400 text-sm border-r border-gray-200 dark:border-slate-700">paypal.me/</span>
+                                    <input
+                                        type="text"
+                                        value={links.paypalUsername || ''}
+                                        onChange={e => setLinks({ ...links, paypalUsername: e.target.value.replace('paypal.me/', '').replace('https://', '').replace('http://', '') })}
+                                        placeholder="pseudo"
+                                        className="w-full px-3 py-2.5 bg-transparent text-gray-900 dark:text-white focus:outline-none"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
 

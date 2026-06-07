@@ -34,6 +34,7 @@ const playlistsRouter = require('./routes/playlists');
 const adminLogsRouter = require('./routes/admin-logs');
 const bugReportsRouter = require('./routes/bug-reports');
 const gamesRouter = require('./routes/games');
+const carpoolRouter = require('./routes/carpool');
 
 // Import socket handler
 const setupSocket = require('./socket');
@@ -226,6 +227,7 @@ app.use('/api/playlists', playlistsRouter);                      // Gestion des 
 app.use('/api/admin/logs', adminLogsRouter);
 app.use('/api/bug-reports', bugReportsRouter);
 app.use('/api/games', jwtWithUser, gamesRouter);
+app.use('/api/carpool', apiLimiter, carpoolRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

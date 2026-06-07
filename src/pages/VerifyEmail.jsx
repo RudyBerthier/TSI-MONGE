@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, Mail, Loader2, CheckCircle, RefreshCw, Shield, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 export function VerifyEmail() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const email = searchParams.get('email') || ''
+  const redirectParams = searchParams.get('redirect')
 
   const { verifyEmail, resendCode, enable2FA, error, clearError } = useAuth()
 
@@ -29,8 +31,8 @@ export function VerifyEmail() {
   }, [resendCooldown])
 
   useEffect(() => {
-    if (!email) navigate('/register')
-  }, [email, navigate])
+    if (!email) navigate(`/register${redirectParams ? `?redirect=${encodeURIComponent(redirectParams)}` : ''}`)
+  }, [email, navigate, redirectParams])
 
   const handleChange = (index, value) => {
     if (value && !/^\d$/.test(value)) return
@@ -79,7 +81,10 @@ export function VerifyEmail() {
     setEnabling2FA(true)
     const result = await enable2FA()
     setEnabling2FA(false)
-    if (result.success) navigate('/')
+    if (result.success) {
+      const from = redirectParams || location.state?.from || '/'
+      navigate(from, { replace: true })
+    }
   }
 
   const codeInputStyle = (hasError) => ({
@@ -118,7 +123,10 @@ export function VerifyEmail() {
                 {enabling2FA ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
                 Activer
               </button>
-              <button onClick={() => navigate('/')} className="tsi-btn-ghost">
+              <button onClick={() => {
+                const from = redirectParams || location.state?.from || '/'
+                navigate(from, { replace: true })
+              }} className="tsi-btn-ghost">
                 Plus tard
               </button>
             </div>
@@ -133,7 +141,7 @@ export function VerifyEmail() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <Link to="/register" className="inline-flex items-center gap-2 mb-6 transition-colors" style={{ color: 'var(--text-muted)' }}>
+          <Link to={`/register${redirectParams ? `?redirect=${encodeURIComponent(redirectParams)}` : ''}`} className="inline-flex items-center gap-2 mb-6 transition-colors" style={{ color: 'var(--text-muted)' }}>
             <ArrowLeft size={20} />
             Retour
           </Link>

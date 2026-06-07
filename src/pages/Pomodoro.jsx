@@ -1,11 +1,12 @@
 import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, LogIn, Search, Loader2 } from 'lucide-react';
 import PomodoroWidget from '../components/widgets/PomodoroWidget';
 import { useAuth } from '../contexts/AuthContext';
 import { useMusic } from '../contexts/MusicContext';
 
 export function Pomodoro() {
+  const location = useLocation();
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
 
@@ -45,11 +46,11 @@ export function Pomodoro() {
                                 Connectez-vous pour rejoindre la session d'étude.
                             </p>
                             <div className="flex gap-2 justify-center">
-                                <Link to="/login" className="tsi-btn-primary text-sm">
+                                <Link to="/login" state={{ from: location.pathname }} className="tsi-btn-primary text-sm">
                                     <LogIn size={16} />
                                     Connexion
                                 </Link>
-                                <Link to="/register" className="tsi-btn-ghost text-sm">
+                                <Link to="/register" state={{ from: location.pathname }} className="tsi-btn-ghost text-sm">
                                     S'inscrire
                                 </Link>
                             </div>

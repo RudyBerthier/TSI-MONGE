@@ -94,6 +94,11 @@ export const WEEKS = [
   { num: 26, start: '2026-05-18', label: '18/05 au 22/05' },
   { num: 27, start: '2026-05-26', label: '26/05 au 29/05' }, // Originalement 26/05
   { num: 28, start: '2026-06-01', label: '01/06 au 05/06' },
+  { num: 29, start: '2026-06-08', label: '08/06 au 12/06' },
+  { num: 30, start: '2026-06-15', label: '15/06 au 19/06' },
+  { num: 31, start: '2026-06-22', label: '22/06 au 26/06' },
+  { num: 32, start: '2026-06-29', label: '29/06 au 03/07' },
+  { num: null, start: '2026-07-06', label: '06/07 au 10/07', isVacances: 'Vacances d\'Été' },
 ]
 
 export const SCHEDULE = [

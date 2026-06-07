@@ -604,13 +604,13 @@ module.exports = (io) => {
 
   // Authentication middleware
   io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-
-    if (!token) {
-      return next(new Error('Authentification requise'));
-    }
-
     try {
+      const token = socket.handshake?.auth?.token;
+
+      if (!token) {
+        return next(new Error('Authentification requise'));
+      }
+
       const user = jwt.verify(token, JWT_SECRET);
       socket.user = user;
       next();
@@ -864,6 +864,28 @@ module.exports = (io) => {
       socket.leave(`focus_${sessionId}`);
       io.emit('focus:sessions_list', getAllSessionsJSON());
     });
+
+    // ─── Carpool Live Tracking ──────────────────────────────────────────
+    socket.on('carpool:join', ({ rideId }) => {
+      console.log(`🚗 [Carpool] ${user.username} joined ride room: ${rideId}`);
+      socket.join(`carpool_${rideId}`);
+    });
+
+    socket.on('carpool:leave', ({ rideId }) => {
+      socket.leave(`carpool_${rideId}`);
+    });
+
+    socket.on('carpool:location_update', (data) => {
+      // data: { rideId, lat, lng, speed, heading, timestamp }
+      if (!data.rideId) return;
+      // Broadcast to everyone in the room except the sender
+      socket.to(`carpool_${data.rideId}`).emit('carpool:location_update', {
+        ...data,
+        driverId: user.id
+      });
+    });
+
+    // ─── Chat Logic ─────────────────────────────────────────────────────
 
     socket.on('focus:delete', ({ sessionId }) => {
       const session = focusSessions.get(sessionId);

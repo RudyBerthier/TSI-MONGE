@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link, useLocation } from 'react-router-dom'
+import { useNavigate, Link, useLocation, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Loader2, Unlock, UserPlus, Shield, KeyRound } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
@@ -46,6 +46,8 @@ function GoogleButton({ text, onSuccess, onError }) {
 export function Login() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const redirectParams = searchParams.get('redirect')
   const { login, loginWithGoogle, verifyLogin2FA, user, loading: authLoading, error, clearError } = useAuth()
 
   const [formData, setFormData] = useState({ identifier: '', password: '' })
@@ -61,11 +63,12 @@ export function Login() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
-      const from = location.state?.from || '/'
-      navigate(from)
+    if (user && location.pathname === '/login') {
+      const from = redirectParams || location.state?.from || '/'
+      navigate(from, { replace: true })
     }
-  }, [user, navigate, location])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -90,8 +93,8 @@ export function Login() {
         setRequires2FA(true)
         setEmail2FA(result.email)
       } else {
-        const from = location.state?.from || '/'
-        navigate(from)
+        const from = redirectParams || location.state?.from || '/'
+        navigate(from, { replace: true })
       }
     }
   }
@@ -109,7 +112,7 @@ export function Login() {
     setLoading(false)
 
     if (result.success) {
-      const from = location.state?.from || '/'
+      const from = redirectParams || location.state?.from || '/'
       navigate(from)
     }
   }
@@ -345,10 +348,10 @@ export function Login() {
                   setEmail2FA(result.email)
                 } else if (result.accountLinked) {
                   setLinkedMessage('Votre compte Google a été lié à votre compte existant. Vous pouvez désormais vous connecter avec Google ou avec votre email et mot de passe.')
-                  const from = location.state?.from || '/'
+                  const from = redirectParams || location.state?.from || '/'
                   setTimeout(() => navigate(from), 4000)
                 } else {
-                  const from = location.state?.from || '/'
+                  const from = redirectParams || location.state?.from || '/'
                   navigate(from)
                 }
               }
@@ -358,7 +361,7 @@ export function Login() {
 
           {/* Forgot Password */}
           <div className="mt-4 text-center">
-            <Link to="/forgot-password" className="text-sm transition-colors" style={{ color: 'var(--text-muted)' }}>
+            <Link to={`/forgot-password${redirectParams ? `?redirect=${encodeURIComponent(redirectParams)}` : ''}`} state={location.state} className="text-sm transition-colors" style={{ color: 'var(--text-muted)' }}>
               Mot de passe oublié ?
             </Link>
           </div>
@@ -366,7 +369,7 @@ export function Login() {
           {/* Register Link */}
           <div className="mt-4 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
             Pas encore de compte ?{' '}
-            <Link to="/register" className="hover:underline font-medium inline-flex items-center gap-1" style={{ color: 'var(--accent)' }}>
+            <Link to={`/register${redirectParams ? `?redirect=${encodeURIComponent(redirectParams)}` : ''}`} state={location.state} className="hover:underline font-medium inline-flex items-center gap-1" style={{ color: 'var(--accent)' }}>
               <UserPlus size={16} />
               Créer un compte
             </Link>

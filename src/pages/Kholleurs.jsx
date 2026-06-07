@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Shield, Star, StarHalf, MessageSquare, Plus, X, BarChart2, User, LogIn, ArrowLeft, Trash2, Edit, Heart } from 'lucide-react';
 import { UserAvatar } from '../components/UserAvatar';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,6 +8,7 @@ const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://
 
 export function Kholleurs() {
     const { getToken, user } = useAuth();
+    const location = useLocation();
     const [kholleurs, setKholleurs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -409,7 +410,8 @@ export function Kholleurs() {
                                                     setIsAnonymous(false);
                                                     setShowForm(true);
                                                 }}
-                                                className="tsi-btn-primary flex items-center gap-2 text-sm py-2"
+                                                className="flex items-center gap-2 text-sm py-2.5 px-5 rounded-xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                                                style={{ background: 'linear-gradient(135deg, var(--accent) 0%, #8b5cf6 100%)', color: 'white', border: 'none', fontWeight: 'bold' }}
                                             >
                                                 <Plus className="w-4 h-4" />
                                                 Donner un avis
@@ -428,10 +430,10 @@ export function Kholleurs() {
                                                 Connectez-vous pour évaluer {selectedKholleur.name}.
                                             </p>
                                             <div className="flex justify-center gap-3">
-                                                <Link to="/login" className="tsi-btn-primary text-sm">
+                                                <Link to="/login" state={{ from: location.pathname }} className="tsi-btn-primary text-sm">
                                                     Connexion
                                                 </Link>
-                                                <Link to="/register" className="tsi-btn-ghost text-sm">
+                                                <Link to="/register" state={{ from: location.pathname }} className="tsi-btn-ghost text-sm">
                                                     S'inscrire
                                                 </Link>
                                             </div>

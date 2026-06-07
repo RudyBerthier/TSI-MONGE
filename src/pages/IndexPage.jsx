@@ -48,15 +48,13 @@ import NotesWidget from '../components/widgets/NotesWidget'
 
 const NAV_ITEMS = [
   { href: '/emploi-du-temps', label: 'EDT & Kholles', Icon: Calendar, color: '#1D4ED8' },
-  { href: '/kholleurs', label: 'Avis Kholleurs', Icon: BarChart2, color: '#eab308' },
-  { href: '/places', label: 'Plan classe', Icon: Users, color: '#059669' },
-  { href: '/forum', label: 'Forum', Icon: MessageCircle, color: '#7C3AED' },
+  { href: '/covoiturage', label: 'Covoiturage', Icon: Car, color: '#10B981', badge: 'Nouveau' },
+  { href: '/kholleurs', label: 'Avis Kholleurs', Icon: BarChart2, color: '#eab308', badge: 'Nouveau' },
   { href: '/sondages', label: 'Sondages', Icon: Star, color: '#D97706' },
-  { href: '/cantine', label: 'Cantine', Icon: ChefHat, color: '#DC2626' },
-  { href: '/countdown', label: 'Concours', Icon: Timer, color: '#0891B2' },
-  { href: '/pomodoro', label: 'Session Focus', Icon: Target, color: '#F59E0B' },
-  { href: '/social', label: 'Mongegram', Icon: Instagram, color: '#E1306C' }, // Couleur Insta par défaut
+  { href: '/social', label: 'Mongegram', Icon: Instagram, color: '#E1306C' },
+  { href: '/outils', label: 'Autres Outils', Icon: Wrench, color: '#6366F1' },
 ]
+
 
 /* ─────────────────────────────────────────────────────────────
    Component
@@ -338,7 +336,7 @@ export function IndexPage() {
           justifyContent: 'space-between',
           gap: '1rem',
           position: 'relative',
-          zIndex: 50,
+          zIndex: 40,
           opacity: isClosingBanner ? 0 : 1,
           transform: isClosingBanner ? 'translateY(-10px)' : 'translateY(0)',
           transition: 'opacity 0.3s ease, transform 0.3s ease',
@@ -875,17 +873,22 @@ function ToolsWidget() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
-        {NAV_ITEMS.map(({ href, label, Icon, color }, i) => (
+        {NAV_ITEMS.map(({ href, label, Icon, color, badge }, i) => (
           <Link
             key={href}
             to={href}
             viewTransition
-            className="tsi-tool-card"
+            className="tsi-tool-card relative"
             style={{
               '--tool-color': color,
               animationDelay: `${200 + i * 65}ms`,
             }}
           >
+            {badge && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full shadow-md z-10 uppercase tracking-wider border-[1.5px] border-white dark:border-slate-900 animate-pulse">
+                {badge}
+              </span>
+            )}
             {/* Colored icon box */}
             <div style={{
               width: 48,
@@ -927,7 +930,7 @@ function ResourcesWidget({ links, iconMap, isAdminAuthenticated, mathPref, handl
         <em>{links.length} liens</em>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
         {links.map((link, index) => {
           const Icon = iconMap[link.icon] || Globe
           const isMath = link.url === ANCIEN_MATH_URL

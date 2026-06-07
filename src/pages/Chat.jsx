@@ -1024,7 +1024,7 @@ export function Chat() {
           <h1 className="text-2xl font-bold text-white mb-2">Chat TSI Monge</h1>
           <p className="text-gray-400 mb-6">Connectez-vous pour accéder au chat</p>
           <div className="flex gap-3">
-            <Link to="/login" className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 flex items-center justify-center gap-2">
+            <Link to="/login" state={{ from: location.pathname }} className="flex-1 py-3 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 flex items-center justify-center gap-2">
               <LogIn size={20} /> Connexion
             </Link>
             <Link to="/" className="flex-1 py-3 rounded-xl border border-white/10 text-gray-300 font-medium hover:bg-neutral-800 flex items-center justify-center gap-2">

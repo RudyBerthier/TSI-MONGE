@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { ArrowLeft, Star, Send, Trash2, UtensilsCrossed, TrendingUp, Users, ChevronDown, Image as ImageIcon, X, ZoomIn, LogIn, SmilePlus, Menu as MenuIcon, MessageCircle, CalendarDays, Info, Upload, RefreshCw, Facebook } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useSocket } from '../contexts/SocketContext'
@@ -42,6 +42,7 @@ function ReactionPicker({ avisId, onReact }) {
 }
 
 export function Cantine() {
+  const location = useLocation();
   const { user, isAuthenticated, getToken, userSettings, updateUserSettings } = useAuth()
   const { socket } = useSocket()
 
@@ -627,8 +628,8 @@ export function Cantine() {
                     Connectez-vous pour donner votre avis sur la cantine.
                   </p>
                   <div className="flex gap-2 justify-center">
-                    <Link to="/login" className="tsi-btn-primary text-sm"><LogIn size={16} />Connexion</Link>
-                    <Link to="/register" className="tsi-btn-ghost text-sm">S'inscrire</Link>
+                    <Link to="/login" state={{ from: location.pathname }} className="tsi-btn-primary text-sm"><LogIn size={16} />Connexion</Link>
+                    <Link to="/register" state={{ from: location.pathname }} className="tsi-btn-ghost text-sm">S'inscrire</Link>
                   </div>
                 </div>
               )}

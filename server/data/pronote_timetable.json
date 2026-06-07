@@ -1,8 +1,8 @@
 {
-  "lastUpdated": "2026-03-15T13:58:53.262311",
+  "lastUpdated": "2026-06-07T15:56:26.774957",
   "courses": [
     {
-      "weekStart": "2026-03-09",
+      "weekStart": "2026-06-01",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -16,7 +16,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-09",
+      "weekStart": "2026-06-01",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -30,329 +30,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-09",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Lundi",
-      "heure": "13h - 14h50",
-      "start": 13.0,
-      "end": 14.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "JIMENEZ L.",
-      "salle": "E114 CPGE",
-      "jour": "Lundi",
-      "heure": "14h50 - 16h40",
-      "start": 14.833333333333334,
-      "end": 16.666666666666668,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "INFORMATIQUE",
-      "matiere": "Info",
-      "prof": "DEVEAUX V., JIMENEZ L.",
-      "salle": "E203 INFO 36 PC",
-      "jour": "Mardi",
-      "heure": "8h - 9h50",
-      "start": 8.0,
-      "end": 9.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Mardi",
-      "heure": "10h - 11h50",
-      "start": 10.0,
-      "end": 11.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "SC. INDUS. INGENIEUR",
-      "matiere": "SI",
-      "prof": "BRAYER C., BONNARD C.",
-      "salle": "E120a TSI, E120b TSI",
-      "jour": "Mardi",
-      "heure": "13h30 - 17h30",
-      "start": 13.5,
-      "end": 17.5,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Mercredi",
-      "heure": "8h - 9h50",
-      "start": 8.0,
-      "end": 9.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "ANGLAIS LV1",
-      "matiere": "Anglais",
-      "prof": "VITRY-ROCHE K.",
-      "salle": "E116 CPGE",
-      "jour": "Mercredi",
-      "heure": "10h - 11h50",
-      "start": 10.0,
-      "end": 11.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "HELWANI C.",
-      "salle": "E114 CPGE",
-      "jour": "Mercredi",
-      "heure": "13h55 - 14h50",
-      "start": 13.916666666666666,
-      "end": 14.833333333333332,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Mercredi",
-      "heure": "14h50 - 15h45",
-      "start": 14.833333333333334,
-      "end": 15.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E114 CPGE",
-      "jour": "Mercredi",
-      "heure": "15h55 - 16h50",
-      "start": 15.916666666666666,
-      "end": 16.833333333333332,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "Etude",
-      "matiere": "Etude",
-      "prof": "",
-      "salle": "E116 CPGE",
-      "jour": "Mercredi",
-      "heure": "16h50 - 17h45",
-      "start": 16.833333333333332,
-      "end": 17.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "SCIENCES INGENIEUR",
-      "matiere": "SI",
-      "prof": "BONNARD C.",
-      "salle": "",
-      "jour": "Jeudi",
-      "heure": "8h - 9h50",
-      "start": 8.0,
-      "end": 9.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "JIMENEZ L.",
-      "salle": "E116 CPGE",
-      "jour": "Jeudi",
-      "heure": "10h - 11h50",
-      "start": 10.0,
-      "end": 11.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "JIMENEZ L.",
-      "salle": "E116 CPGE",
-      "jour": "Jeudi",
-      "heure": "13h55 - 15h45",
-      "start": 13.916666666666666,
-      "end": 15.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "ED.PHYSIQUE & SPORT.",
-      "matiere": "EPS",
-      "prof": "JOURDAN V., MONTCHAMP J.",
-      "salle": "",
-      "jour": "Jeudi",
-      "heure": "15h55 - 17h45",
-      "start": 15.916666666666666,
-      "end": 17.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "FRANCAIS PHILO",
-      "matiere": "Francais",
-      "prof": "DECHANET-PLATZ F.",
-      "salle": "E116 CPGE",
-      "jour": "Vendredi",
-      "heure": "8h - 8h55",
-      "start": 8.0,
-      "end": 8.916666666666666,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "SC. INDUS. INGENIEUR",
-      "matiere": "SI",
-      "prof": "BONNARD C.",
-      "salle": "E116 CPGE",
-      "jour": "Vendredi",
-      "heure": "8h55 - 10h45",
-      "start": 8.916666666666666,
-      "end": 10.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Vendredi",
-      "heure": "11h - 11h55",
-      "start": 11.0,
-      "end": 11.916666666666666,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "FRANCAIS-PHILO",
-      "matiere": "Francais",
-      "prof": "DECHANET-PLATZ F.",
-      "salle": "E116 CPGE",
-      "jour": "Vendredi",
-      "heure": "13h55 - 14h50",
-      "start": 13.916666666666666,
-      "end": 14.833333333333332,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E114 CPGE",
-      "jour": "Vendredi",
-      "heure": "14h50 - 15h45",
-      "start": 14.833333333333334,
-      "end": 15.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-09",
-      "title": "TX.INIT.PERSO.ENCAD.",
-      "matiere": "TIPE",
-      "prof": "ROY F., BRAYER C.",
-      "salle": "E120a TSI, E120b TSI",
-      "jour": "Vendredi",
-      "heure": "15h55 - 17h45",
-      "start": 15.916666666666666,
-      "end": 17.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-16",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Lundi",
-      "heure": "8h - 9h50",
-      "start": 8.0,
-      "end": 9.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-16",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "JIMENEZ L.",
-      "salle": "E116 CPGE",
-      "jour": "Lundi",
-      "heure": "10h - 11h50",
-      "start": 10.0,
-      "end": 11.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -366,7 +44,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -380,7 +58,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "INFORMATIQUE",
       "matiere": "Info",
       "prof": "DEVEAUX V., JIMENEZ L.",
@@ -394,7 +72,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -408,7 +86,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "SC. INDUS. INGENIEUR",
       "matiere": "SI",
       "prof": "BRAYER C., BONNARD C.",
@@ -422,7 +100,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -436,7 +114,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "ANGLAIS LV1",
       "matiere": "Anglais",
       "prof": "VITRY-ROCHE K.",
@@ -450,7 +128,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "HELWANI C.",
@@ -464,7 +142,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -478,7 +156,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -492,7 +170,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "Etude",
       "matiere": "Etude",
       "prof": "",
@@ -506,21 +184,21 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "SCIENCES INGENIEUR",
       "matiere": "SI",
-      "prof": "BRAYER C.",
-      "salle": "E120a TSI",
+      "prof": "BONNARD C.",
+      "salle": "",
       "jour": "Jeudi",
       "heure": "8h - 9h50",
       "start": 8.0,
       "end": 9.833333333333334,
-      "status": "",
+      "status": "Prof. absent",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -534,7 +212,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -548,10 +226,10 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "ED.PHYSIQUE & SPORT.",
       "matiere": "EPS",
-      "prof": "JOURDAN V., MONTCHAMP J.",
+      "prof": "JOURDAN V.",
       "salle": "",
       "jour": "Jeudi",
       "heure": "15h55 - 17h45",
@@ -562,7 +240,21 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
+      "title": "ED.PHYSIQUE & SPORT.",
+      "matiere": "EPS",
+      "prof": "JOURDAN V., MONTCHAMP J.",
+      "salle": "",
+      "jour": "Jeudi",
+      "heure": "15h55 - 17h45",
+      "start": 15.916666666666666,
+      "end": 17.75,
+      "status": "Cours annulé",
+      "isSortie": false,
+      "isCancelled": true
+    },
+    {
+      "weekStart": "2026-06-01",
       "title": "FRANCAIS PHILO",
       "matiere": "Francais",
       "prof": "DECHANET-PLATZ F.",
@@ -576,7 +268,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "SC. INDUS. INGENIEUR",
       "matiere": "SI",
       "prof": "BONNARD C.",
@@ -590,7 +282,7 @@
       "isCancelled": true
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -604,7 +296,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "FRANCAIS-PHILO",
       "matiere": "Francais",
       "prof": "DECHANET-PLATZ F.",
@@ -618,7 +310,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -632,7 +324,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-16",
+      "weekStart": "2026-06-01",
       "title": "TX.INIT.PERSO.ENCAD.",
       "matiere": "TIPE",
       "prof": "ROY F., BRAYER C.",
@@ -646,7 +338,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -660,7 +352,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -674,7 +366,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -688,7 +380,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -702,7 +394,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "INFORMATIQUE",
       "matiere": "Info",
       "prof": "DEVEAUX V., JIMENEZ L.",
@@ -716,7 +408,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -730,10 +422,24 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "SC. INDUS. INGENIEUR",
       "matiere": "SI",
       "prof": "BRAYER C., BONNARD C.",
+      "salle": "E120a TSI, E120b TSI",
+      "jour": "Mardi",
+      "heure": "13h30 - 17h30",
+      "start": 13.5,
+      "end": 17.5,
+      "status": "Prof. absent",
+      "isSortie": false,
+      "isCancelled": true
+    },
+    {
+      "weekStart": "2026-06-08",
+      "title": "SC. INDUS. INGENIEUR",
+      "matiere": "SI",
+      "prof": "BRAYER C.",
       "salle": "E120a TSI, E120b TSI",
       "jour": "Mardi",
       "heure": "13h30 - 17h30",
@@ -744,7 +450,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -758,7 +464,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "ANGLAIS LV1",
       "matiere": "Anglais",
       "prof": "VITRY-ROCHE K.",
@@ -772,7 +478,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "HELWANI C.",
@@ -786,7 +492,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -800,7 +506,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -814,7 +520,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-06-08",
       "title": "Etude",
       "matiere": "Etude",
       "prof": "",
@@ -828,329 +534,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-23",
-      "title": "SCIENCES INGENIEUR",
-      "matiere": "SI",
-      "prof": "BONNARD C.",
-      "salle": "",
-      "jour": "Jeudi",
-      "heure": "8h - 9h50",
-      "start": 8.0,
-      "end": 9.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-23",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "JIMENEZ L.",
-      "salle": "E116 CPGE",
-      "jour": "Jeudi",
-      "heure": "10h - 11h50",
-      "start": 10.0,
-      "end": 11.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-23",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "JIMENEZ L.",
-      "salle": "E116 CPGE",
-      "jour": "Jeudi",
-      "heure": "13h55 - 15h45",
-      "start": 13.916666666666666,
-      "end": 15.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-23",
-      "title": "ED.PHYSIQUE & SPORT.",
-      "matiere": "EPS",
-      "prof": "JOURDAN V., MONTCHAMP J.",
-      "salle": "",
-      "jour": "Jeudi",
-      "heure": "15h55 - 17h45",
-      "start": 15.916666666666666,
-      "end": 17.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-23",
-      "title": "FRANCAIS PHILO",
-      "matiere": "Francais",
-      "prof": "DECHANET-PLATZ F.",
-      "salle": "E116 CPGE",
-      "jour": "Vendredi",
-      "heure": "8h - 8h55",
-      "start": 8.0,
-      "end": 8.916666666666666,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-23",
-      "title": "SC. INDUS. INGENIEUR",
-      "matiere": "SI",
-      "prof": "BONNARD C.",
-      "salle": "E116 CPGE",
-      "jour": "Vendredi",
-      "heure": "8h55 - 10h45",
-      "start": 8.916666666666666,
-      "end": 10.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-23",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Vendredi",
-      "heure": "11h - 11h55",
-      "start": 11.0,
-      "end": 11.916666666666666,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-23",
-      "title": "FRANCAIS-PHILO",
-      "matiere": "Francais",
-      "prof": "DECHANET-PLATZ F.",
-      "salle": "E116 CPGE",
-      "jour": "Vendredi",
-      "heure": "13h55 - 14h50",
-      "start": 13.916666666666666,
-      "end": 14.833333333333332,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-23",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E114 CPGE",
-      "jour": "Vendredi",
-      "heure": "14h50 - 15h45",
-      "start": 14.833333333333334,
-      "end": 15.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-23",
-      "title": "TX.INIT.PERSO.ENCAD.",
-      "matiere": "TIPE",
-      "prof": "ROY F., BRAYER C.",
-      "salle": "E120a TSI, E120b TSI",
-      "jour": "Vendredi",
-      "heure": "15h55 - 17h45",
-      "start": 15.916666666666666,
-      "end": 17.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Lundi",
-      "heure": "8h - 9h50",
-      "start": 8.0,
-      "end": 9.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "JIMENEZ L.",
-      "salle": "E116 CPGE",
-      "jour": "Lundi",
-      "heure": "10h - 11h50",
-      "start": 10.0,
-      "end": 11.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Lundi",
-      "heure": "13h - 14h50",
-      "start": 13.0,
-      "end": 14.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "JIMENEZ L.",
-      "salle": "E114 CPGE",
-      "jour": "Lundi",
-      "heure": "14h50 - 16h40",
-      "start": 14.833333333333334,
-      "end": 16.666666666666668,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "INFORMATIQUE",
-      "matiere": "Info",
-      "prof": "DEVEAUX V., JIMENEZ L.",
-      "salle": "E203 INFO 36 PC",
-      "jour": "Mardi",
-      "heure": "8h - 9h50",
-      "start": 8.0,
-      "end": 9.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Mardi",
-      "heure": "10h - 11h50",
-      "start": 10.0,
-      "end": 11.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "SC. INDUS. INGENIEUR",
-      "matiere": "SI",
-      "prof": "BRAYER C., BONNARD C.",
-      "salle": "E120a TSI, E120b TSI",
-      "jour": "Mardi",
-      "heure": "13h30 - 17h30",
-      "start": 13.5,
-      "end": 17.5,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Mercredi",
-      "heure": "8h - 9h50",
-      "start": 8.0,
-      "end": 9.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "ANGLAIS LV1",
-      "matiere": "Anglais",
-      "prof": "VITRY-ROCHE K.",
-      "salle": "E116 CPGE",
-      "jour": "Mercredi",
-      "heure": "10h - 11h50",
-      "start": 10.0,
-      "end": 11.833333333333334,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "PHYSIQUE",
-      "matiere": "Physique",
-      "prof": "HELWANI C.",
-      "salle": "E114 CPGE",
-      "jour": "Mercredi",
-      "heure": "13h55 - 14h50",
-      "start": 13.916666666666666,
-      "end": 14.833333333333332,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E116 CPGE",
-      "jour": "Mercredi",
-      "heure": "14h50 - 15h45",
-      "start": 14.833333333333334,
-      "end": 15.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "MATHEMATIQUES",
-      "matiere": "Maths",
-      "prof": "CRIDA A.",
-      "salle": "E114 CPGE",
-      "jour": "Mercredi",
-      "heure": "15h55 - 16h50",
-      "start": 15.916666666666666,
-      "end": 16.833333333333332,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
-      "title": "Etude",
-      "matiere": "Etude",
-      "prof": "",
-      "salle": "E116 CPGE",
-      "jour": "Mercredi",
-      "heure": "16h50 - 17h45",
-      "start": 16.833333333333332,
-      "end": 17.75,
-      "status": "",
-      "isSortie": false,
-      "isCancelled": false
-    },
-    {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "SCIENCES INGENIEUR",
       "matiere": "SI",
       "prof": "BRAYER C.",
@@ -1164,7 +548,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1178,7 +562,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1192,7 +576,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "ED.PHYSIQUE & SPORT.",
       "matiere": "EPS",
       "prof": "JOURDAN V., MONTCHAMP J.",
@@ -1201,12 +585,12 @@
       "heure": "15h55 - 17h45",
       "start": 15.916666666666666,
       "end": 17.75,
-      "status": "",
+      "status": "Cours annulé",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "FRANCAIS PHILO",
       "matiere": "Francais",
       "prof": "DECHANET-PLATZ F.",
@@ -1220,7 +604,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "SC. INDUS. INGENIEUR",
       "matiere": "SI",
       "prof": "BONNARD C.",
@@ -1229,12 +613,12 @@
       "heure": "8h55 - 10h45",
       "start": 8.916666666666666,
       "end": 10.75,
-      "status": "",
+      "status": "Prof. absent",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1248,7 +632,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "FRANCAIS-PHILO",
       "matiere": "Francais",
       "prof": "DECHANET-PLATZ F.",
@@ -1262,7 +646,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1276,7 +660,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-03-30",
+      "weekStart": "2026-06-08",
       "title": "TX.INIT.PERSO.ENCAD.",
       "matiere": "TIPE",
       "prof": "ROY F., BRAYER C.",
@@ -1290,7 +674,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1304,7 +688,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1313,12 +697,12 @@
       "heure": "10h - 11h50",
       "start": 10.0,
       "end": 11.833333333333334,
-      "status": "",
+      "status": "Prof. absent",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1332,7 +716,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1341,15 +725,29 @@
       "heure": "14h50 - 16h40",
       "start": 14.833333333333334,
       "end": 16.666666666666668,
-      "status": "",
+      "status": "Prof. absent",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "INFORMATIQUE",
       "matiere": "Info",
       "prof": "DEVEAUX V., JIMENEZ L.",
+      "salle": "E203 INFO 36 PC",
+      "jour": "Mardi",
+      "heure": "8h - 9h50",
+      "start": 8.0,
+      "end": 9.833333333333334,
+      "status": "Prof. absent",
+      "isSortie": false,
+      "isCancelled": true
+    },
+    {
+      "weekStart": "2026-06-15",
+      "title": "INFORMATIQUE",
+      "matiere": "Info",
+      "prof": "DEVEAUX V.",
       "salle": "E203 INFO 36 PC",
       "jour": "Mardi",
       "heure": "8h - 9h50",
@@ -1360,7 +758,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1374,7 +772,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "SC. INDUS. INGENIEUR",
       "matiere": "SI",
       "prof": "BRAYER C., BONNARD C.",
@@ -1388,7 +786,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1402,7 +800,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "ANGLAIS LV1",
       "matiere": "Anglais",
       "prof": "VITRY-ROCHE K.",
@@ -1416,7 +814,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "HELWANI C.",
@@ -1430,7 +828,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1444,7 +842,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1458,7 +856,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "Etude",
       "matiere": "Etude",
       "prof": "",
@@ -1472,7 +870,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "SCIENCES INGENIEUR",
       "matiere": "SI",
       "prof": "BONNARD C.",
@@ -1486,7 +884,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1495,12 +893,12 @@
       "heure": "10h - 11h50",
       "start": 10.0,
       "end": 11.833333333333334,
-      "status": "",
+      "status": "Prof. absent",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1509,12 +907,12 @@
       "heure": "13h55 - 15h45",
       "start": 13.916666666666666,
       "end": 15.75,
-      "status": "",
+      "status": "Prof. absent",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "ED.PHYSIQUE & SPORT.",
       "matiere": "EPS",
       "prof": "JOURDAN V., MONTCHAMP J.",
@@ -1528,7 +926,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "FRANCAIS PHILO",
       "matiere": "Francais",
       "prof": "DECHANET-PLATZ F.",
@@ -1542,7 +940,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "SC. INDUS. INGENIEUR",
       "matiere": "SI",
       "prof": "BONNARD C.",
@@ -1556,7 +954,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1570,7 +968,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "FRANCAIS-PHILO",
       "matiere": "Francais",
       "prof": "DECHANET-PLATZ F.",
@@ -1584,7 +982,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1598,7 +996,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-06-15",
       "title": "TX.INIT.PERSO.ENCAD.",
       "matiere": "TIPE",
       "prof": "ROY F., BRAYER C.",
@@ -1612,7 +1010,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1626,7 +1024,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1635,12 +1033,12 @@
       "heure": "10h - 11h50",
       "start": 10.0,
       "end": 11.833333333333334,
-      "status": "",
+      "status": "Prof. absent",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1654,7 +1052,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1663,15 +1061,15 @@
       "heure": "14h50 - 16h40",
       "start": 14.833333333333334,
       "end": 16.666666666666668,
-      "status": "",
+      "status": "Prof. absent",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "INFORMATIQUE",
       "matiere": "Info",
-      "prof": "DEVEAUX V., JIMENEZ L.",
+      "prof": "DEVEAUX V.",
       "salle": "E203 INFO 36 PC",
       "jour": "Mardi",
       "heure": "8h - 9h50",
@@ -1682,7 +1080,21 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
+      "title": "INFORMATIQUE",
+      "matiere": "Info",
+      "prof": "DEVEAUX V., JIMENEZ L.",
+      "salle": "E203 INFO 36 PC",
+      "jour": "Mardi",
+      "heure": "8h - 9h50",
+      "start": 8.0,
+      "end": 9.833333333333334,
+      "status": "Prof. absent",
+      "isSortie": false,
+      "isCancelled": true
+    },
+    {
+      "weekStart": "2026-06-22",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1696,7 +1108,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "SC. INDUS. INGENIEUR",
       "matiere": "SI",
       "prof": "BRAYER C., BONNARD C.",
@@ -1710,7 +1122,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1724,7 +1136,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "ANGLAIS LV1",
       "matiere": "Anglais",
       "prof": "VITRY-ROCHE K.",
@@ -1733,12 +1145,12 @@
       "heure": "10h - 11h50",
       "start": 10.0,
       "end": 11.833333333333334,
-      "status": "",
+      "status": "Prof. absent",
       "isSortie": false,
-      "isCancelled": false
+      "isCancelled": true
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "HELWANI C.",
@@ -1752,7 +1164,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1766,7 +1178,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "MATHEMATIQUES",
       "matiere": "Maths",
       "prof": "CRIDA A.",
@@ -1780,7 +1192,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "Etude",
       "matiere": "Etude",
       "prof": "",
@@ -1794,7 +1206,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
       "title": "SCIENCES INGENIEUR",
       "matiere": "SI",
       "prof": "BRAYER C.",
@@ -1808,7 +1220,343 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-22",
+      "title": "PHYSIQUE",
+      "matiere": "Physique",
+      "prof": "JIMENEZ L.",
+      "salle": "E116 CPGE",
+      "jour": "Jeudi",
+      "heure": "10h - 11h50",
+      "start": 10.0,
+      "end": 11.833333333333334,
+      "status": "Prof. absent",
+      "isSortie": false,
+      "isCancelled": true
+    },
+    {
+      "weekStart": "2026-06-22",
+      "title": "PHYSIQUE",
+      "matiere": "Physique",
+      "prof": "JIMENEZ L.",
+      "salle": "E116 CPGE",
+      "jour": "Jeudi",
+      "heure": "13h55 - 15h45",
+      "start": 13.916666666666666,
+      "end": 15.75,
+      "status": "Prof. absent",
+      "isSortie": false,
+      "isCancelled": true
+    },
+    {
+      "weekStart": "2026-06-22",
+      "title": "ED.PHYSIQUE & SPORT.",
+      "matiere": "EPS",
+      "prof": "JOURDAN V., MONTCHAMP J.",
+      "salle": "",
+      "jour": "Jeudi",
+      "heure": "15h55 - 17h45",
+      "start": 15.916666666666666,
+      "end": 17.75,
+      "status": "Prof. absent",
+      "isSortie": false,
+      "isCancelled": true
+    },
+    {
+      "weekStart": "2026-06-22",
+      "title": "ED.PHYSIQUE & SPORT.",
+      "matiere": "EPS",
+      "prof": "JOURDAN V.",
+      "salle": "",
+      "jour": "Jeudi",
+      "heure": "15h55 - 17h45",
+      "start": 15.916666666666666,
+      "end": 17.75,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-22",
+      "title": "FRANCAIS PHILO",
+      "matiere": "Francais",
+      "prof": "DECHANET-PLATZ F.",
+      "salle": "E116 CPGE",
+      "jour": "Vendredi",
+      "heure": "8h - 8h55",
+      "start": 8.0,
+      "end": 8.916666666666666,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-22",
+      "title": "SC. INDUS. INGENIEUR",
+      "matiere": "SI",
+      "prof": "BONNARD C.",
+      "salle": "E116 CPGE",
+      "jour": "Vendredi",
+      "heure": "8h55 - 10h45",
+      "start": 8.916666666666666,
+      "end": 10.75,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-22",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E116 CPGE",
+      "jour": "Vendredi",
+      "heure": "11h - 11h55",
+      "start": 11.0,
+      "end": 11.916666666666666,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-22",
+      "title": "FRANCAIS-PHILO",
+      "matiere": "Francais",
+      "prof": "DECHANET-PLATZ F.",
+      "salle": "E116 CPGE",
+      "jour": "Vendredi",
+      "heure": "13h55 - 14h50",
+      "start": 13.916666666666666,
+      "end": 14.833333333333332,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-22",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E114 CPGE",
+      "jour": "Vendredi",
+      "heure": "14h50 - 15h45",
+      "start": 14.833333333333334,
+      "end": 15.75,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-22",
+      "title": "TX.INIT.PERSO.ENCAD.",
+      "matiere": "TIPE",
+      "prof": "ROY F., BRAYER C.",
+      "salle": "E120a TSI, E120b TSI",
+      "jour": "Vendredi",
+      "heure": "15h55 - 17h45",
+      "start": 15.916666666666666,
+      "end": 17.75,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E116 CPGE",
+      "jour": "Lundi",
+      "heure": "8h - 9h50",
+      "start": 8.0,
+      "end": 9.833333333333334,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "PHYSIQUE",
+      "matiere": "Physique",
+      "prof": "JIMENEZ L.",
+      "salle": "E116 CPGE",
+      "jour": "Lundi",
+      "heure": "10h - 11h50",
+      "start": 10.0,
+      "end": 11.833333333333334,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E116 CPGE",
+      "jour": "Lundi",
+      "heure": "13h - 14h50",
+      "start": 13.0,
+      "end": 14.833333333333334,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "PHYSIQUE",
+      "matiere": "Physique",
+      "prof": "JIMENEZ L.",
+      "salle": "E114 CPGE",
+      "jour": "Lundi",
+      "heure": "14h50 - 16h40",
+      "start": 14.833333333333334,
+      "end": 16.666666666666668,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "INFORMATIQUE",
+      "matiere": "Info",
+      "prof": "DEVEAUX V., JIMENEZ L.",
+      "salle": "E203 INFO 36 PC",
+      "jour": "Mardi",
+      "heure": "8h - 9h50",
+      "start": 8.0,
+      "end": 9.833333333333334,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E116 CPGE",
+      "jour": "Mardi",
+      "heure": "10h - 11h50",
+      "start": 10.0,
+      "end": 11.833333333333334,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "SC. INDUS. INGENIEUR",
+      "matiere": "SI",
+      "prof": "BRAYER C., BONNARD C.",
+      "salle": "E120a TSI, E120b TSI",
+      "jour": "Mardi",
+      "heure": "13h30 - 17h30",
+      "start": 13.5,
+      "end": 17.5,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E116 CPGE",
+      "jour": "Mercredi",
+      "heure": "8h - 9h50",
+      "start": 8.0,
+      "end": 9.833333333333334,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "ANGLAIS LV1",
+      "matiere": "Anglais",
+      "prof": "VITRY-ROCHE K.",
+      "salle": "E116 CPGE",
+      "jour": "Mercredi",
+      "heure": "10h - 11h50",
+      "start": 10.0,
+      "end": 11.833333333333334,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "PHYSIQUE",
+      "matiere": "Physique",
+      "prof": "HELWANI C.",
+      "salle": "E114 CPGE",
+      "jour": "Mercredi",
+      "heure": "13h55 - 14h50",
+      "start": 13.916666666666666,
+      "end": 14.833333333333332,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E116 CPGE",
+      "jour": "Mercredi",
+      "heure": "14h50 - 15h45",
+      "start": 14.833333333333334,
+      "end": 15.75,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E114 CPGE",
+      "jour": "Mercredi",
+      "heure": "15h55 - 16h50",
+      "start": 15.916666666666666,
+      "end": 16.833333333333332,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "Etude",
+      "matiere": "Etude",
+      "prof": "",
+      "salle": "E116 CPGE",
+      "jour": "Mercredi",
+      "heure": "16h50 - 17h45",
+      "start": 16.833333333333332,
+      "end": 17.75,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "SCIENCES INGENIEUR",
+      "matiere": "SI",
+      "prof": "BONNARD C.",
+      "salle": "",
+      "jour": "Jeudi",
+      "heure": "8h - 9h50",
+      "start": 8.0,
+      "end": 9.833333333333334,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1822,7 +1570,7 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-29",
       "title": "PHYSIQUE",
       "matiere": "Physique",
       "prof": "JIMENEZ L.",
@@ -1836,12 +1584,96 @@
       "isCancelled": false
     },
     {
-      "weekStart": "2026-04-27",
+      "weekStart": "2026-06-29",
       "title": "ED.PHYSIQUE & SPORT.",
       "matiere": "EPS",
       "prof": "JOURDAN V., MONTCHAMP J.",
       "salle": "",
       "jour": "Jeudi",
+      "heure": "15h55 - 17h45",
+      "start": 15.916666666666666,
+      "end": 17.75,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "FRANCAIS PHILO",
+      "matiere": "Francais",
+      "prof": "DECHANET-PLATZ F.",
+      "salle": "E116 CPGE",
+      "jour": "Vendredi",
+      "heure": "8h - 8h55",
+      "start": 8.0,
+      "end": 8.916666666666666,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "SC. INDUS. INGENIEUR",
+      "matiere": "SI",
+      "prof": "BONNARD C.",
+      "salle": "E116 CPGE",
+      "jour": "Vendredi",
+      "heure": "8h55 - 10h45",
+      "start": 8.916666666666666,
+      "end": 10.75,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E116 CPGE",
+      "jour": "Vendredi",
+      "heure": "11h - 11h55",
+      "start": 11.0,
+      "end": 11.916666666666666,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "FRANCAIS-PHILO",
+      "matiere": "Francais",
+      "prof": "DECHANET-PLATZ F.",
+      "salle": "E116 CPGE",
+      "jour": "Vendredi",
+      "heure": "13h55 - 14h50",
+      "start": 13.916666666666666,
+      "end": 14.833333333333332,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "MATHEMATIQUES",
+      "matiere": "Maths",
+      "prof": "CRIDA A.",
+      "salle": "E114 CPGE",
+      "jour": "Vendredi",
+      "heure": "14h50 - 15h45",
+      "start": 14.833333333333334,
+      "end": 15.75,
+      "status": "",
+      "isSortie": false,
+      "isCancelled": false
+    },
+    {
+      "weekStart": "2026-06-29",
+      "title": "TX.INIT.PERSO.ENCAD.",
+      "matiere": "TIPE",
+      "prof": "ROY F., BRAYER C.",
+      "salle": "E120a TSI, E120b TSI",
+      "jour": "Vendredi",
       "heure": "15h55 - 17h45",
       "start": 15.916666666666666,
       "end": 17.75,

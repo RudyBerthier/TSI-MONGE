@@ -239,8 +239,7 @@ export function Navbar() {
               </>
             ) : (
               <Link
-                to="/login"
-                state={{ from: location.pathname }}
+                to={`/login?redirect=${encodeURIComponent(location.pathname)}`}
                 className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold transition-all"
                 style={{
                   background: 'var(--accent)',

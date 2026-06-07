@@ -91,7 +91,7 @@ export default defineConfig({
           },
           {
             urlPattern: /\/api\/colloscope/i,
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'colloscope-cache',
               expiration: {
@@ -177,6 +177,11 @@ export default defineConfig({
       },
       '/uploads': {
         target: 'http://localhost:3001',
+        changeOrigin: true
+      },
+      '/socket.io': {
+        target: 'http://localhost:3001',
+        ws: true,
         changeOrigin: true
       }
     }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Mail, User, Lock, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useGoogleLogin } from '@react-oauth/google'
@@ -37,6 +37,9 @@ function GoogleButton({ text, onSuccess, onError }) {
 
 export function Register() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const [searchParams] = useSearchParams()
+  const redirectParams = searchParams.get('redirect')
   const { register, loginWithGoogle, error, clearError } = useAuth()
 
   const [formData, setFormData] = useState({ email: '', username: '', password: '', confirmPassword: '' })
@@ -65,7 +68,10 @@ export function Register() {
     setLoading(true)
     const result = await register(formData.email, formData.username, formData.password)
     setLoading(false)
-    if (result.success) navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`)
+    if (result.success) {
+      // Pass the redirect param to verify-email
+      navigate(`/verify-email?email=${encodeURIComponent(formData.email)}${redirectParams ? `&redirect=${encodeURIComponent(redirectParams)}` : ''}`)
+    }
   }
 
   const getPasswordStrength = () => {
@@ -180,14 +186,17 @@ export function Register() {
               setLoading(true); setLocalError(''); clearError()
               const result = await loginWithGoogle(tokenResponse)
               setLoading(false)
-              if (result.success && !result.requires2FA) navigate('/')
+              if (result.success && !result.requires2FA) {
+                const from = redirectParams || location.state?.from || '/'
+                navigate(from, { replace: true })
+              }
             }}
             onError={() => setLocalError('Erreur lors de la connexion Google')}
           />
 
           <div className="mt-6 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
             Déjà un compte ?{' '}
-            <Link to="/login" className="font-medium hover:underline" style={{ color: 'var(--accent)' }}>
+            <Link to={`/login${redirectParams ? `?redirect=${encodeURIComponent(redirectParams)}` : ''}`} state={location.state} className="font-medium hover:underline" style={{ color: 'var(--accent)' }}>
               Se connecter
             </Link>
           </div>
