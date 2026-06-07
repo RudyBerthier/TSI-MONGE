@@ -276,7 +276,10 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
 let supabase2 = null;
 if (supabaseUrl && supabaseKey) {
-    supabase2 = createClient(supabaseUrl, supabaseKey);
+    supabase2 = createClient(supabaseUrl, supabaseKey, {
+        realtime: { transport: require('ws') },
+        global: { WebSocket: require('ws') }
+    });
 }
 
 function authMiddleware(req, res, next) {
