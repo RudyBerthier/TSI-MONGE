@@ -30,6 +30,7 @@
     "tesseract.js": "^7.0.0",
     "uuid": "^9.0.1",
     "web-push": "^3.6.7",
+    "ws": "^8.21.0",
     "youtube-dl-exec": "^3.1.4",
     "youtube-ext": "^1.1.25",
     "yt-search": "^2.13.1"
