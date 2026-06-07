@@ -40,6 +40,7 @@ const carpoolRouter = require('./routes/carpool');
 const setupSocket = require('./socket');
 
 const app = express();
+app.set('trust proxy', 1); // Indispensable pour que express-rate-limit marche derrière Nginx (X-Forwarded-For)
 const server = http.createServer(app);
 const PORT = process.env.PORT || 3001;
 
