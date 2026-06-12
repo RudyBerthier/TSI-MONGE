@@ -39,6 +39,8 @@ const mediaRouter = require('./routes/media');
 const kanbanRouter = require('./routes/kanban');
 const searchRouter = require('./routes/search');
 const clickerRouter = require('./routes/clicker');
+const mediaStatsRouter = require('./routes/media_stats');
+const mediaListsRouter = require('./routes/media_lists');
 
 // Import socket handler
 const setupSocket = require('./socket');
@@ -240,6 +242,8 @@ app.use('/api/admin/logs', adminLogsRouter);
 app.use('/api/bug-reports', bugReportsRouter);
 app.use('/api/games', jwtWithUser, gamesRouter);
 app.use('/api/carpool', apiLimiter, carpoolRouter);
+app.use('/api/media/lists', apiLimiter, mediaListsRouter);
+app.use('/api/media', apiLimiter, mediaStatsRouter);
 app.use('/api/media', apiLimiter, mediaRouter);
 app.use('/api/kanban', jwtWithUser, kanbanRouter);
 app.use('/api/search', jwtWithUser, searchRouter);

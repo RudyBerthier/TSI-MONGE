@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
-import { ArrowLeft, Trash2, Star, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { ArrowLeft, Trash2, Star, ThumbsUp, ThumbsDown, BarChart2, Film, Hash } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export function MyReviews() {
   const { getToken, user } = useAuth()
   const [reviews, setReviews] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [stats, setStats] = useState({
+    total: 0,
+    averageRating: 0,
+    topGenres: []
+  })
 
   useEffect(() => {
     const fetchMyReviews = async () => {
@@ -15,7 +20,54 @@ export function MyReviews() {
           headers: { 'Authorization': `Bearer ${getToken()}` }
         })
         if (res.ok) {
-          setReviews(await res.json())
+          const data = await res.json()
+          setReviews(data)
+          
+          // Calculate basic stats
+          const total = data.length
+          const avgRating = total > 0 ? (data.reduce((acc, r) => acc + r.rating, 0) / total).toFixed(1) : 0
+          
+          setStats(s => ({ ...s, total, averageRating: avgRating }))
+
+          // Fetch genres for top genres calculation
+          if (total > 0) {
+            const uniqueMedia = [];
+            const seen = new Set();
+            data.forEach(r => {
+              const id = r.media.tmdb_id;
+              if (!seen.has(id)) {
+                seen.add(id);
+                uniqueMedia.push({ id, type: r.media.type === 'tv' ? 'tv' : 'movie' });
+              }
+            });
+
+            // Fetch details in parallel to get genres
+            const genreCounts = {};
+            await Promise.all(uniqueMedia.map(async (media) => {
+              try {
+                const detRes = await fetch(`/api/media/details/${media.type}/${media.id}`, {
+                  headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                if (detRes.ok) {
+                  const details = await detRes.json();
+                  if (details.genres) {
+                    details.genres.forEach(g => {
+                      genreCounts[g.name] = (genreCounts[g.name] || 0) + 1;
+                    });
+                  }
+                }
+              } catch (e) {
+                console.error("Erreur récupération détails pour genres", e);
+              }
+            }));
+
+            const sortedGenres = Object.entries(genreCounts)
+              .sort((a, b) => b[1] - a[1])
+              .map(entry => entry[0])
+              .slice(0, 3); // Top 3 genres
+
+            setStats(s => ({ ...s, topGenres: sortedGenres }));
+          }
         }
       } catch (err) {
         console.error(err)
@@ -34,6 +86,7 @@ export function MyReviews() {
       })
       if (res.ok) {
         setReviews(prev => prev.filter(r => r.id !== id))
+        setStats(s => ({ ...s, total: s.total - 1 })) // Simplistic update
       }
     } catch (err) {
       console.error(err)
@@ -71,79 +124,141 @@ export function MyReviews() {
 
   return (
     <div className="min-h-screen bg-[#141414] text-white font-sans overflow-x-hidden pb-20">
-      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-50 bg-[#141414] border-b border-gray-800 pt-4 pb-4 px-4 sm:px-8 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Link to="/media" className="text-white hover:text-gray-300 transition-colors p-2 rounded-full bg-black/50">
-            <ArrowLeft size={24} />
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-50 bg-[#141414]/90 backdrop-blur-md border-b border-gray-800 pt-4 pb-4 px-4 sm:px-8 flex justify-between items-center transition-all">
+        <div className="flex items-center gap-4 text-red-600 font-black text-2xl tracking-tighter">
+          <Link to="/media" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit bg-[#242424] text-gray-400 hover:text-white">
+            <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-2xl font-bold">Mes Critiques</h1>
+          <span className="flex items-center gap-2"><Star size={24} fill="currentColor" /> MES CRITIQUES</span>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-5xl mx-auto px-4 py-12">
         {isLoading ? (
-          <div className="animate-pulse space-y-4">
-            <div className="h-32 bg-[#181818] rounded-xl border border-gray-800"></div>
-            <div className="h-32 bg-[#181818] rounded-xl border border-gray-800"></div>
+          <div className="animate-pulse space-y-8">
+            <div className="h-32 bg-[#181818] rounded-2xl border border-[#333]"></div>
+            <div className="h-48 bg-[#181818] rounded-2xl border border-[#333]"></div>
+            <div className="h-48 bg-[#181818] rounded-2xl border border-[#333]"></div>
           </div>
         ) : reviews.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">
-            <p className="text-lg">Tu n'as publié aucune critique pour l'instant.</p>
-            <Link to="/media" className="text-red-500 hover:underline mt-2 inline-block">Retourner sur MongeFlix</Link>
+          <div className="text-center py-32 bg-[#181818] rounded-2xl border border-[#333] shadow-2xl">
+            <div className="w-20 h-20 bg-[#242424] rounded-full flex items-center justify-center mx-auto mb-6">
+              <Star size={32} className="text-gray-500" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2">Aucune critique</h2>
+            <p className="text-gray-400 mb-8 max-w-md mx-auto">Tu n'as pas encore partagé ton avis sur des films ou séries. Explore le catalogue et laisse ta première critique !</p>
+            <Link to="/media" className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition-all shadow-lg hover:shadow-red-600/30">
+              Explorer MongeFlix
+            </Link>
           </div>
         ) : (
-          <div className="flex flex-col gap-6">
-            {reviews.map(review => {
-              const upvotes = review.reactions?.filter(r => r.reaction_type === 'up').length || 0;
-              const downvotes = review.reactions?.filter(r => r.reaction_type === 'down').length || 0;
-              const myReaction = review.reactions?.find(r => r.user_id === user?.id)?.reaction_type;
+          <>
+            {/* Stats Header */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
+              <div className="bg-[#181818] rounded-2xl p-6 border border-[#333] shadow-lg flex items-center gap-5">
+                <div className="w-14 h-14 bg-red-600/20 rounded-full flex items-center justify-center shrink-0">
+                  <Hash size={24} className="text-red-500" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 font-bold mb-1 uppercase tracking-wider">Total</div>
+                  <div className="text-3xl font-black">{stats.total} <span className="text-base font-normal text-gray-500">critiques</span></div>
+                </div>
+              </div>
+              
+              <div className="bg-[#181818] rounded-2xl p-6 border border-[#333] shadow-lg flex items-center gap-5">
+                <div className="w-14 h-14 bg-yellow-500/20 rounded-full flex items-center justify-center shrink-0">
+                  <BarChart2 size={24} className="text-yellow-500" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 font-bold mb-1 uppercase tracking-wider">Moyenne Donnée</div>
+                  <div className="text-3xl font-black">{stats.averageRating}<span className="text-xl text-gray-500">/5</span></div>
+                </div>
+              </div>
 
-              return (
-                <div key={review.id} className="bg-[#181818] p-6 rounded-xl flex gap-6 border border-gray-800 shadow-xl relative">
-                  <button
-                    onClick={() => deleteReview(review.id)}
-                    className="absolute top-4 right-4 p-2 text-gray-500 hover:text-red-500 hover:bg-black/20 rounded-full transition-all"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+              <div className="bg-[#181818] rounded-2xl p-6 border border-[#333] shadow-lg flex items-center gap-5">
+                <div className="w-14 h-14 bg-blue-500/20 rounded-full flex items-center justify-center shrink-0">
+                  <Film size={24} className="text-blue-500" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-400 font-bold mb-1 uppercase tracking-wider">Genres Préférés</div>
+                  <div className="text-lg font-bold leading-tight text-gray-200">
+                    {stats.topGenres.length > 0 ? stats.topGenres.join(', ') : 'Calcul...'}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-                  <img src={review.media.poster_url} className="w-24 h-36 object-cover rounded-md shadow-lg hidden sm:block" alt="poster" />
+            {/* Reviews List */}
+            <div className="flex flex-col gap-6">
+              {reviews.map(review => {
+                const upvotes = review.reactions?.filter(r => r.reaction_type === 'up').length || 0;
+                const downvotes = review.reactions?.filter(r => r.reaction_type === 'down').length || 0;
+                const myReaction = review.reactions?.find(r => r.user_id === user?.id)?.reaction_type;
+                const year = review.media.release_year || '';
 
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <h2 className="text-2xl font-bold">{review.media.title}</h2>
-                      <div className="flex text-yellow-400">
-                        {[1, 2, 3, 4, 5].map(s => <Star key={s} size={14} fill={s <= review.rating ? 'currentColor' : 'transparent'} />)}
+                return (
+                  <div key={review.id} className="bg-[#181818] p-5 sm:p-6 rounded-2xl flex flex-col sm:flex-row gap-6 border border-[#333] shadow-lg relative group transition-all hover:border-gray-600">
+                    <button
+                      onClick={() => deleteReview(review.id)}
+                      className="absolute top-4 right-4 p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all opacity-100 sm:opacity-0 group-hover:opacity-100"
+                      title="Supprimer la critique"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+
+                    <div className="shrink-0 mx-auto sm:mx-0 w-32 sm:w-28 relative rounded-lg overflow-hidden shadow-xl aspect-[2/3]">
+                      {review.media.poster_url ? (
+                        <img src={review.media.poster_url} className="w-full h-full object-cover" alt="poster" />
+                      ) : (
+                        <div className="w-full h-full bg-[#242424] flex items-center justify-center"><Film className="text-gray-600" /></div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                      <div className="absolute bottom-2 left-0 right-0 flex justify-center text-yellow-400 gap-0.5 drop-shadow-md">
+                        {[1, 2, 3, 4, 5].map(s => <Star key={s} size={12} fill={s <= review.rating ? 'currentColor' : 'transparent'} />)}
                       </div>
                     </div>
 
-                    <div className="text-gray-500 text-sm mb-4">
-                      Publiée le {new Date(review.created_at).toLocaleDateString('fr-FR')}
-                    </div>
+                    <div className="flex-1 flex flex-col">
+                      <div className="flex items-start justify-between mb-2 pr-10">
+                        <div>
+                          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-3">
+                            {review.media.title}
+                            {year && <span className="text-sm font-normal text-gray-500">({year})</span>}
+                          </h2>
+                          <div className="text-gray-500 text-xs font-medium uppercase tracking-wider mt-1">
+                            {review.season_number ? `Saison ${review.season_number} ` : ''}
+                            {review.episode_number ? `Épisode ${review.episode_number} ` : ''}
+                            • Publiée le {new Date(review.created_at).toLocaleDateString('fr-FR')}
+                          </div>
+                        </div>
+                      </div>
 
-                    <p className="text-gray-300 italic mb-6">"{review.review_text}"</p>
+                      <div className="bg-[#242424] p-4 rounded-xl text-gray-300 italic mb-5 mt-2 flex-1 border border-[#333]">
+                        "{review.review_text}"
+                      </div>
 
-                    <div className="flex items-center gap-4">
-                      <button
-                        onClick={() => handleReact(review.id, myReaction === 'up' ? null : 'up')}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors text-sm font-medium ${myReaction === 'up' ? 'bg-green-500/20 text-green-500' : 'bg-black/40 text-gray-400 hover:bg-black/60'}`}
-                      >
-                        <ThumbsUp size={16} fill={myReaction === 'up' ? 'currentColor' : 'transparent'} />
-                        {upvotes}
-                      </button>
-                      <button
-                        onClick={() => handleReact(review.id, myReaction === 'down' ? null : 'down')}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors text-sm font-medium ${myReaction === 'down' ? 'bg-red-500/20 text-red-500' : 'bg-black/40 text-gray-400 hover:bg-black/60'}`}
-                      >
-                        <ThumbsDown size={16} fill={myReaction === 'down' ? 'currentColor' : 'transparent'} />
-                        {downvotes}
-                      </button>
+                      <div className="flex items-center gap-3 mt-auto">
+                        <button
+                          onClick={() => handleReact(review.id, myReaction === 'up' ? null : 'up')}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs sm:text-sm font-bold border ${myReaction === 'up' ? 'bg-green-500/20 text-green-500 border-green-500/30' : 'bg-[#242424] text-gray-400 border-[#333] hover:border-gray-500 hover:text-white'}`}
+                        >
+                          <ThumbsUp size={16} fill={myReaction === 'up' ? 'currentColor' : 'transparent'} />
+                          {upvotes > 0 ? upvotes : 'J\'aime'}
+                        </button>
+                        <button
+                          onClick={() => handleReact(review.id, myReaction === 'down' ? null : 'down')}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs sm:text-sm font-bold border ${myReaction === 'down' ? 'bg-red-500/20 text-red-500 border-red-500/30' : 'bg-[#242424] text-gray-400 border-[#333] hover:border-gray-500 hover:text-white'}`}
+                        >
+                          <ThumbsDown size={16} fill={myReaction === 'down' ? 'currentColor' : 'transparent'} />
+                          {downvotes > 0 ? downvotes : ''}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>

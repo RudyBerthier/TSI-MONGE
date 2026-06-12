@@ -11,12 +11,14 @@ const JWT_SECRET = process.env.JWT_SECRET || 'tsi1-secret-key-2025';
 const formatTmdbResults = (results) => results.map(item => ({
   tmdb_id: item.id.toString(),
   type: item.media_type || (item.name ? 'tv' : 'movie'),
+  media_type: item.media_type || (item.name ? 'tv' : 'movie'),
   title: item.title || item.name,
   release_date: item.release_date || item.first_air_date,
   poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
   backdrop_url: item.backdrop_path ? `https://image.tmdb.org/t/p/original${item.backdrop_path}` : null,
   overview: item.overview,
-  vote_average: item.vote_average
+  vote_average: item.vote_average,
+  genre_ids: item.genre_ids || []
 }));
 
 // ----------------------------------------------------------------------
@@ -114,6 +116,123 @@ router.get('/discover', authenticateToken, async (req, res) => {
 });
 
 // ----------------------------------------------------------------------
+// GET /api/media/explore - Recherche avancée et filtres
+// ----------------------------------------------------------------------
+router.get('/explore', authenticateToken, async (req, res) => {
+  const { type = 'movie', genre, year, rating, sort = 'popularity.desc' } = req.query;
+  const tmdbKey = process.env.TMDB_API_KEY;
+  if (!tmdbKey) return res.status(400).json({ error: 'Clé API manquante' });
+
+  try {
+    if (sort === 'promo_rating.desc') {
+      const { data: reviews, error } = await supabase
+        .from('media_reviews')
+        .select('rating, media_items!inner(tmdb_id, type)');
+      
+      if (error) throw error;
+      
+      const ratingsMap = {};
+      const countMap = {};
+      const typeMap = {};
+      reviews.forEach(r => {
+        const tId = r.media_items?.tmdb_id;
+        const mType = r.media_items?.type;
+        if (tId) {
+          if (!ratingsMap[tId]) { ratingsMap[tId] = 0; countMap[tId] = 0; typeMap[tId] = mType; }
+          ratingsMap[tId] += r.rating;
+          countMap[tId] += 1;
+        }
+      });
+      
+      let items = Object.keys(ratingsMap).map(id => ({
+        id,
+        type: typeMap[id],
+        avg: ratingsMap[id] / countMap[id]
+      }));
+      
+      if (type !== 'all') {
+        items = items.filter(item => item.type === type);
+      }
+      
+      items.sort((a, b) => b.avg - a.avg);
+      
+      const topItems = items.slice(0, 20);
+      const detailsPromises = topItems.map(item => 
+        axios.get(`https://api.themoviedb.org/3/${item.type}/${item.id}`, {
+          params: { api_key: tmdbKey, language: 'fr-FR' }
+        }).then(r => ({ ...r.data, media_type: item.type })).catch(() => null)
+      );
+      
+      let tmdbResults = (await Promise.all(detailsPromises)).filter(Boolean);
+      
+      if (genre) {
+        tmdbResults = tmdbResults.filter(r => r.genres?.some(g => g.id.toString() === genre));
+      }
+      if (year) {
+        tmdbResults = tmdbResults.filter(r => {
+          const rYear = r.release_date ? r.release_date.split('-')[0] : (r.first_air_date ? r.first_air_date.split('-')[0] : '');
+          return rYear === year;
+        });
+      }
+      if (rating) {
+        tmdbResults = tmdbResults.filter(r => r.vote_average >= parseFloat(rating));
+      }
+      
+      return res.json(formatTmdbResults(tmdbResults));
+    } else {
+      const params = {
+        api_key: tmdbKey,
+        language: 'fr-FR',
+        sort_by: sort,
+        page: 1,
+        include_adult: false
+      };
+      
+      if (genre) params.with_genres = genre;
+      if (rating) {
+        params['vote_average.gte'] = rating;
+        params['vote_count.gte'] = 50; 
+      }
+      
+      if (year) {
+        if (type === 'movie' || type === 'all') params.primary_release_year = year;
+        if (type === 'tv' || type === 'all') params.first_air_date_year = year;
+      }
+      
+      let results = [];
+      if (type === 'all') {
+        const [movieRes, tvRes] = await Promise.all([
+          axios.get(`https://api.themoviedb.org/3/discover/movie`, { params }),
+          axios.get(`https://api.themoviedb.org/3/discover/tv`, { params })
+        ]);
+        results = [
+          ...movieRes.data.results.map(i => ({ ...i, media_type: 'movie' })),
+          ...tvRes.data.results.map(i => ({ ...i, media_type: 'tv' }))
+        ];
+        if (sort === 'popularity.desc') results.sort((a, b) => b.popularity - a.popularity);
+        else if (sort === 'vote_average.desc') results.sort((a, b) => b.vote_average - a.vote_average);
+        else if (sort === 'primary_release_date.desc') {
+          results.sort((a, b) => {
+            const dateA = a.release_date || a.first_air_date || '';
+            const dateB = b.release_date || b.first_air_date || '';
+            return dateB.localeCompare(dateA);
+          });
+        }
+        results = results.slice(0, 20);
+      } else {
+        const resObj = await axios.get(`https://api.themoviedb.org/3/discover/${type}`, { params });
+        results = resObj.data.results.map(i => ({ ...i, media_type: type }));
+      }
+      
+      return res.json(formatTmdbResults(results));
+    }
+  } catch (error) {
+    console.error('Erreur explore TMDB:', error.message);
+    res.status(500).json({ error: 'Erreur Serveur' });
+  }
+});
+
+// ----------------------------------------------------------------------
 // GET /api/media/random - Un film ou série au hasard
 // ----------------------------------------------------------------------
 router.get('/random', async (req, res) => {
@@ -155,7 +274,7 @@ router.get('/details/:type/:id', authenticateToken, async (req, res) => {
     if (!tmdbKey) return res.status(400).json({ error: 'Clé API manquante' });
 
     const response = await axios.get(`https://api.themoviedb.org/3/${type}/${id}`, {
-      params: { api_key: tmdbKey, language: 'fr-FR', append_to_response: 'watch/providers' }
+      params: { api_key: tmdbKey, language: 'fr-FR', append_to_response: 'watch/providers,videos', include_video_language: 'fr,fr-FR,en,en-US,null' }
     });
     const item = response.data;
     res.json({
@@ -167,11 +286,83 @@ router.get('/details/:type/:id', authenticateToken, async (req, res) => {
       backdrop_url: item.backdrop_path ? `https://image.tmdb.org/t/p/original${item.backdrop_path}` : null,
       overview: item.overview || "Aucune description disponible.",
       vote_average: item.vote_average,
-      watch_providers: item['watch/providers']?.results?.FR || null
+      genres: item.genres || [],
+      seasons: item.seasons || [],
+      watch_providers: item['watch/providers']?.results?.FR?.flatrate || item['watch/providers']?.results?.FR?.rent || item['watch/providers']?.results?.FR?.buy || [],
+      watch_link: item['watch/providers']?.results?.FR?.link || null,
+      trailer_key: (() => {
+        const vids = item.videos?.results || [];
+        const frTrailer = vids.find(v => v.site === 'YouTube' && v.type === 'Trailer' && (v.iso_639_1 === 'fr' || v.iso_639_1 === 'fr-FR'));
+        const anyTrailer = vids.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+        const anyVideo = vids.find(v => v.site === 'YouTube');
+        return (frTrailer || anyTrailer || anyVideo)?.key || null;
+      })()
     });
   } catch (error) {
     console.error('Erreur details TMDB:', error.message);
     res.status(500).json({ error: 'Erreur TMDB' });
+  }
+});
+
+// ----------------------------------------------------------------------
+// GET /api/media/series/:id/season/:season_number - Détails d'une saison
+// ----------------------------------------------------------------------
+router.get('/series/:id/season/:season_num', authenticateToken, async (req, res) => {
+  const { id, season_num } = req.params;
+  try {
+    const tmdbKey = process.env.TMDB_API_KEY;
+    if (!tmdbKey) return res.status(400).json({ error: 'Clé API manquante' });
+
+    const response = await axios.get(`https://api.themoviedb.org/3/tv/${id}/season/${season_num}`, {
+      params: { api_key: tmdbKey, language: 'fr-FR' }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error(`Erreur fetch saison ${season_num} pour série ${id}:`, error.message);
+    res.status(500).json({ error: 'Erreur TMDB' });
+  }
+});
+
+
+// ----------------------------------------------------------------------
+// GET /api/media/promo_ratings - Récupérer les notes moyennes de la promo
+// ----------------------------------------------------------------------
+router.get('/promo_ratings', async (req, res) => {
+  try {
+    const { data: reviews, error } = await supabase
+      .from('media_reviews')
+      .select(`
+        rating,
+        media_items!inner(tmdb_id)
+      `);
+      
+    if (error) throw error;
+    
+    // Group and average
+    const ratingsMap = {};
+    const countMap = {};
+    
+    reviews.forEach(r => {
+      const tmdbId = r.media_items?.tmdb_id;
+      if (tmdbId) {
+        if (!ratingsMap[tmdbId]) {
+          ratingsMap[tmdbId] = 0;
+          countMap[tmdbId] = 0;
+        }
+        ratingsMap[tmdbId] += r.rating;
+        countMap[tmdbId] += 1;
+      }
+    });
+    
+    Object.keys(ratingsMap).forEach(id => {
+      ratingsMap[id] = (ratingsMap[id] / countMap[id]).toFixed(1);
+    });
+    
+    res.json(ratingsMap);
+  } catch (error) {
+    console.error('Erreur promo_ratings:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
   }
 });
 

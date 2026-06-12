@@ -11,7 +11,7 @@ const UPGRADES = [
   { id: 'cafe', name: 'Café de la machine', description: '+5 clics par clic', baseCost: 500, type: 'click', value: 5, icon: <Coffee size={22} className="text-amber-600" /> },
   { id: 'calculatrice', name: 'Calculatrice Casio', description: '+25 clics par clic', baseCost: 5000, type: 'click', value: 25, icon: <Calculator size={22} className="text-gray-500" /> },
   { id: 'livre_maths', name: 'Livre de Maths de 15kg', description: '+100 clics par clic', baseCost: 50000, type: 'click', value: 100, icon: <BookOpen size={22} className="text-blue-500" /> },
-  { id: 'blouse', name: 'Blouse blanche tachée', description: '+500 clics par clic', baseCost: 250000, type: 'click', value: 500, icon: <Shirt size={22} className="text-slate-400" /> },
+  { id: 'blouse', name: 'Blouse blanche tachée', description: '+500 clics par clic', baseCost: 250000, type: 'click', value: 500, icon: <Shirt size={22} className="text-[var(--text-muted)]" /> },
   { id: 'soudure_parfaite', name: 'Soudure à l\'étain parfaite', description: '+10 000 clics par clic', baseCost: 2500000, type: 'click', value: 10000, icon: <Flame size={22} className="text-orange-500" /> },
   { id: 'copion_trousse', name: 'Pompe dans la trousse', description: '+50 000 clics par clic', baseCost: 10000000, type: 'click', value: 50000, icon: <FileText size={22} className="text-yellow-500" /> },
   { id: 'hack_wifi', name: 'Hack du Wi-Fi du lycée', description: '+250 000 clics par clic', baseCost: 50000000, type: 'click', value: 250000, icon: <Wifi size={22} className="text-teal-500" /> },
@@ -253,7 +253,7 @@ export default function MongeClicker() {
         {/* Global Score Compact Badge */}
         <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl py-2 px-5 shadow-lg border border-white/10 flex flex-col items-end">
           <p className="text-indigo-300 font-bold uppercase tracking-wider text-[10px] mb-0.5">Total Lycée</p>
-          <div className="text-xl font-black text-white font-mono flex items-center gap-2">
+          <div className="text-xl font-black text-[var(--text)] font-mono flex items-center gap-2">
             <Trophy className="text-yellow-400" size={18} />
             {globalScore.toLocaleString()}
           </div>
@@ -264,7 +264,7 @@ export default function MongeClicker() {
 
         {/* Main Click Area */}
         <div className="lg:col-span-5 flex flex-col h-full min-h-0">
-          <div className="w-full h-full bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-slate-700/50 flex flex-col items-center shrink-0">
+          <div className="w-full h-full bg-white dark:bg-[var(--surface-2)] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 flex flex-col items-center shrink-0">
 
             <div className="text-center mb-2 shrink-0">
               <p className="text-gray-500 font-semibold uppercase tracking-wider text-xs mb-1">Tes MongeCoins</p>
@@ -325,9 +325,9 @@ export default function MongeClicker() {
 
         {/* Upgrades Shop */}
         <div className="lg:col-span-4 flex flex-col h-full min-h-0">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-slate-700/50 h-full flex flex-col min-h-0">
+          <div className="bg-white dark:bg-[var(--surface-2)] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 h-full flex flex-col min-h-0">
             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 shrink-0" style={{ color: 'var(--text)' }}>
-              <Settings className="text-gray-400" /> Boutique
+              <Settings className="text-[var(--text-muted)]" /> Boutique
             </h3>
 
             <div className="flex flex-col flex-1 min-h-0 gap-6">
@@ -350,7 +350,7 @@ export default function MongeClicker() {
                         disabled={!canAfford}
                         className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left ${canAfford
                           ? 'border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 hover:scale-[1.02] cursor-pointer'
-                          : 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 opacity-60 cursor-not-allowed'
+                          : 'border-gray-200 dark:border-[var(--border)] bg-gray-50 dark:bg-[var(--surface-2)]/50 opacity-60 cursor-not-allowed'
                           }`}
                       >
                         <div className="flex items-center gap-3">
@@ -359,7 +359,7 @@ export default function MongeClicker() {
                           </div>
                           <div>
                             <h4 className="font-bold text-sm leading-tight" style={{ color: 'var(--text)' }}>{u.name}</h4>
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{u.description}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-[var(--text-muted)] leading-tight mt-0.5">{u.description}</p>
                             <p className={`text-xs font-bold mt-1 ${canAfford ? 'text-indigo-600 dark:text-indigo-400' : 'text-red-500'}`}>
                               {cost.toLocaleString()} pts
                             </p>
@@ -392,7 +392,7 @@ export default function MongeClicker() {
                         disabled={!canAfford}
                         className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left ${canAfford
                           ? 'border-orange-200 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-800/50 hover:scale-[1.02] cursor-pointer'
-                          : 'border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/50 opacity-60 cursor-not-allowed'
+                          : 'border-gray-200 dark:border-[var(--border)] bg-gray-50 dark:bg-[var(--surface-2)]/50 opacity-60 cursor-not-allowed'
                           }`}
                       >
                         <div className="flex items-center gap-3">
@@ -401,7 +401,7 @@ export default function MongeClicker() {
                           </div>
                           <div>
                             <h4 className="font-bold text-sm leading-tight" style={{ color: 'var(--text)' }}>{u.name}</h4>
-                            <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{u.description}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-[var(--text-muted)] leading-tight mt-0.5">{u.description}</p>
                             <p className={`text-xs font-bold mt-1 ${canAfford ? 'text-orange-600 dark:text-orange-400' : 'text-red-500'}`}>
                               {cost.toLocaleString()} pts
                             </p>
@@ -422,7 +422,7 @@ export default function MongeClicker() {
 
         {/* Leaderboard */}
         <div className="lg:col-span-3 flex flex-col h-full min-h-0">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-slate-700/50 h-full flex flex-col min-h-0">
+          <div className="bg-white dark:bg-[var(--surface-2)] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 h-full flex flex-col min-h-0">
             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 shrink-0" style={{ color: 'var(--text)' }}>
               <Award className="text-yellow-500" /> Top Tryharders
             </h3>

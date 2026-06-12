@@ -47,7 +47,7 @@ export function Navbar() {
               to="/status"
               title="État des services"
               aria-label="État des services"
-              className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0"
+              className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0 shrink-0"
               style={{
                 background: 'var(--surface-2)',
                 border: '1px solid var(--border)',
@@ -73,7 +73,7 @@ export function Navbar() {
               to="/docs"
               title="Documentation"
               aria-label="Documentation"
-              className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0"
+              className="hidden sm:flex p-2 rounded-lg transition-all items-center justify-center min-w-0 shrink-0"
               style={{
                 background: 'var(--surface-2)',
                 border: '1px solid var(--border)',
@@ -99,7 +99,7 @@ export function Navbar() {
               to="/kholleurs"
               title="Avis Kholleurs"
               aria-label="Avis Kholleurs"
-              className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0"
+              className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0 shrink-0"
               style={{
                 background: 'var(--surface-2)',
                 border: '1px solid var(--border)',
@@ -128,7 +128,7 @@ export function Navbar() {
                     to="/admin"
                     title="Administration"
                     aria-label="Administration"
-                    className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0"
+                    className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0 shrink-0"
                     style={{
                       background: 'rgba(239,68,68,0.08)',
                       border: '1px solid rgba(239,68,68,0.2)',
@@ -153,7 +153,7 @@ export function Navbar() {
                   to="/notes"
                   title="Mes notes"
                   aria-label="Mes notes"
-                  className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0"
+                  className="hidden sm:flex p-2 rounded-lg transition-all items-center justify-center min-w-0 shrink-0"
                   style={{
                     background: 'var(--surface-2)',
                     border: '1px solid var(--border)',
@@ -217,7 +217,7 @@ export function Navbar() {
                   onClick={logout}
                   title="Déconnexion"
                   aria-label="Se déconnecter"
-                  className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0"
+                  className="p-2 rounded-lg transition-all flex items-center justify-center min-w-0 shrink-0"
                   style={{
                     background: 'var(--surface-2)',
                     border: '1px solid var(--border)',
