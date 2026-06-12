@@ -459,6 +459,7 @@ CREATE TABLE IF NOT EXISTS carpool_rides (
   seats_offered INTEGER NOT NULL CHECK (seats_offered > 0),
   seats_available INTEGER NOT NULL CHECK (seats_available >= 0),
   price INTEGER DEFAULT 0,
+  price_type TEXT DEFAULT 'per_person' CHECK (price_type IN ('per_person', 'divided')),
   description TEXT DEFAULT '',
   status TEXT DEFAULT 'active' CHECK (status IN ('active', 'full', 'cancelled', 'completed')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -486,9 +487,51 @@ CREATE INDEX IF NOT EXISTS idx_carpool_passengers_user ON carpool_passengers(use
 /*
 -- ============================================
 -- NOTE POUR UPDATE : Si la table carpool_rides existe déjà, exécutez ces requêtes :
-ALTER TABLE carpool_rides ADD COLUMN origin_lat NUMERIC;
-ALTER TABLE carpool_rides ADD COLUMN origin_lng NUMERIC;
-ALTER TABLE carpool_rides ADD COLUMN dest_lat NUMERIC;
-ALTER TABLE carpool_rides ADD COLUMN dest_lng NUMERIC;
--- ============================================
+-- ALTER TABLE carpool_rides ADD COLUMN IF NOT EXISTS price INTEGER DEFAULT 0;
+-- ALTER TABLE carpool_rides ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '';
+-- ALTER TABLE carpool_passengers ADD COLUMN IF NOT EXISTS has_paid BOOLEAN DEFAULT false;
+-- ALTER TABLE carpool_passengers ADD COLUMN IF NOT EXISTS boarded BOOLEAN DEFAULT false;
 */
+
+-- ============================================
+-- MODULE : MONGEFLIX (Films & Séries)
+-- ============================================
+
+-- 1. Table des médias (Films et Séries)
+CREATE TABLE IF NOT EXISTS public.media_items (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    tmdb_id VARCHAR NOT NULL UNIQUE,
+    type VARCHAR NOT NULL DEFAULT 'movie', -- 'movie' ou 'tv'
+    title VARCHAR NOT NULL,
+    poster_url TEXT,
+    release_year VARCHAR,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 2. Table des critiques / notes
+CREATE TABLE IF NOT EXISTS public.media_reviews (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    media_id UUID NOT NULL REFERENCES public.media_items(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    review_text TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, media_id) -- Un utilisateur ne peut noter un média qu'une seule fois
+);
+
+-- Index pour optimiser les requêtes sur le feed
+CREATE INDEX IF NOT EXISTS idx_media_reviews_created_at ON public.media_reviews(created_at DESC);
+
+-- 3. Table de Watchlist (Liste de visionnage)
+CREATE TABLE IF NOT EXISTS public.media_watchlists (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    media_id UUID NOT NULL REFERENCES public.media_items(id) ON DELETE CASCADE,
+    type VARCHAR NOT NULL DEFAULT 'personal', -- 'personal' ou 'class'
+    status VARCHAR NOT NULL DEFAULT 'planned', -- 'planned', 'watching', 'watched'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, media_id, type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_media_watchlists_user ON public.media_watchlists(user_id);
+CREATE INDEX IF NOT EXISTS idx_media_watchlists_type ON public.media_watchlists(type);

@@ -588,11 +588,11 @@ export function Forum() {
     return (
       <div className="pb-20" style={{ background: 'var(--bg)', minHeight: '100vh' }}>
         {/* Header */}
-        <div className="shadow-lg sticky top-0 z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+        <div className="shadow-lg sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
           <div className="max-w-4xl mx-auto px-4 py-3">
             <div className="flex items-center gap-3">
-              <button onClick={() => setSelectedTopic(null)} className="hover:opacity-70 transition-opacity p-1" style={{ color: 'var(--accent)' }}>
-                <ArrowLeft size={22} />
+              <button onClick={() => setSelectedTopic(null)} className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+                <ArrowLeft className="w-5 h-5" />
               </button>
               <div>
                 <div className="flex items-center gap-2">
@@ -951,14 +951,14 @@ export function Forum() {
 
   // Main forum view
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '24px' }}>
       {/* Topics list header */}
-      <div className="sticky top-0 z-30 shadow-sm" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30 shadow-sm" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-4xl mx-auto px-4 py-4 sm:py-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Link to="/" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
-                <ArrowLeft size={22} />
+              <Link to="/outils" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+                <ArrowLeft className="w-5 h-5" />
               </Link>
               <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
                 <MessageSquare size={24} style={{ color: 'var(--accent)' }} className="hidden sm:block" />
@@ -1138,7 +1138,7 @@ export function Forum() {
       {showNewTopicModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" style={{ background: 'var(--surface)' }}>
-            <div className="flex items-center justify-between p-4 sticky top-0" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+            <div className="flex items-center justify-between p-4 sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
               <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
                 <Plus size={20} style={{ color: 'var(--accent)' }} />
                 Créer un nouveau sujet

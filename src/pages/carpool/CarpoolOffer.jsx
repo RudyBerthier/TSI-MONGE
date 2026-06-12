@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Car, Search, MapPin, Calendar, Clock, Users, Euro, CheckCircle, ArrowDownUp } from 'lucide-react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, Car, Search, MapPin, Calendar, Clock, Users, Euro, CheckCircle, ArrowDownUp, Calculator, Wand2, ChevronDown, ChevronUp, Fuel } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -351,7 +351,7 @@ function InlineTimePicker({ value, onChange }) {
         <div className="absolute z-50 mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl shadow-lg p-3 w-64 right-0 sm:right-auto sm:left-0">
           <div className="flex gap-2 h-48">
             <div className="flex-1 overflow-y-auto scroll-smooth border-r border-gray-100 dark:border-slate-700 pr-1" style={{ scrollbarWidth: 'none' }}>
-              <div className="text-[10px] font-bold text-gray-400 uppercase text-center sticky top-0 bg-white dark:bg-slate-800 py-1 z-10">Heure</div>
+              <div className="text-[10px] font-bold text-gray-400 uppercase text-center sticky top-[calc(3.5rem+env(safe-area-inset-top))] bg-white dark:bg-slate-800 py-1 z-10">Heure</div>
               {hours.map((h) => (
                 <button
                   key={h}
@@ -366,7 +366,7 @@ function InlineTimePicker({ value, onChange }) {
             </div>
             
             <div className="flex-1 overflow-y-auto scroll-smooth pl-1" style={{ scrollbarWidth: 'none' }}>
-              <div className="text-[10px] font-bold text-gray-400 uppercase text-center sticky top-0 bg-white dark:bg-slate-800 py-1 z-10">Minute</div>
+              <div className="text-[10px] font-bold text-gray-400 uppercase text-center sticky top-[calc(3.5rem+env(safe-area-inset-top))] bg-white dark:bg-slate-800 py-1 z-10">Minute</div>
               {minutes.map((m) => (
                 <button
                   key={m}
@@ -395,6 +395,7 @@ function InlineTimePicker({ value, onChange }) {
 
 export function CarpoolOffer() {
   const navigate = useNavigate()
+  const { id } = useParams()
   const { getToken } = useAuth()
 
   const now = new Date()
@@ -414,12 +415,87 @@ export function CarpoolOffer() {
     time: defaultTime,
     seatsOffered: 3,
     price: 0,
-    description: ''
+    priceType: 'per_person',
+    description: '',
+    recurringWeeks: 0,
+    priceDetails: null
   })
 
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(!!id)
   const [error, setError] = useState('')
   const [route, setRoute] = useState(null)
+
+  const [showCalculator, setShowCalculator] = useState(false)
+  const [fuelPrices, setFuelPrices] = useState(null)
+  const [calcData, setCalcData] = useState({
+    consumption: 6.0,
+    fuelPrice: 1.80,
+    tolls: 0
+  })
+
+  // Calcul des frais
+  const distanceKm = route ? (route.distance / 1000) : 0
+  const fuelCost = (distanceKm / 100) * calcData.consumption * calcData.fuelPrice
+  const totalCost = fuelCost + Number(calcData.tolls)
+  const costPerPerson = totalCost / (Number(formData.seatsOffered) + 1)
+
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const res = await fetch('/api/carpool/fuel-prices')
+        if (res.ok) {
+          const data = await res.json()
+          setFuelPrices(data)
+          if (data['Gazole']) {
+            setCalcData(p => ({...p, fuelPrice: data['Gazole']}))
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch fuel prices', err)
+      }
+    }
+    fetchPrices()
+  }, [])
+
+  useEffect(() => {
+    if (id) {
+      const fetchRide = async () => {
+        try {
+          const res = await fetch(`/api/carpool/${id}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+          })
+          if (!res.ok) throw new Error('Erreur lors du chargement du trajet')
+          const ride = await res.json()
+          
+          const dt = new Date(ride.departure_time)
+          const dateStr = dt.toISOString().split('T')[0]
+          const timeStr = dt.toTimeString().slice(0, 5)
+
+          setFormData({
+            origin: ride.origin,
+            originLat: ride.origin_lat,
+            originLng: ride.origin_lng,
+            destination: ride.destination,
+            destLat: ride.dest_lat,
+            destLng: ride.dest_lng,
+            date: dateStr,
+            time: timeStr,
+            seatsOffered: ride.seats_offered,
+            price: ride.price,
+            priceType: ride.price_type || 'per_person',
+            description: ride.description || '',
+            priceDetails: ride.price_details || null
+          })
+        } catch (err) {
+          setError(err.message)
+        } finally {
+          setInitialLoading(false)
+        }
+      }
+      fetchRide()
+    }
+  }, [id, getToken])
 
   useEffect(() => {
     const fetchRoute = async () => {
@@ -460,8 +536,8 @@ export function CarpoolOffer() {
     const departureTime = new Date(`${formData.date}T${formData.time}`).toISOString()
 
     try {
-      const res = await fetch('/api/carpool', {
-        method: 'POST',
+      const res = await fetch(id ? `/api/carpool/${id}` : '/api/carpool', {
+        method: id ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getToken()}`
@@ -473,7 +549,7 @@ export function CarpoolOffer() {
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de la création')
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de la sauvegarde')
 
       navigate(`/covoiturage/${data.id}`)
     } catch (err) {
@@ -483,20 +559,22 @@ export function CarpoolOffer() {
   }
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '24px' }}>
       {/* Header */}
-      <div className="sticky top-0 z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/covoiturage" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
-              <ArrowLeft size={22} />
+            <Link to="/covoiturage" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+              <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-500">
                 <Car size={22} className="text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Proposer un trajet</h1>
+                <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>
+                  {id ? 'Modifier le trajet' : 'Proposer un trajet'}
+                </h1>
               </div>
             </div>
           </div>
@@ -504,6 +582,11 @@ export function CarpoolOffer() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6">
+        {initialLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
 
           {error && (
@@ -654,12 +737,160 @@ export function CarpoolOffer() {
               </div>
 
               <div>
-                <label className="text-xs font-semibold mb-1 block" style={{ color: 'var(--text-muted)' }}>Prix (en €)</label>
+                <label className="text-xs font-semibold mb-1 flex items-center justify-between" style={{ color: 'var(--text-muted)' }}>
+                  <span>Prix (en €)</span>
+                  {route && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCalculator(!showCalculator)}
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors ${showCalculator ? 'bg-indigo-500 text-white' : 'bg-indigo-50 text-indigo-500 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-900/50'}`}
+                    >
+                      <Wand2 size={12} /> Assistant
+                    </button>
+                  )}
+                </label>
                 <div className="relative">
                   <Euro className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                   <input type="number" min="0" step="1" name="price" required value={formData.price} onChange={handleChange} placeholder="0 pour gratuit" className="tsi-input pl-10 w-full" />
                 </div>
-                <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Mettez 0 si le trajet est gratuit.</p>
+                {formData.price > 0 && (
+                  <div className="mt-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl p-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, priceType: 'per_person' }))}
+                      className={`flex-1 text-xs py-2 px-1 rounded-lg font-semibold transition-colors ${formData.priceType === 'per_person' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                    >
+                      Par personne
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, priceType: 'divided' }))}
+                      className={`flex-1 text-xs py-2 px-1 rounded-lg font-semibold transition-colors ${formData.priceType === 'divided' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-500 hover:bg-gray-50 dark:hover:bg-slate-700'}`}
+                    >
+                      À diviser
+                    </button>
+                  </div>
+                )}
+                {formData.price > 0 && formData.priceType === 'divided' && (
+                  <p className="text-[10px] mt-2" style={{ color: 'var(--text-muted)' }}>Le coût total sera divisé entre vous et les passagers.</p>
+                )}
+                {formData.price === 0 && (
+                  <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Laissez 0 si le trajet est gratuit.</p>
+                )}
+
+                {/* Assistant de Prix */}
+                {showCalculator && route && (
+                  <div className="mt-4 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10">
+                    <div className="flex justify-between items-center mb-3">
+                      <h3 className="text-xs font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1">
+                        <Calculator size={14} /> Estimer mes frais
+                      </h3>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[10px] font-semibold text-gray-500 block mb-1">Conso. (L/100km)</label>
+                          <input 
+                            type="number" 
+                            step="0.1"
+                            min="0"
+                            value={calcData.consumption}
+                            onChange={(e) => setCalcData(p => ({...p, consumption: parseFloat(e.target.value) || 0}))}
+                            className="w-full text-xs p-1.5 rounded bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50" 
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold text-gray-500 block mb-1">Type de carburant</label>
+                          <select 
+                            className="w-full text-xs p-1.5 rounded bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50"
+                            defaultValue="Gazole"
+                            onChange={(e) => {
+                              const val = e.target.value
+                              if (val && fuelPrices && fuelPrices[val]) {
+                                setCalcData(p => ({...p, fuelPrice: fuelPrices[val]}))
+                              }
+                            }}
+                          >
+                            <option value="">Manuel</option>
+                            {fuelPrices && Object.keys(fuelPrices).filter(k => k !== 'last_updated').map(k => (
+                              <option key={k} value={k}>{k}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold text-gray-500 block mb-1">Prix (€/L)</label>
+                          <input 
+                            type="number" 
+                            step="0.01"
+                            min="0"
+                            value={calcData.fuelPrice}
+                            onChange={(e) => setCalcData(p => ({...p, fuelPrice: parseFloat(e.target.value) || 0}))}
+                            className="w-full text-xs p-1.5 rounded bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50" 
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <label className="text-[10px] font-semibold text-gray-500 block mb-1">Frais de péage estimés (€)</label>
+                        <input 
+                          type="number" 
+                          step="0.1"
+                          min="0"
+                          value={calcData.tolls}
+                          onChange={(e) => setCalcData(p => ({...p, tolls: parseFloat(e.target.value) || 0}))}
+                          className="w-full text-xs p-1.5 rounded bg-white dark:bg-slate-800 border border-indigo-100 dark:border-indigo-900/50" 
+                        />
+                      </div>
+
+                      <div className="pt-2 border-t border-indigo-100 dark:border-indigo-800/50">
+                        <div className="flex justify-between items-end mb-2">
+                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">Coût total ({distanceKm.toFixed(0)}km)</span>
+                          <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{totalCost.toFixed(2)} €</span>
+                        </div>
+                        <div className="flex justify-between items-end mb-3">
+                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 flex items-center gap-1">
+                            <Users size={12}/> Par personne (/{Number(formData.seatsOffered) + 1})
+                          </span>
+                          <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{costPerPerson.toFixed(2)} €</span>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData(p => ({
+                                ...p, 
+                                price: Math.ceil(costPerPerson), 
+                                priceType: 'per_person',
+                                priceDetails: { ...calcData, distanceKm, totalCost }
+                              }));
+                              setShowCalculator(false);
+                            }}
+                            className="flex-1 bg-indigo-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-indigo-600 transition-colors"
+                          >
+                            Par personne ({Math.ceil(costPerPerson)}€)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setFormData(p => ({
+                                ...p, 
+                                price: Math.ceil(totalCost), 
+                                priceType: 'divided',
+                                priceDetails: { ...calcData, distanceKm, totalCost }
+                              }));
+                              setShowCalculator(false);
+                            }}
+                            className="flex-1 bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 text-xs font-bold py-2 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900 transition-colors"
+                          >
+                            À diviser ({Math.ceil(totalCost)}€)
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -675,16 +906,34 @@ export function CarpoolOffer() {
                 style={{ resize: 'none' }}
               />
             </div>
+
+            {!id && (
+              <div className="space-y-4">
+                <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Répéter ce trajet chaque semaine ?</label>
+                <select
+                  name="recurringWeeks"
+                  value={formData.recurringWeeks}
+                  onChange={handleChange}
+                  className="tsi-input w-full"
+                >
+                  <option value={0}>Non, une seule fois</option>
+                  <option value={4}>Oui, pendant 1 mois (4 semaines)</option>
+                  <option value={8}>Oui, pendant 2 mois (8 semaines)</option>
+                </select>
+                <p className="text-xs text-gray-500">Pratique pour vos allers-retours habituels. Vous pourrez toujours annuler une date spécifique plus tard.</p>
+              </div>
+            )}
           </div>
 
           <button type="submit" disabled={loading} className="tsi-btn-primary w-full py-4 text-base justify-center flex items-center gap-2">
             {loading ? (
               <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
             ) : (
-              <><CheckCircle size={20} /> Publier mon trajet</>
+              <><CheckCircle size={20} /> {id ? 'Enregistrer les modifications' : 'Publier mon trajet'}</>
             )}
           </button>
         </form>
+        )}
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Car, Calendar, Users, Euro, MapPin, CheckCircle, XCircle, MessageCircle, Info, Clock, X, Send, Reply, Smile, CheckCheck, Heart, ThumbsUp, QrCode, Scan, Star, Music, VolumeX } from 'lucide-react'
+import { ArrowLeft, Car, Calendar, Users, Euro, MapPin, CheckCircle, XCircle, MessageCircle, Info, Clock, X, Send, Reply, Smile, CheckCheck, Heart, ThumbsUp, QrCode, Scan, Star, Music, VolumeX, Fuel, Calculator } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useSocket } from '../../contexts/SocketContext'
 import { RestrictedAccess } from '../../components/RestrictedAccess'
@@ -51,7 +51,14 @@ export function CarpoolDetails() {
   const [chatError, setChatError] = useState('')
   const [chatReplyTo, setChatReplyTo] = useState(null)
   const [hoveredMessage, setHoveredMessage] = useState(null)
+
+  // Driver stats
+  const [driverStats, setDriverStats] = useState({ totalRides: 0, reliability: 100 })
   
+  // Detour request
+  const [detourRequest, setDetourRequest] = useState(false)
+  const [detourText, setDetourText] = useState('')
+
   const [route, setRoute] = useState(null)
   const { socket } = useSocket()
   
@@ -74,6 +81,13 @@ export function CarpoolDetails() {
   const myRequest = ride?.passengers?.find(p => p.user_id === user?.id)
   const isAcceptedPassenger = myRequest?.status === 'accepted'
   const isChatAuthorized = isDriver || isAcceptedPassenger
+
+  const acceptedPassengersCount = ride?.passengers?.filter(p => p.status === 'accepted').length || 0
+  const finalPrice = ride?.price_type === 'divided' && ride?.price > 0 ? (ride.price / (acceptedPassengersCount + 1)) : (ride?.price || 0)
+  const formattedPrice = finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2)
+
+  const hoursBeforeDeparture = ride ? (new Date(ride.departure_time) - new Date()) / (1000 * 60 * 60) : 0
+  const canModify = hoursBeforeDeparture >= 24
 
   useEffect(() => {
     if (optPlusUn && optPlusUnName.length >= 2 && !optPlusUnName.startsWith('@')) {
@@ -99,6 +113,15 @@ export function CarpoolDetails() {
       const data = await res.json()
       setRide(data)
       
+      // Fetch driver stats
+      try {
+        const statsRes = await fetch(`/api/carpool/driver-stats/${data.driver_id}`)
+        if (statsRes.ok) {
+          const statsData = await statsRes.json()
+          setDriverStats(statsData)
+        }
+      } catch (err) { console.error('Erreur stats conducteur', err) }
+
       // Fetch OSRM Route if coordinates exist
       if (data.origin_lat && data.origin_lng && data.dest_lat && data.dest_lng) {
         try {
@@ -293,6 +316,11 @@ export function CarpoolDetails() {
       if (optChien) opts.push("🐾 Animal de compagnie")
       
       let finalMessage = message.trim()
+      
+      if (detourRequest && detourText.trim() !== '') {
+        finalMessage = `[DÉTOUR : ${detourText.trim()}]\n${finalMessage}`
+      }
+      
       if (opts.length > 0) {
         finalMessage = `[Options : ${opts.join(" | ")}]\n${finalMessage}`
       }
@@ -483,12 +511,15 @@ export function CarpoolDetails() {
 
   if (!user) {
     return (
-      <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
-        <div className="sticky top-0 z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '24px' }}>
+        <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
           <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-            <Link to="/covoiturage" className="flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: 'var(--accent)' }}>
-              <ArrowLeft size={18} /> Retour
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link to="/covoiturage" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Détails du trajet</h1>
+            </div>
           </div>
         </div>
         <div className="max-w-2xl mx-auto px-4 py-12">
@@ -502,15 +533,23 @@ export function CarpoolDetails() {
   }
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '24px' }}>
       {/* Header */}
-      <div className="sticky top-0 z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/covoiturage" className="flex items-center gap-2 text-sm font-medium transition-colors" style={{ color: 'var(--accent)' }}>
-            <ArrowLeft size={18} /> Retour
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/covoiturage" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Détails du trajet</h1>
+          </div>
           {isDriver && ride.status === 'active' && (
             <div className="flex items-center gap-4">
+              {canModify && (
+                <Link to={`/covoiturage/modifier/${id}`} className="text-indigo-600 dark:text-indigo-400 text-sm font-medium hover:underline">
+                  Modifier
+                </Link>
+              )}
               <button onClick={handleStartRide} className="bg-indigo-600 text-white text-sm font-bold px-4 py-2 rounded-full hover:bg-indigo-700 transition shadow-md">
                 Démarrer le trajet
               </button>
@@ -566,13 +605,21 @@ export function CarpoolDetails() {
               </div>
               <div>
                 <h2 className="text-lg font-bold" style={{ color: 'var(--text)' }}>{ride.driver.username}</h2>
+                <p className="text-xs text-gray-500 font-medium mb-1 flex items-center gap-1">
+                  <Car size={14} className="shrink-0" /> {driverStats.totalRides} trajet(s) • <Star size={14} className="text-yellow-500 shrink-0" /> {driverStats.reliability}% fiable
+                </p>
                 <p className="text-sm flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
                   <Car size={14} /> Conducteur
                 </p>
               </div>
             </div>
-            <div className="bg-indigo-500/10 text-indigo-600 px-4 py-1.5 rounded-full font-bold flex items-center gap-1">
-              {ride.price > 0 ? <>{ride.price} <Euro size={16}/></> : 'Gratuit'}
+            <div className="bg-indigo-500/10 text-indigo-600 px-4 py-1.5 rounded-full font-bold flex flex-col items-end">
+              <div className="flex items-center gap-1">
+                {ride.price > 0 ? <>{formattedPrice} <Euro size={16}/></> : 'Gratuit'}
+              </div>
+              {ride.price_type === 'divided' && ride.price > 0 && (
+                <span className="text-[10px] uppercase tracking-wider opacity-80 mt-0.5">({ride.price}€ divisé par {acceptedPassengersCount + 1})</span>
+              )}
             </div>
           </div>
 
@@ -739,6 +786,35 @@ export function CarpoolDetails() {
               <p className="text-sm italic" style={{ color: 'var(--text)' }}>"{ride.description}"</p>
             </div>
           )}
+
+          {/* Frais du trajet (Price Details) */}
+          {ride.price_details && (
+            <div className="mt-4 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-900/10">
+              <h3 className="text-xs font-bold text-indigo-700 dark:text-indigo-400 flex items-center gap-1 mb-3">
+                <Calculator size={14} /> Détails des frais estimés
+              </h3>
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-gray-500 mb-0.5">Essence ({ride.price_details.consumption}L/100)</p>
+                  <p className="text-sm font-semibold flex items-center gap-1" style={{ color: 'var(--text)' }}>
+                    <Fuel size={12} className="text-indigo-500"/> 
+                    {((ride.price_details.totalCost - (ride.price_details.tolls || 0))).toFixed(2)} €
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-gray-500 mb-0.5">Péages</p>
+                  <p className="text-sm font-semibold flex items-center gap-1" style={{ color: 'var(--text)' }}>
+                    <Euro size={12} className="text-indigo-500"/> 
+                    {Number(ride.price_details.tolls || 0).toFixed(2)} €
+                  </p>
+                </div>
+              </div>
+              <div className="border-t border-indigo-100 dark:border-indigo-800 pt-2 flex justify-between items-end">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Coût total du trajet ({ride.price_details.distanceKm?.toFixed(0)}km)</span>
+                <span className="text-sm font-bold text-indigo-700 dark:text-indigo-400">{Number(ride.price_details.totalCost).toFixed(2)} €</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Passenger Action Section */}
@@ -772,7 +848,7 @@ export function CarpoolDetails() {
                         className="px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 transition-colors bg-indigo-600 text-white hover:bg-indigo-700 shadow-md"
                       >
                         <Euro size={16} />
-                        Payer {ride.price} €
+                        Payer {formattedPrice} €
                       </button>
                     ) : (
                       <button 
@@ -857,6 +933,29 @@ export function CarpoolDetails() {
                   className="tsi-input w-full mb-4 text-sm" 
                   rows={2} 
                 />
+
+                <div className="mb-4 bg-gray-50 dark:bg-slate-800/50 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <label className="flex items-center gap-2 cursor-pointer mb-2">
+                    <input 
+                      type="checkbox" 
+                      checked={detourRequest} 
+                      onChange={(e) => setDetourRequest(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500 bg-black/40 border-gray-700"
+                    />
+                    <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>Demander un petit détour</span>
+                  </label>
+                  {detourRequest && (
+                    <input 
+                      type="text" 
+                      value={detourText} 
+                      onChange={(e) => setDetourText(e.target.value)} 
+                      placeholder="Ex: Pouvez-vous passer par l'arrêt de bus Mairie ?" 
+                      className="tsi-input w-full text-sm" 
+                      required
+                    />
+                  )}
+                </div>
+
                 <button type="submit" disabled={requesting} className="tsi-btn-primary w-full justify-center py-3">
                   {requesting ? 'Envoi...' : 'Demander une place'}
                 </button>

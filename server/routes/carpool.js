@@ -1,5 +1,7 @@
 const express = require('express')
 const router = express.Router()
+const fs = require('fs')
+const path = require('path')
 const supabase = require('../config/supabase')
 const jwt = require('jsonwebtoken')
 const { sendCarpoolEmail } = require('../services/email')
@@ -55,41 +57,53 @@ router.get('/', async (req, res) => {
 // POST /api/carpool - Create a ride (Offer a ride)
 // ----------------------------------------------------------------------
 router.post('/', jwtWithUser, async (req, res) => {
-  const { origin, originLat, originLng, destination, destLat, destLng, departureTime, seatsOffered, price, description } = req.body
+  const { origin, originLat, originLng, destination, destLat, destLng, departureTime, seatsOffered, price, priceType, description, recurringWeeks, priceDetails } = req.body
 
   if (!origin || !destination || !departureTime || !seatsOffered || !originLat || !originLng || !destLat || !destLng) {
     return res.status(400).json({ error: 'Origine, destination (avec coordonnées), heure et nombre de places requis' })
   }
 
   try {
-    const { data: ride, error } = await supabase
+    const baseRide = {
+      driver_id: req.user.id,
+      origin,
+      origin_lat: parseFloat(originLat),
+      origin_lng: parseFloat(originLng),
+      destination,
+      dest_lat: parseFloat(destLat),
+      dest_lng: parseFloat(destLng),
+      seats_offered: parseInt(seatsOffered),
+      seats_available: parseInt(seatsOffered),
+      price: parseInt(price) || 0,
+      price_type: priceType === 'divided' ? 'divided' : 'per_person',
+      price_details: priceDetails || null,
+      description: description || ''
+    }
+
+    let ridesToInsert = []
+    const weeksCount = recurringWeeks ? parseInt(recurringWeeks) : 0
+    const startDate = new Date(departureTime)
+
+    for (let i = 0; i <= weeksCount; i++) {
+      const dTime = new Date(startDate)
+      dTime.setDate(dTime.getDate() + (i * 7))
+      ridesToInsert.push({ ...baseRide, departure_time: dTime.toISOString() })
+    }
+
+    const { data: rides, error } = await supabase
       .from('carpool_rides')
-      .insert({
-        driver_id: req.user.id,
-        origin,
-        origin_lat: parseFloat(originLat),
-        origin_lng: parseFloat(originLng),
-        destination,
-        dest_lat: parseFloat(destLat),
-        dest_lng: parseFloat(destLng),
-        departure_time: departureTime,
-        seats_offered: parseInt(seatsOffered),
-        seats_available: parseInt(seatsOffered),
-        price: parseInt(price) || 0,
-        description: description || ''
-      })
+      .insert(ridesToInsert)
       .select()
-      .single()
 
     if (error) throw error
 
-    // Broadcast to connected clients (real-time feature if needed)
+    // Broadcast to connected clients
     const io = req.app.get('io')
-    if (io) {
-      io.emit('carpool:new', ride)
+    if (io && rides) {
+      rides.forEach(r => io.emit('carpool:new', r))
     }
 
-    res.status(201).json(ride)
+    res.status(201).json(rides[0])
   } catch (error) {
     console.error('Erreur création covoiturage:', error)
     if (error.message?.includes('relation "carpool_rides" does not exist')) {
@@ -100,6 +114,115 @@ router.post('/', jwtWithUser, async (req, res) => {
 })
 
 // ----------------------------------------------------------------------
+// PUT /api/carpool/:id - Modify a ride (driver only, > 24h before departure)
+// ----------------------------------------------------------------------
+router.put('/:id', jwtWithUser, async (req, res) => {
+  const { id } = req.params
+  const { origin, originLat, originLng, destination, destLat, destLng, departureTime, seatsOffered, price, priceType, description, priceDetails } = req.body
+
+  try {
+    // 1. Fetch current ride
+    const { data: ride, error: fetchError } = await supabase
+      .from('carpool_rides')
+      .select('*, driver:driver_id(id, name, email)')
+      .eq('id', id)
+      .single()
+
+    if (fetchError || !ride) return res.status(404).json({ error: 'Trajet introuvable' })
+    if (ride.driver_id !== req.user.id) return res.status(403).json({ error: 'Non autorisé' })
+    if (ride.status !== 'active') return res.status(400).json({ error: 'Trajet non modifiable' })
+
+    // 2. Check 24h constraint
+    const now = new Date()
+    const departure = new Date(ride.departure_time)
+    const hoursDifference = (departure - now) / (1000 * 60 * 60)
+    
+    if (hoursDifference < 24) {
+      return res.status(400).json({ error: 'Impossible de modifier un trajet à moins de 24h du départ.' })
+    }
+
+    // 3. Calculate new seats_available based on existing passengers
+    const differenceInSeats = parseInt(seatsOffered) - ride.seats_offered
+    const newSeatsAvailable = ride.seats_available + differenceInSeats
+    if (newSeatsAvailable < 0) {
+      return res.status(400).json({ error: 'Vous ne pouvez pas réduire le nombre de places en dessous du nombre de passagers déjà acceptés.' })
+    }
+
+    // 4. Update the ride
+    const { data: updatedRide, error: updateError } = await supabase
+      .from('carpool_rides')
+      .update({
+        origin,
+        origin_lat: parseFloat(originLat),
+        origin_lng: parseFloat(originLng),
+        destination,
+        dest_lat: parseFloat(destLat),
+        dest_lng: parseFloat(destLng),
+        departure_time: departureTime,
+        seats_offered: parseInt(seatsOffered),
+        seats_available: newSeatsAvailable,
+        price: parseInt(price) || 0,
+        price_type: priceType === 'divided' ? 'divided' : 'per_person',
+        price_details: priceDetails || null,
+        description: description || '',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (updateError) throw updateError
+
+    // 5. Notify all pending and accepted passengers
+    const { data: passengers } = await supabase
+      .from('carpool_passengers')
+      .select('status, user:user_id(name, email)')
+      .eq('ride_id', id)
+      .in('status', ['pending', 'accepted'])
+
+    if (passengers && passengers.length > 0) {
+      passengers.forEach(p => {
+        if (p.user?.email) {
+          sendCarpoolEmail(p.user.email, 'modified', {
+            driverName: ride.driver?.name || 'Le conducteur',
+            passengerName: p.user.name,
+            origin: updatedRide.origin,
+            destination: updatedRide.destination,
+            rideId: id
+          }).catch(console.error)
+        }
+      })
+    }
+
+    // Broadcast update
+    const io = req.app.get('io')
+    if (io) {
+      io.emit('carpool:updated', updatedRide)
+    }
+
+    res.json(updatedRide)
+  } catch (error) {
+    console.error('Erreur modification covoiturage:', error)
+    res.status(500).json({ error: 'Erreur lors de la modification' })
+  }
+})
+
+// ----------------------------------------------------------------------
+// GET /api/carpool/fuel-prices
+router.get('/fuel-prices', (req, res) => {
+  try {
+    const dataPath = path.join(__dirname, '../data/fuel_prices.json')
+    if (fs.existsSync(dataPath)) {
+      const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'))
+      res.json(data)
+    } else {
+      res.json({ Gazole: 1.8, SP95: 1.85, E85: 0.85, E10: 1.8, SP98: 1.9 }) // fallback
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to read fuel prices' })
+  }
+})
+
 // GET /api/carpool/history - Get user's past rides (driver or passenger)
 // ----------------------------------------------------------------------
 router.get('/history', jwtWithUser, async (req, res) => {
@@ -848,6 +971,40 @@ router.get('/user/:id/tags', async (req, res) => {
   } catch (error) {
     console.error('Erreur récupération tags:', error)
     res.status(500).json({ error: 'Erreur lors de la récupération des tags' })
+  }
+})
+
+// ----------------------------------------------------------------------
+// GET /api/carpool/driver-stats/:id - Driver stats
+// ----------------------------------------------------------------------
+router.get('/driver-stats/:id', async (req, res) => {
+  try {
+    const { data: rides, error } = await supabase
+      .from('carpool_rides')
+      .select('id, status, departure_time')
+      .eq('driver_id', req.params.id)
+
+    if (error) {
+      if (error.code === '42P01') return res.json({ totalRides: 0, reliability: 100 })
+      throw error
+    }
+
+    const pastRides = rides.filter(r => new Date(r.departure_time) < new Date())
+    const totalPast = pastRides.length
+    const cancelledPast = pastRides.filter(r => r.status === 'cancelled').length
+
+    let reliability = 100
+    if (totalPast > 0) {
+      reliability = Math.round(((totalPast - cancelledPast) / totalPast) * 100)
+    }
+
+    res.json({
+      totalRides: rides.length,
+      reliability
+    })
+  } catch (error) {
+    console.error('Erreur driver stats:', error)
+    res.status(500).json({ error: 'Erreur driver stats' })
   }
 })
 

@@ -15,6 +15,7 @@ import { MusicProvider } from './contexts/MusicContext'
 import MiniPlayer from './components/widgets/MiniPlayer.jsx'
 import { GlobalSearch } from './components/GlobalSearch'
 import { ErrorPage } from './pages/ErrorPage'
+import { MyReviews } from './pages/MyReviews'
 
 // Lazy loading des pages lourdes pour le code splitting
 const IndexPage = lazy(() => import('./pages/IndexPage').then(m => ({ default: m.IndexPage })))
@@ -50,10 +51,13 @@ const PlaylistDetail = lazy(() => import('./pages/PlaylistDetail').then(m => ({ 
 const Wrapped = lazy(() => import('./pages/Wrapped').then(m => ({ default: m.Wrapped })))
 const Kholleurs = lazy(() => import('./pages/Kholleurs').then(m => ({ default: m.Kholleurs })))
 const OutilsPage = lazy(() => import('./pages/OutilsPage').then(m => ({ default: m.OutilsPage })))
+const KanbanBoard = lazy(() => import('./pages/outils/KanbanBoard').then(m => ({ default: m.KanbanBoard })))
+const MongeClicker = lazy(() => import('./pages/outils/MongeClicker').then(m => ({ default: m.default })))
 const CarpoolHub = lazy(() => import('./pages/carpool/CarpoolHub').then(m => ({ default: m.CarpoolHub })))
 const CarpoolOffer = lazy(() => import('./pages/carpool/CarpoolOffer').then(m => ({ default: m.CarpoolOffer })))
 const CarpoolHistory = lazy(() => import('./pages/carpool/CarpoolHistory').then(m => ({ default: m.CarpoolHistory })))
 const CarpoolDetails = lazy(() => import('./pages/carpool/CarpoolDetails').then(m => ({ default: m.CarpoolDetails })))
+const MediaHub = lazy(() => import('./pages/MediaHub').then(m => ({ default: m.MediaHub })))
 
 
 const SocialLayout = lazy(() => import('./components/SocialLayout').then(m => ({ default: m.SocialLayout })))
@@ -228,9 +232,14 @@ const router = createBrowserRouter([
       { path: "wrapped", element: <Wrapped /> },
       { path: "kholleurs", element: <Kholleurs /> },
       { path: "outils", element: <OutilsPage /> },
+      { path: "outils/kanban", element: <KanbanBoard /> },
+      { path: "outils/clicker", element: <MongeClicker /> },
+      { path: "mes-critiques", element: <MyReviews /> },
+      { path: "media", element: <MediaHub /> },
       { path: "covoiturage", element: <CarpoolHub /> },
       { path: "covoiturage/historique", element: <CarpoolHistory /> },
       { path: "covoiturage/proposer", element: <CarpoolOffer /> },
+      { path: "covoiturage/modifier/:id", element: <CarpoolOffer /> },
       { path: "covoiturage/:id", element: <CarpoolDetails /> },
 
       {

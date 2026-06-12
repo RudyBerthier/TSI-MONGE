@@ -17,6 +17,7 @@ import {
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { ProchaineKholleBanner } from '../components/ProchaineKholleBanner'
+import { VacationCountdown } from '../components/VacationCountdown'
 
 import {
   DndContext,
@@ -355,6 +356,11 @@ export function IndexPage() {
           </button>
         </div>
       )}
+
+      {/* ════════════════════════════════════════════════════
+          VACATION COUNTDOWN
+      ════════════════════════════════════════════════════ */}
+      <VacationCountdown />
 
       {/* ════════════════════════════════════════════════════
           HERO

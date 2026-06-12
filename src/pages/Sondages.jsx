@@ -143,12 +143,12 @@ export function Sondages() {
 
   if (!isAuthenticated) {
     return (
-      <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '24px' }}>
         <div style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
           <div className="max-w-3xl mx-auto px-4 py-5">
             <div className="flex items-center gap-3">
-              <Link to="/" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
-                <ArrowLeft size={22} />
+              <Link to="/" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+                <ArrowLeft className="w-5 h-5" />
               </Link>
             </div>
           </div>
@@ -169,8 +169,8 @@ export function Sondages() {
       <div style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-3xl mx-auto px-4 py-5">
           <div className="flex items-center gap-3">
-            <Link to="/" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
-              <ArrowLeft size={22} />
+            <Link to="/" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+              <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>

@@ -94,7 +94,7 @@ const FALLBACK_COLLEURS = {
   ],
   'MSA 4': [
     { matiere: 'Maths', prof: 'Mme Lehmann', salle: 'E105', jour: 'Mercredi', heure: '17h45 - 18h40' },
-    { matiere: 'SI', prof: 'Mme Bonnard / Mr Brayer', salle: 'E112', jour: 'Jeudi', heure: '12h05 - 13h' },
+    { matiere: 'SI', prof: 'Mr Brayer', salle: 'E112', jour: 'Jeudi', heure: '12h05 - 13h' },
     { matiere: 'Anglais', prof: 'Mme Vitry-Roche', salle: 'i322', jour: 'Lundi', heure: '16h50 - 17h45', type: 'TQ' },
   ],
   'MSA 5': [
@@ -279,6 +279,7 @@ export function EmploiDuTemps() {
   const dayViewContainerRef = useRef(null)
   const touchStartRef = useRef(null)
   const navStateAppliedRef = useRef(false)
+  const hasAutoAdvancedRef = useRef(false)
 
   // Listen to incoming navigation state (from Prochaine Kholle)
   useEffect(() => {
@@ -1014,6 +1015,9 @@ export function EmploiDuTemps() {
     if (searchParams.get('day') !== null) return
     if (navStateAppliedRef.current) { navStateAppliedRef.current = false; return }
 
+    // ONLY RUN THIS AUTO-SELECT LOGIC ONCE per load to avoid fighting user clicks
+    if (hasAutoAdvancedRef.current) return
+
     const now = new Date()
     const currentDayOfWeek = now.getDay() // 0=Sunday, 1=Monday...
     const currentHour = now.getHours() + now.getMinutes() / 60
@@ -1033,21 +1037,32 @@ export function EmploiDuTemps() {
     // Map day of week to our index (Monday=0, ..., Friday=4)
     let dayIdx = currentDayOfWeek >= 1 && currentDayOfWeek <= 5 ? currentDayOfWeek - 1 : 0
 
-    // If it's weekend, show Monday
+    // Check if last course of current day is finished
+    if (loadingCourses) return // Wait for calendarData to be ready
+
+    hasAutoAdvancedRef.current = true
+
+    // If it's weekend, advance week and show Monday
     if (currentDayOfWeek === 0 || currentDayOfWeek === 6) {
+      setWeekIdx(prev => Math.min(WEEKS.length - 1, prev + 1))
       setActiveDay(0)
       return
     }
 
-    // Check if last course of current day is finished
     const lastEnd = getLastCourseEnd(dayIdx)
-    if (lastEnd > 0 && currentHour >= lastEnd && dayIdx < 4) {
-      // Move to next day
-      dayIdx = dayIdx + 1
+    if (lastEnd > 0 && currentHour >= lastEnd) {
+      if (dayIdx < 4) {
+        // Move to next day
+        dayIdx = dayIdx + 1
+      } else {
+        // Friday finished! Move to next week Monday
+        setWeekIdx(prev => Math.min(WEEKS.length - 1, prev + 1))
+        dayIdx = 0
+      }
     }
 
     setActiveDay(dayIdx)
-  }, [calendarData, week])
+  }, [calendarData, week, loadingCourses])
 
   // Auto-scroll vers le prochain cours non passé dans la vue jour
   useEffect(() => {
@@ -1300,8 +1315,8 @@ export function EmploiDuTemps() {
         <div style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }} className="shadow-lg">
           <div className="max-w-3xl mx-auto px-4 py-5">
             <div className="flex items-center gap-3">
-              <Link to="/" style={{ color: 'var(--accent)' }} className="hover:opacity-80 transition-opacity p-1">
-                <ArrowLeft size={22} />
+              <Link to="/" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+                <ArrowLeft className="w-5 h-5" />
               </Link>
               <h1 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--text)' }}>Emploi du temps</h1>
             </div>
@@ -2602,13 +2617,13 @@ export function EmploiDuTemps() {
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
       {/* Header */}
-      <div className="sticky top-0 z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-2xl mx-auto px-4 py-3">
           {/* Top row: back + title + trinome */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <Link to="/" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
-                <ArrowLeft size={22} />
+              <Link to="/" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+                <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
                 <div className="flex items-center gap-2">
@@ -2654,14 +2669,14 @@ export function EmploiDuTemps() {
             </button>
 
             <button onClick={() => {
-              setWeekIdx(getCurrentWeekIdx())
-              // Mettre le jour actuel, ou demain si cours finis
               const now = new Date()
               const currentDayOfWeek = now.getDay()
               const currentHour = now.getHours() + now.getMinutes() / 60
+              let wIdx = getCurrentWeekIdx()
 
-              // Si weekend -> Lundi
+              // Si weekend -> Semaine pro, Lundi
               if (currentDayOfWeek === 0 || currentDayOfWeek === 6) {
+                setWeekIdx(Math.min(WEEKS.length - 1, wIdx + 1))
                 setActiveDay(0)
                 return
               }
@@ -2669,11 +2684,18 @@ export function EmploiDuTemps() {
               let dayIdx = currentDayOfWeek - 1
               const lastEnd = getLastCourseEnd(dayIdx)
 
-              // Si dernier cours fini et pas vendredi -> demain
-              if (lastEnd > 0 && currentHour >= lastEnd && dayIdx < 4) {
-                dayIdx = dayIdx + 1
+              // Si dernier cours fini
+              if (lastEnd > 0 && currentHour >= lastEnd) {
+                if (dayIdx < 4) {
+                  dayIdx = dayIdx + 1
+                } else {
+                  // Vendredi soir -> Semaine pro, Lundi
+                  wIdx = Math.min(WEEKS.length - 1, wIdx + 1)
+                  dayIdx = 0
+                }
               }
 
+              setWeekIdx(wIdx)
               setActiveDay(dayIdx)
             }}
               className="px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors shadow">
@@ -3271,7 +3293,7 @@ export function EmploiDuTemps() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="rounded-t-[2rem] sm:rounded-3xl p-0 overflow-hidden shadow-2xl border flex flex-col max-h-[85vh] w-full sm:max-w-xl" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
             {/* Header */}
-            <div className="px-6 py-5 border-b sticky top-0 z-10 flex items-center justify-between backdrop-blur-md bg-opacity-90" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
+            <div className="px-6 py-5 border-b sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-10 flex items-center justify-between backdrop-blur-md bg-opacity-90" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl flex items-center justify-center shrink-0" style={{ background: 'rgba(var(--accent-rgb), 0.1)', color: 'var(--accent)' }}>
                   <Sparkles size={22} className="animate-pulse" />

@@ -201,13 +201,13 @@ export function Kholleurs() {
     };
 
     return (
-        <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
+        <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '24px' }}>
             {/* Header Sticky Modernisé */}
-            <div className="sticky top-0 z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+            <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
                 <div className="max-w-6xl mx-auto px-4 py-4">
                     <div className="flex items-center gap-3">
-                        <Link to="/" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
-                            <ArrowLeft size={22} />
+                        <Link to="/" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+                            <ArrowLeft className="w-5 h-5" />
                         </Link>
                         <div className="flex items-center gap-2">
                             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent)' }}>

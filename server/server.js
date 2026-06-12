@@ -35,9 +35,20 @@ const adminLogsRouter = require('./routes/admin-logs');
 const bugReportsRouter = require('./routes/bug-reports');
 const gamesRouter = require('./routes/games');
 const carpoolRouter = require('./routes/carpool');
+const mediaRouter = require('./routes/media');
+const kanbanRouter = require('./routes/kanban');
+const searchRouter = require('./routes/search');
+const clickerRouter = require('./routes/clicker');
 
 // Import socket handler
 const setupSocket = require('./socket');
+
+// Background tasks
+const { fetchAndParseFuelPrices } = require('./scripts/fetch_fuel_prices');
+// Fetch fuel prices at startup then every 24 hours
+setTimeout(fetchAndParseFuelPrices, 5000); // 5 seconds after startup
+setInterval(fetchAndParseFuelPrices, 24 * 60 * 60 * 1000);
+
 
 const app = express();
 app.set('trust proxy', 1); // Indispensable pour que express-rate-limit marche derrière Nginx (X-Forwarded-For)
@@ -229,6 +240,10 @@ app.use('/api/admin/logs', adminLogsRouter);
 app.use('/api/bug-reports', bugReportsRouter);
 app.use('/api/games', jwtWithUser, gamesRouter);
 app.use('/api/carpool', apiLimiter, carpoolRouter);
+app.use('/api/media', apiLimiter, mediaRouter);
+app.use('/api/kanban', jwtWithUser, kanbanRouter);
+app.use('/api/search', jwtWithUser, searchRouter);
+app.use('/api/clicker', jwtWithUser, clickerRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

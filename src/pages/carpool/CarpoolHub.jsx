@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
-import { Calendar as CalendarIcon, Users, Euro, ArrowRight, Car, Search, Plus } from 'lucide-react'
+import { Calendar as CalendarIcon, Users, Euro, ArrowLeft, Car, Search, Plus, History } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { RestrictedAccess } from '../../components/RestrictedAccess'
 
@@ -37,14 +37,44 @@ export function CarpoolHub() {
     fetch('/api/carpool')
       .then(res => res.json())
       .then(data => {
-        const mapped = data.filter(r => r.origin_lat && r.origin_lng).map(r => ({
-          ...r,
-          lat: r.origin_lat,
-          lng: r.origin_lng
-        }))
+        const pointCounts = {}
+        const mapped = data.filter(r => r.origin_lat && r.origin_lng).map(r => {
+          // Jitter algorithme : on décale très légèrement les points identiques
+          const key = `${r.origin_lat.toFixed(4)},${r.origin_lng.toFixed(4)}`
+          pointCounts[key] = (pointCounts[key] || 0) + 1
+          const offset = (pointCounts[key] - 1) * 0.0003 // Environ 30m de décalage vers le nord/est
+          return {
+            ...r,
+            lat: r.origin_lat + offset,
+            lng: r.origin_lng + offset
+          }
+        })
         
         setRides(data)
         setMapRides(mapped)
+
+        // Récupérer les tracés (polylines) en arrière-plan sans bloquer
+        const fetchRoutes = async () => {
+          const updated = [...mapped];
+          for (let i = 0; i < updated.length; i++) {
+            const r = updated[i];
+            if (r.dest_lat && r.dest_lng) {
+              try {
+                const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${r.origin_lng},${r.origin_lat};${r.dest_lng},${r.dest_lat}?overview=simplified&geometries=geojson`);
+                const routeData = await res.json();
+                if (routeData.routes && routeData.routes.length > 0) {
+                   const coords = routeData.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                   // Attacher la polyline au point jittered
+                   coords[0] = [r.lat, r.lng]; 
+                   r.polyline = coords;
+                }
+              } catch (e) { console.error('OSRM fail', e) }
+            }
+          }
+          setMapRides([...updated]);
+        }
+        
+        fetchRoutes()
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -67,14 +97,14 @@ export function CarpoolHub() {
   }
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '24px' }}>
       
       {/* Header */}
-      <div className="sticky top-0 z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/outils" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
-              <ArrowRight size={22} className="rotate-180" />
+            <Link to="/" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+              <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-500">
@@ -87,8 +117,8 @@ export function CarpoolHub() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/covoiturage/historique" className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition flex items-center justify-center">
-              <CalendarIcon size={20} />
+            <Link to="/covoiturage/historique" className="tsi-btn-ghost text-sm flex items-center gap-2 px-3">
+              <History size={16} /> <span className="hidden sm:inline">Historique</span>
             </Link>
             <Link to="/covoiturage/proposer" className="tsi-btn-primary text-sm flex items-center gap-2 px-4">
               <Plus size={16} /> <span className="hidden sm:inline">Proposer un trajet</span>
@@ -106,17 +136,33 @@ export function CarpoolHub() {
               url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             />
-            {mapRides.map(ride => (
-              <Marker key={ride.id} position={[ride.lat, ride.lng]}>
+            {mapRides.map(ride => {
+              const popupContent = (
                 <Popup>
                   <div className="text-center font-sans">
                     <p className="font-bold text-sm m-0">{ride.origin} → {ride.destination}</p>
                     <p className="text-xs text-gray-500 m-0 mt-1">{new Date(ride.departure_time).toLocaleString('fr-FR')}</p>
-                    <Link to={`/covoiturage/${ride.id}`} className="mt-2 block text-xs bg-indigo-500 text-white py-1 px-2 rounded-md no-underline">Voir le trajet</Link>
+                    <Link to={`/covoiturage/${ride.id}`} className="mt-2 block text-xs bg-indigo-500 py-1 px-2 rounded-md no-underline font-bold" style={{ color: '#ffffff' }}>Voir le trajet</Link>
                   </div>
                 </Popup>
-              </Marker>
-            ))}
+              );
+
+              return (
+                <div key={`group-${ride.id}`}>
+                  {ride.polyline && (
+                    <Polyline 
+                      positions={ride.polyline} 
+                      pathOptions={{ color: '#6366f1', weight: 4, opacity: 0.6 }} 
+                    >
+                      {popupContent}
+                    </Polyline>
+                  )}
+                  <Marker position={[ride.lat, ride.lng]}>
+                    {popupContent}
+                  </Marker>
+                </div>
+              );
+            })}
           </MapContainer>
         </div>
 
@@ -176,9 +222,19 @@ export function CarpoolHub() {
                         </div>
                       </div>
                     </div>
-                    
-                    <div className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
-                      {ride.price > 0 ? <>{ride.price} <Euro size={14}/></> : 'Gratuit'}
+                    <div className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full text-sm font-bold flex flex-col items-end">
+                      <div className="flex items-center gap-1">
+                        {(() => {
+                          if (ride.price === 0) return 'Gratuit';
+                          const acceptedPassengersCount = ride.seats_offered - ride.seats_available;
+                          const finalPrice = ride.price_type === 'divided' ? (ride.price / (acceptedPassengersCount + 1)) : ride.price;
+                          const formattedPrice = finalPrice % 1 === 0 ? finalPrice : finalPrice.toFixed(2);
+                          return <>{formattedPrice} <Euro size={14}/></>;
+                        })()}
+                      </div>
+                      {ride.price_type === 'divided' && ride.price > 0 && (
+                        <span className="text-[9px] uppercase tracking-wider opacity-80 mt-0.5 whitespace-nowrap">({ride.price}€ à diviser)</span>
+                      )}
                     </div>
                   </div>
 

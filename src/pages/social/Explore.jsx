@@ -222,7 +222,7 @@ export function Explore() {
         <div className="flex flex-col max-w-4xl mx-auto w-full pb-20 md:pb-8 pt-4 px-4 h-full">
 
             {/* Search Bar */}
-            <div ref={searchContainerRef} className="relative mb-6 mt-2 sticky top-0 z-10 bg-gray-50 dark:bg-black pt-2 pb-2">
+            <div ref={searchContainerRef} className="relative mb-6 mt-2 sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-10 bg-gray-50 dark:bg-black pt-2 pb-2">
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 pl-3 flex items-center pointer-events-none">
                     <Search className="text-gray-400" size={20} />
                 </div>

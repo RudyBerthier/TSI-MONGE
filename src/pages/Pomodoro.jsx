@@ -13,14 +13,13 @@ export function Pomodoro() {
     return (
         <div className="min-h-screen pt-24 pb-12 px-4 flex flex-col items-center" style={{ background: 'var(--bg)' }}>
             <div className="w-full max-w-md">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="mb-6 flex items-center gap-2 text-sm font-medium transition-colors"
-                    style={{ color: 'var(--text-muted)' }}
+                <Link
+                    to="/outils"
+                    className="p-2 rounded-xl flex items-center justify-center transition-all w-fit mb-8"
+                    style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}
                 >
-                    <ArrowLeft size={16} />
-                    Retour
-                </button>
+                    <ArrowLeft className="w-5 h-5" />
+                </Link>
 
                 <div className="mb-8">
                     <h1 className="text-3xl font-display font-bold" style={{ color: 'var(--text)' }}>

@@ -211,8 +211,8 @@ export function Places() {
         <div className="max-w-6xl mx-auto px-4 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link to="/" className="transition-colors p-1" style={{ color: 'var(--accent)' }}>
-                <ArrowLeft size={22} />
+              <Link to="/outils" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+                <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
@@ -357,8 +357,8 @@ export function Places() {
       </div>
 
       <div className="text-center py-6">
-        <Link to="/" className="text-sm font-medium transition-colors" style={{ color: 'var(--accent)' }}>
-          Retour à l'accueil
+        <Link to="/outils" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit mx-auto" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+          <ArrowLeft className="w-5 h-5" />
         </Link>
       </div>
     </div>

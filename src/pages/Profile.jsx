@@ -567,10 +567,10 @@ export function Profile() {
                       className="absolute inset-0 w-16 h-16 -top-4 -left-4 cursor-pointer"
                     />
                     {isCustomColor ? (
-                      <Check className="w-4 h-4 text-white absolute top-2 left-2 pointer-events-none drop-shadow-md" />
+                      <Pencil className="w-4 h-4 text-white absolute top-2 left-2 pointer-events-none drop-shadow-md" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-400 dark:from-gray-600 dark:to-gray-800 flex items-center justify-center">
-                        <span className="text-white text-lg leading-none mt-[-2px]">+</span>
+                      <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-400 dark:from-gray-600 dark:to-gray-800 flex items-center justify-center pointer-events-none">
+                        <Pencil className="w-4 h-4 text-white drop-shadow-md" />
                       </div>
                     )}
                   </label>

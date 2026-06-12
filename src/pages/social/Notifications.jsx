@@ -203,7 +203,7 @@ export function Notifications() {
     return (
         <div className="max-w-2xl mx-auto w-full pb-24 md:pb-8">
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-black sticky top-0 z-10">
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-black sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-10">
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">Notifications</h2>
                 {unreadCount > 0 && (
                     <button

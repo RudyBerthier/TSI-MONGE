@@ -152,6 +152,11 @@ async function sendCarpoolEmail(email, type, data) {
       subject: 'Un passager a annulé',
       title: 'Annulation de place',
       description: `<b>${data.passengerName}</b> a annulé sa demande ou sa place pour votre trajet.`
+    },
+    'modified': {
+      subject: 'Modification de votre covoiturage',
+      title: 'Trajet modifié',
+      description: `<b>${data.driverName}</b> a modifié les détails de votre covoiturage (horaire, point de rendez-vous, etc.).`
     }
   }
 

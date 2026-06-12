@@ -388,7 +388,7 @@ export function Notes() {
                             overflowY: 'auto'
                         }}>
                         {/* Search */}
-                        <div className="relative sticky top-0 z-10 pb-1" style={{ background: 'var(--bg)' }}>
+                        <div className="relative sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-10 pb-1" style={{ background: 'var(--bg)' }}>
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 mt-[-2px]" style={{ color: 'var(--text-muted)' }} />
                             <input
                                 type="text"

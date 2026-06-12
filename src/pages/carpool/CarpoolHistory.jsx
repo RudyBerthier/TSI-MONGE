@@ -188,11 +188,11 @@ export function CarpoolHistory() {
   }
 
   return (
-    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '90px' }}>
-      <div className="sticky top-0 z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', paddingBottom: '24px' }}>
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30" style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Link to="/covoiturage" className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition" style={{ color: 'var(--text)' }}>
-            <ArrowLeft size={20} />
+          <Link to="/covoiturage" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+            <ArrowLeft className="w-5 h-5" />
           </Link>
           <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Mon Historique</h1>
         </div>

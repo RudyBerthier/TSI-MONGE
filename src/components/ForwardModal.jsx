@@ -56,7 +56,11 @@ export function ForwardModal({ message, conversations, customGroups, currentUser
         {/* Message preview */}
         <div className="px-4 py-2 bg-gray-50 dark:bg-slate-900/50 border-b border-gray-100 dark:border-slate-700 shrink-0">
           <p className="text-xs text-gray-400 mb-0.5">Message à transférer :</p>
-          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">{message.content || '📎 Pièce jointe'}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+            {message.content?.startsWith('media-share:') ? '🎬 Partage d\'un titre MongeFlix' :
+             message.content?.startsWith('contact-share:') ? '👤 Partage de contact' :
+             message.content || '📎 Pièce jointe'}
+          </p>
         </div>
 
         {/* Destination list */}

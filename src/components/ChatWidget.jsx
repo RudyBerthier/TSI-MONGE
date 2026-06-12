@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import {
   MessageCircle, X, Send, ArrowLeft, Users, User, Search,
   Smile, Reply, Pencil, Trash2, Check, CheckCheck, History, Loader2,
@@ -12,6 +12,7 @@ import { useCall } from '../contexts/CallContext'
 import { SOCKET_URL, REACTION_EMOJIS, formatFileSize, forceDownload, getAttachmentUrl, getDmUnreadCount, uploadFile, formatTime, formatDateSeparator, getAvatarUrl, isDifferentDay } from '../utils/chat'
 import { ForwardModal } from './ForwardModal'
 import { ContactCard, parseContactShare } from './ContactCard'
+import { MediaShareCard, parseMediaShare } from './MediaShareCard'
 import { DmInfoPanel } from './DmInfoPanel'
 import { GroupInfoPanel } from './GroupInfoPanel'
 import VoiceRecorder from './VoiceRecorder'
@@ -71,6 +72,19 @@ export function ChatWidget() {
   const [newMessage, setNewMessage] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
   const [forwardingMessage, setForwardingMessage] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    const shareMedia = searchParams.get('shareMedia')
+    if (shareMedia) {
+      setForwardingMessage({ id: 'virtual', content: shareMedia, type: 'text', attachment: null })
+      setSearchParams(prev => {
+        prev.delete('shareMedia')
+        return prev
+      }, { replace: true })
+      if (!isOpen && !isOnChatPage) setIsOpen(true)
+    }
+  }, [searchParams, isOpen, isOnChatPage, setSearchParams])
   const [showDmInfo, setShowDmInfo] = useState(false)
   const [showGroupInfo, setShowGroupInfo] = useState(false)
   const [dmSettings, setDmSettings] = useState({ muted: [], blocked: [] })
@@ -968,10 +982,24 @@ export function ChatWidget() {
   const stripFwd = (s) => s?.startsWith('fwd::') ? s.slice(5) : s
 
   const renderContent = (content, isOwn) => {
-    const contact = parseContactShare(content)
-    if (contact) return <ContactCard data={contact} isOwn={isOwn} />
-    const isForwarded = content.startsWith('fwd::')
+    const isForwarded = content?.startsWith('fwd::')
     const actualContent = isForwarded ? content.slice(5) : content
+
+    const contact = parseContactShare(actualContent)
+    if (contact) return (
+      <>
+        {isForwarded && <p className="text-[10px] font-medium mb-1 flex items-center gap-1" style={{ opacity: 0.6 }}>↪ Transféré</p>}
+        <ContactCard data={contact} isOwn={isOwn} />
+      </>
+    )
+
+    const media = parseMediaShare(actualContent)
+    if (media) return (
+      <>
+        {isForwarded && <p className="text-[10px] font-medium mb-1 flex items-center gap-1" style={{ opacity: 0.6 }}>↪ Transféré</p>}
+        <MediaShareCard data={media} isOwn={isOwn} />
+      </>
+    )
     return (
       <>
         {isForwarded && (

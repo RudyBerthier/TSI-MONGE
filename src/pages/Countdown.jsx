@@ -197,7 +197,7 @@ export function Countdown() {
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link to="/" className="p-2 rounded-xl flex items-center justify-center transition-all" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+              <Link to="/outils" className="p-2 rounded-xl flex items-center justify-center transition-all" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div className="flex items-center gap-3">

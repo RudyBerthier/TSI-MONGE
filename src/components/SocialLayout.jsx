@@ -218,7 +218,7 @@ export function SocialLayout() {
     <div className={`flex flex-col md:flex-row w-full min-h-[100dvh] bg-gray-50 dark:bg-black pt-[env(safe-area-inset-top,_0px)] md:pt-0 ${(!isChatPage && !isReelsPage) ? 'pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0' : ''}`}>
 
             {/* ═══ DESKTOP SIDEBAR ═══ */}
-            <aside className="hidden md:flex flex-col w-[72px] hover:w-[240px] group/sidebar h-screen sticky top-0 border-r border-gray-200/80 dark:border-white/10 bg-white dark:bg-black py-6 px-3 z-50 transition-all duration-300 ease-[cubic-bezier(0.33,0.33,0.33,1)] overflow-hidden">
+            <aside className="hidden md:flex flex-col w-[72px] hover:w-[240px] group/sidebar h-screen sticky top-[calc(3.5rem+env(safe-area-inset-top))] border-r border-gray-200/80 dark:border-white/10 bg-white dark:bg-black py-6 px-3 z-50 transition-all duration-300 ease-[cubic-bezier(0.33,0.33,0.33,1)] overflow-hidden">
                 {/* Logo */}
                 <div className="mb-8 px-3 flex items-center justify-start gap-4 relative">
                     <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/20 shrink-0 z-10">
@@ -304,7 +304,7 @@ export function SocialLayout() {
             <main className="flex-1 w-full max-w-[100vw] relative flex flex-col">
                 {/* Mobile Top Bar */}
                 {(!isChatPage && !isReelsPage) && (
-                    <div className="md:hidden grid grid-cols-3 items-center px-3 h-12 bg-white/95 dark:bg-black/95 backdrop-blur-xl sticky top-0 z-40 border-b border-gray-200/80 dark:border-white/10">
+                    <div className="md:hidden grid grid-cols-3 items-center px-3 h-12 bg-white/95 dark:bg-black/95 backdrop-blur-xl sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-40 border-b border-gray-200/80 dark:border-white/10">
                         {/* Left: Create button */}
                         <div className="flex items-center gap-2">
                             <button
