@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useAuth } from '../contexts/AuthContext';
 
 const DEFAULT_CITY = { id: 'chambery', name: 'Chambéry', lat: 45.5646, lon: 5.9178 };
 
@@ -466,6 +467,7 @@ function SortableCityItem({ city, idx, currentCityIndex, setCurrentCityIndex, se
 
 export function Meteo() {
     const navigate = useNavigate();
+    const { userSettings, updateUserSettings } = useAuth();
     
     // Multiple cities
     const [savedCities, setSavedCities] = useState(() => {
@@ -475,6 +477,34 @@ export function Meteo() {
         }
         return [DEFAULT_CITY];
     });
+
+    const [isLoadedFromSettings, setIsLoadedFromSettings] = useState(false);
+
+    useEffect(() => {
+        if (userSettings && userSettings.tsi_weather_cities && !isLoadedFromSettings) {
+            const parsed = userSettings.tsi_weather_cities;
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                setSavedCities(parsed);
+                localStorage.setItem('tsi_weather_cities', JSON.stringify(parsed));
+            }
+            setIsLoadedFromSettings(true);
+        } else if (userSettings && !userSettings.tsi_weather_cities && !isLoadedFromSettings) {
+             if (updateUserSettings) updateUserSettings({ tsi_weather_cities: savedCities });
+             setIsLoadedFromSettings(true);
+        }
+    }, [userSettings, isLoadedFromSettings, savedCities, updateUserSettings]);
+
+    const updateCities = (newCitiesOrFn) => {
+        setSavedCities((prev) => {
+            const newCities = typeof newCitiesOrFn === 'function' ? newCitiesOrFn(prev) : newCitiesOrFn;
+            localStorage.setItem('tsi_weather_cities', JSON.stringify(newCities));
+            if (updateUserSettings) {
+                updateUserSettings({ tsi_weather_cities: newCities });
+            }
+            return newCities;
+        });
+    };
+
     const [currentCityIndex, setCurrentCityIndex] = useState(0);
     const activeCity = savedCities[currentCityIndex] || DEFAULT_CITY;
 
@@ -521,7 +551,7 @@ export function Meteo() {
                         isGeo: true
                     };
                     
-                    setSavedCities(prev => {
+                    updateCities(prev => {
                         const dupIdx = findDuplicate(geoCity.lat, geoCity.lon, prev);
                         if (dupIdx >= 0) {
                             setCurrentCityIndex(dupIdx);
@@ -602,7 +632,7 @@ export function Meteo() {
             setCurrentCityIndex(dupIdx);
         } else {
             const newCities = [...savedCities, newCity];
-            setSavedCities(newCities);
+            updateCities(newCities);
             setCurrentCityIndex(newCities.length - 1);
         }
         setShowSearch(false);
@@ -631,7 +661,7 @@ export function Meteo() {
                     if (dupIdx >= 0) {
                         setCurrentCityIndex(dupIdx);
                     } else {
-                        setSavedCities(prev => {
+                        updateCities(prev => {
                             const newCities = [...prev, newCity];
                             setCurrentCityIndex(newCities.length - 1);
                             return newCities;
@@ -653,7 +683,7 @@ export function Meteo() {
         if (e) e.stopPropagation();
         if (savedCities.length <= 1) return;
         const newCities = savedCities.filter((_, i) => i !== index);
-        setSavedCities(newCities);
+        updateCities(newCities);
         if (currentCityIndex >= newCities.length) {
             setCurrentCityIndex(newCities.length - 1);
         } else if (currentCityIndex > index) {
@@ -671,7 +701,7 @@ export function Meteo() {
     const handleDragEnd = (event) => {
         const { active, over } = event;
         if (over && active.id !== over.id) {
-            setSavedCities((items) => {
+            updateCities((items) => {
                 const oldIndex = items.findIndex(c => c.id === active.id);
                 const newIndex = items.findIndex(c => c.id === over.id);
                 
