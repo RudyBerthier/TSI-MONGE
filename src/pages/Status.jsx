@@ -304,9 +304,28 @@ export function Status() {
 
         {/* Chargement initial */}
         {!registryError && registry.length === 0 && (
-          <div className="flex items-center justify-center py-20" style={{ color: 'var(--text-muted)' }}>
-            <Loader2 size={24} className="animate-spin mr-3" />
-            <span className="text-sm">Chargement du registre…</span>
+          <div className="space-y-4">
+            {[1,2,3].map(g => (
+              <div key={g}>
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="w-7 h-7 rounded-lg animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                  <div className="w-24 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                  <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+                </div>
+                <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border)', background: 'var(--surface)' }}>
+                  {[1,2,3].map(r => (
+                    <div key={r} className="flex items-center gap-3 px-5 py-3.5" style={{ borderTop: r > 1 ? '1px solid var(--border)' : undefined }}>
+                      <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                      <div className="flex-1 space-y-1.5">
+                        <div className="w-32 h-3.5 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                        <div className="w-48 h-2.5 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                      </div>
+                      <div className="w-20 h-6 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

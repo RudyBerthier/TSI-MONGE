@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, BookOpen, Settings, X, Save, Pencil, ExternalLink, Plus, Trash2, Clock, MapPin, User, RefreshCw, Calendar, List, Search, UtensilsCrossed, Coffee, Bus, FileText, BookMarked, Sparkles, MessageSquarePlus, Check, XCircle, Bell, Send, WifiOff } from 'lucide-react'
+import { ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, BookOpen, Settings, X, Save, Pencil, ExternalLink, Plus, Trash2, Clock, MapPin, User, RefreshCw, Calendar, List, Search, UtensilsCrossed, Coffee, Bus, FileText, BookMarked, Sparkles, MessageSquarePlus, Check, XCircle, Bell, Send, WifiOff, Download } from 'lucide-react'
 import { useSearchParams, useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { WEEKS, SCHEDULE, HOLIDAYS, DEVOIRS_SURVEILLES, CONCOURS_BLANC } from '../utils/schedule'
@@ -585,6 +585,72 @@ export function EmploiDuTemps() {
   }
 
   const pendingRequestsCount = kholleRequests.filter(r => r.status === 'pending').length
+
+  // Export ICS
+  const exportICS = () => {
+    if (!week) return
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//TSI-MONGE//EDT//FR',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:EDT TSI-1 Trinôme ' + trinome,
+    ]
+
+    const pad2 = n => String(n).padStart(2, '0')
+    const toICSDate = (dateObj) => {
+      return `${dateObj.getFullYear()}${pad2(dateObj.getMonth()+1)}${pad2(dateObj.getDate())}T${pad2(dateObj.getHours())}${pad2(dateObj.getMinutes())}00`
+    }
+    const uid = () => Math.random().toString(36).substring(2, 12) + '@tsi-monge'
+
+    // For each day of the week
+    JOURS.forEach((jour, dayIdx) => {
+      const dayItems = calendarData[jour] || []
+      const dateBase = new Date(week.start)
+      dateBase.setDate(dateBase.getDate() + dayIdx)
+
+      dayItems.forEach(item => {
+        if (item.kind === 'event-overlay' || item.isCancelled) return
+        const startH = Math.floor(item.start)
+        const startM = Math.round((item.start - startH) * 60)
+        const endH = Math.floor(item.end)
+        const endM = Math.round((item.end - endH) * 60)
+
+        const dtStart = new Date(dateBase)
+        dtStart.setHours(startH, startM, 0)
+        const dtEnd = new Date(dateBase)
+        dtEnd.setHours(endH, endM, 0)
+
+        const summary = item.kind === 'kholle'
+          ? `Kholle ${item.matiere}${item.type ? ' (' + item.type + ')' : ''}`
+          : item.kind === 'event'
+            ? `${item.eventType || ''} ${item.title}`.trim()
+            : item.matiere || item.title || 'Cours'
+
+        const location = item.salle || ''
+        const description = [item.prof, item.heure].filter(Boolean).join(' — ')
+
+        lines.push('BEGIN:VEVENT')
+        lines.push('UID:' + uid())
+        lines.push('DTSTART:' + toICSDate(dtStart))
+        lines.push('DTEND:' + toICSDate(dtEnd))
+        lines.push('SUMMARY:' + summary.replace(/[\\;,]/g, ' '))
+        if (location) lines.push('LOCATION:' + location.replace(/[\\;,]/g, ' '))
+        if (description) lines.push('DESCRIPTION:' + description.replace(/[\\;,]/g, ' '))
+        lines.push('END:VEVENT')
+      })
+    })
+
+    lines.push('END:VCALENDAR')
+    const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `edt_trinome${trinome}_s${week.num}.ics`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const week = WEEKS[weekIdx]
   const code = week.num ? SCHEDULE[(week.num - 1) % SCHEDULE.length]?.[trinome - 1] || '' : ''
@@ -2637,14 +2703,24 @@ export function EmploiDuTemps() {
                 <p className="text-xs" style={{ color: 'var(--text-muted)' }}>TSI-1 • {code}</p>
               </div>
             </div>
-            <div className="relative">
-              <select value={trinome} onChange={(e) => setTrinome(parseInt(e.target.value))}
-                className="appearance-none bg-blue-600 text-white font-bold pl-4 pr-10 py-2.5 rounded-xl text-base cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 shadow">
-                {Array.from({ length: 12 }, (_, i) => i + 1).map(t => (
-                  <option key={t} value={t}>Trinôme {t}</option>
-                ))}
-              </select>
-              <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-white pointer-events-none" />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={exportICS}
+                title="Exporter la semaine (.ics)"
+                className="p-2.5 rounded-xl transition-colors flex items-center justify-center"
+                style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}
+              >
+                <Download size={16} />
+              </button>
+              <div className="relative">
+                <select value={trinome} onChange={(e) => setTrinome(parseInt(e.target.value))}
+                  className="appearance-none bg-blue-600 text-white font-bold pl-4 pr-10 py-2.5 rounded-xl text-base cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 shadow">
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(t => (
+                    <option key={t} value={t}>Trinôme {t}</option>
+                  ))}
+                </select>
+                <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-white pointer-events-none" />
+              </div>
             </div>
           </div>
 

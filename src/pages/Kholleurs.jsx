@@ -240,7 +240,20 @@ export function Kholleurs() {
                             </h2>
                             
                             <div className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 custom-scrollbar">
-                                {loading && <div className="text-center p-4 text-sm" style={{ color: 'var(--text-muted)' }}>Chargement...</div>}
+                                {loading && (
+                                  <div className="space-y-3">
+                                    {[1,2,3,4,5].map(i => (
+                                      <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                                        <div className="w-11 h-11 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                                        <div className="flex-1 space-y-2">
+                                          <div className="w-28 h-3.5 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                                          <div className="w-16 h-2.5 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                                        </div>
+                                        <div className="w-12 h-7 rounded-lg animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                                 {!loading && kholleurs.length === 0 && (
                                     <div className="text-center py-4 text-sm" style={{ color: 'var(--text-muted)' }}>Aucun professeur trouvé.</div>
                                 )}
@@ -506,7 +519,19 @@ export function Kholleurs() {
 
                                     {/* Liste des commentaires */}
                                     <div className="space-y-4">
-                                        {loadingReviews && <div className="text-center py-6 text-sm" style={{ color: 'var(--text-muted)' }}>Chargement des avis...</div>}
+                                        {loadingReviews && (
+                                          <div className="space-y-3 py-4">
+                                            {[1,2,3].map(i => (
+                                              <div key={i} className="p-3 rounded-xl space-y-2" style={{ background: 'var(--surface-2)' }}>
+                                                <div className="flex items-center gap-2">
+                                                  <div className="w-6 h-6 rounded-full animate-pulse" style={{ background: 'var(--border)' }} />
+                                                  <div className="w-20 h-3 rounded-full animate-pulse" style={{ background: 'var(--border)' }} />
+                                                </div>
+                                                <div className="w-3/4 h-2.5 rounded-full animate-pulse" style={{ background: 'var(--border)' }} />
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
                                         
                                         {!loadingReviews && reviews.length === 0 && !showForm && (
                                             <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>

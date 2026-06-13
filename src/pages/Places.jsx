@@ -198,8 +198,35 @@ export function Places() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center" style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-        <div className="animate-pulse text-lg" style={{ color: 'var(--text-muted)' }}>Chargement du plan de classe...</div>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
+        <div style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+          <div className="max-w-6xl mx-auto px-4 py-5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+              <div className="space-y-2">
+                <div className="w-36 h-5 rounded-lg animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                <div className="w-48 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <div className="max-w-md mx-auto mb-6">
+            <div className="h-10 rounded-xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+          </div>
+          <div className="rounded-2xl p-6" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+            <div className="h-10 rounded-xl mb-6 animate-pulse" style={{ background: 'var(--surface-2)' }} />
+            <div className="flex flex-col items-center gap-2">
+              {[0,1,2,3,4].map(row => (
+                <div key={row} className="flex gap-1 sm:gap-2">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="w-[40px] h-[30px] sm:w-[72px] sm:h-[44px] rounded-md sm:rounded-lg animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     )
   }

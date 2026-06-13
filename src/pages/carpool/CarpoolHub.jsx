@@ -183,7 +183,27 @@ export function CarpoolHub() {
         {/* List of Rides */}
         <h2 className="font-bold text-lg" style={{ color: 'var(--text)' }}>Trajets disponibles</h2>
         {loading ? (
-          <p className="text-center text-gray-500 py-10 animate-pulse">Chargement des trajets...</p>
+          <div className="space-y-3">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="rounded-2xl p-4 space-y-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                  <div className="w-28 h-3.5 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-10 rounded animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                  <div className="flex-1 space-y-2">
+                    <div className="w-2/3 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                    <div className="w-1/2 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <div className="w-16 h-6 rounded-lg animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                  <div className="w-20 h-6 rounded-lg animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : rides.length === 0 ? (
           <div className="text-center py-12 rounded-2xl" style={{ background: 'var(--surface)' }}>
             <Car size={48} className="mx-auto mb-4 opacity-20" />

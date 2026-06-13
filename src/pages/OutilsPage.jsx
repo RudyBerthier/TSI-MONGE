@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom'
-import { MessageCircle, ChefHat, Users, Target, Timer, Wrench, ArrowLeft, ChevronRight, Car, Film, BookOpen, MousePointer2 } from 'lucide-react'
+import { MessageCircle, ChefHat, Users, Target, Timer, Wrench, ArrowLeft, ChevronRight, Car, Film, BookOpen, MousePointer2, CloudRain, Bus, Utensils } from 'lucide-react'
 
 const OTHER_NAV_ITEMS = [
   { href: '/forum', label: 'Forum', Icon: MessageCircle, color: '#7C3AED', description: 'Discute avec les autres élèves' },
-  { href: '/cantine', label: 'Cantine', Icon: ChefHat, color: '#DC2626', description: 'Menu, notes et photos des repas' },
+  { href: '/covoiturage', label: 'Covoiturage', Icon: Car, color: '#10B981', description: 'Propose ou trouve un trajet' },
+  { href: '/meteo', label: 'Météo locale', Icon: CloudRain, color: '#38BDF8', description: 'Prévisions pour le lycée' },
+  { href: '/transport', label: 'Horaires Bus', Icon: Bus, color: '#22c55e', description: 'Synchro Bus en temps réel', badge: 'Nouveau' },
+  { href: '/cantine', label: 'Menus Cantine', Icon: Utensils, color: '#F59E0B', description: 'Menus de la semaine' },
   { href: '/places', label: 'Plan classe', Icon: Users, color: '#059669', description: 'Où t\'asseoir en cours' },
   { href: '/outils/kanban', label: 'Suivi des DM', Icon: BookOpen, color: '#3B82F6', description: 'Devoirs de la classe (Kanban)', badge: 'Nouveau' },
   { href: '/pomodoro', label: 'Session Focus', Icon: Target, color: '#F59E0B', description: 'Minuteur pour rester concentré' },

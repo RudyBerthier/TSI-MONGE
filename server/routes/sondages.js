@@ -28,28 +28,32 @@ async function buildVoters(poll) {
   (users || []).forEach(u => { usersMap[u.id] = u; });
 
   for (const [userId, rawOption] of Object.entries(poll.user_votes)) {
-    const isVoteAnon = rawOption.endsWith('__ANON__');
-    const option = isVoteAnon ? rawOption.replace('__ANON__', '') : rawOption;
+    const optionsArray = Array.isArray(rawOption) ? rawOption : [rawOption];
+    
+    for (const rawOpt of optionsArray) {
+      const isVoteAnon = rawOpt.endsWith('__ANON__');
+      const option = isVoteAnon ? rawOpt.replace('__ANON__', '') : rawOpt;
 
-    if (!voters[option]) continue;
+      if (!voters[option]) continue;
 
-    // Un vote est anonyme soit parce que l'utilisateur l'a choisi (__ANON__),
-    // soit parce que c'est un vieux sondage globalement anonyme (isAnonymous)
-    if (isAnonymous || isVoteAnon) {
-      // Fake voter data for anonymous polls
-      voters[option].push({
-        id: `anon-${userId}`, // keeps it unique for rendering keys
-        username: 'Anonyme',
-        avatar: null
-      });
-    } else {
-      const u = usersMap[userId];
-      voters[option].push({
-        id: userId,
-        username: u?.username || 'Inconnu',
-        avatar: u?.avatar || null,
-        google_avatar: u?.google_avatar || null
-      });
+      // Un vote est anonyme soit parce que l'utilisateur l'a choisi (__ANON__),
+      // soit parce que c'est un vieux sondage globalement anonyme (isAnonymous)
+      if (isAnonymous || isVoteAnon) {
+        // Fake voter data for anonymous polls
+        voters[option].push({
+          id: `anon-${userId}-${option}`, // keeps it unique for rendering keys
+          username: 'Anonyme',
+          avatar: null
+        });
+      } else {
+        const u = usersMap[userId];
+        voters[option].push({
+          id: userId,
+          username: u?.username || 'Inconnu',
+          avatar: u?.avatar || null,
+          google_avatar: u?.google_avatar || null
+        });
+      }
     }
   }
 
@@ -66,6 +70,8 @@ function mapPollToFrontend(row) {
     title: row.title,
     description: cleanDescription,
     isAnonymous: isAnonymous,
+    isMultipleChoice: row.is_multiple_choice || false,
+    expiresAt: row.expires_at || null,
     options: row.options,
     votes: row.votes,
     userVotes: row.user_votes,
@@ -105,7 +111,7 @@ router.get('/', async (req, res) => {
 // POST /api/sondages — creer un sondage (admin)
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { title, description, options } = req.body;
+    const { title, description, options, expiresAt, isMultipleChoice } = req.body;
     if (!title || !options || options.length < 2) {
       return res.status(400).json({ error: 'Titre et au moins 2 options requis' });
     }
@@ -120,6 +126,8 @@ router.post('/', requireAuth, async (req, res) => {
       options,
       votes,
       user_votes: {},
+      expires_at: expiresAt || null,
+      is_multiple_choice: isMultipleChoice || false,
       active: true,
       created_at: new Date().toISOString()
     };
@@ -260,8 +268,9 @@ router.get('/my-votes', authenticateToken, async (req, res) => {
     for (const poll of (polls || [])) {
       const rawVote = poll.user_votes?.[userId];
       if (rawVote) {
-        const isAnon = rawVote.endsWith('__ANON__');
-        votes[poll.id] = isAnon ? rawVote.replace('__ANON__', '') : rawVote;
+        const voteArray = Array.isArray(rawVote) ? rawVote : [rawVote];
+        const isAnon = voteArray.some(v => v.endsWith('__ANON__'));
+        votes[poll.id] = voteArray.map(v => v.replace('__ANON__', ''));
         if (isAnon) {
           anonVotes[poll.id] = true;
         }
@@ -277,8 +286,10 @@ router.get('/my-votes', authenticateToken, async (req, res) => {
 // POST /api/sondages/:id/vote — voter ou changer de vote (par compte utilisateur)
 router.post('/:id/vote', authenticateToken, async (req, res) => {
   try {
-    const { option, isAnonymous } = req.body;
-    if (!option) return res.status(400).json({ error: 'Option requise' });
+    const { option, options, isAnonymous } = req.body;
+    const submittedOptions = options || (option ? [option] : []);
+
+    if (submittedOptions.length === 0) return res.status(400).json({ error: 'Option requise' });
 
     const userId = req.user.id || req.user.username;
 
@@ -291,23 +302,42 @@ router.post('/:id/vote', authenticateToken, async (req, res) => {
 
     if (fetchError || !poll) return res.status(404).json({ error: 'Sondage non trouve' });
     if (!poll.active) return res.status(400).json({ error: 'Sondage ferme' });
-    if (!poll.options.includes(option)) return res.status(400).json({ error: 'Option invalide' });
+    
+    if (poll.expires_at && new Date() > new Date(poll.expires_at)) {
+      return res.status(400).json({ error: 'Sondage expiré' });
+    }
+
+    if (!poll.is_multiple_choice && submittedOptions.length > 1) {
+      return res.status(400).json({ error: 'Choix multiples non autorisés' });
+    }
+
+    for (const opt of submittedOptions) {
+      if (!poll.options.includes(opt)) return res.status(400).json({ error: 'Option invalide' });
+    }
 
     // Initialize if needed
     const votes = poll.votes || {};
     const userVotes = poll.user_votes || {};
 
     const rawPreviousOption = userVotes[userId];
-    const previousOption = rawPreviousOption ? rawPreviousOption.replace('__ANON__', '') : null;
+    const previousOptions = Array.isArray(rawPreviousOption) ? rawPreviousOption : (rawPreviousOption ? [rawPreviousOption] : []);
+    const cleanPreviousOptions = previousOptions.map(o => o.replace('__ANON__', ''));
 
     // Si changement de vote, decrementer l'ancien
-    if (previousOption && poll.options.includes(previousOption)) {
-      votes[previousOption] = Math.max(0, (votes[previousOption] || 0) - 1);
+    for (const prev of cleanPreviousOptions) {
+      if (poll.options.includes(prev)) {
+        votes[prev] = Math.max(0, (votes[prev] || 0) - 1);
+      }
     }
 
     // Enregistrer le nouveau vote
-    votes[option] = (votes[option] || 0) + 1;
-    userVotes[userId] = isAnonymous ? `${option}__ANON__` : option;
+    for (const opt of submittedOptions) {
+      votes[opt] = (votes[opt] || 0) + 1;
+    }
+    
+    // Si choix multiple, on stocke un tableau, sinon un string pour la compatibilité
+    const finalVoteValue = poll.is_multiple_choice ? submittedOptions.map(o => isAnonymous ? `${o}__ANON__` : o) : (isAnonymous ? `${submittedOptions[0]}__ANON__` : submittedOptions[0]);
+    userVotes[userId] = finalVoteValue;
 
     const { data: updated, error: updateError } = await supabase
       .from('polls')
@@ -320,17 +350,23 @@ router.post('/:id/vote', authenticateToken, async (req, res) => {
 
     const voters = await buildVoters(updated);
 
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('sondage:update', { id: updated.id, votes: updated.votes, voters });
+    }
+
     logActivity({
       actorId: req.user.id,
       actorUsername: req.user.username,
       action: 'sondage.vote',
       targetType: 'sondage',
       targetId: req.params.id,
-      details: { option, isAnonymous, previousOption },
+      details: { options: submittedOptions, isAnonymous, previousOptions: cleanPreviousOptions },
       req
     });
 
-    res.json({ success: true, votes: updated.votes, voters, userVote: option });
+    // Retourner le vote clean pour le frontend
+    res.json({ success: true, votes: updated.votes, voters, userVote: poll.is_multiple_choice ? submittedOptions : submittedOptions[0] });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

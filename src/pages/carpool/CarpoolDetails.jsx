@@ -506,7 +506,16 @@ export function CarpoolDetails() {
     }
   }
 
-  if (loading) return <div className="text-center p-10 text-gray-500">Chargement...</div>
+  if (loading) return (
+    <div className="min-h-screen pt-24 pb-12 px-4" style={{ background: 'var(--bg)' }}>
+      <div className="max-w-lg mx-auto space-y-4">
+        <div className="w-16 h-3.5 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+        <div className="h-44 rounded-2xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+        <div className="h-28 rounded-2xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+        <div className="h-20 rounded-2xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+      </div>
+    </div>
+  )
   if (error && !ride) return <div className="text-center p-10 text-red-500">{error}</div>
 
   if (!user) {

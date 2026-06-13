@@ -41,6 +41,7 @@ const searchRouter = require('./routes/search');
 const clickerRouter = require('./routes/clicker');
 const mediaStatsRouter = require('./routes/media_stats');
 const mediaListsRouter = require('./routes/media_lists');
+const transitRouter = require('./routes/transit');
 
 // Import socket handler
 const setupSocket = require('./socket');
@@ -248,6 +249,7 @@ app.use('/api/media', apiLimiter, mediaRouter);
 app.use('/api/kanban', jwtWithUser, kanbanRouter);
 app.use('/api/search', jwtWithUser, searchRouter);
 app.use('/api/clicker', jwtWithUser, clickerRouter);
+app.use('/api/transit', transitRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

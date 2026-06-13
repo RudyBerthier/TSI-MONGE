@@ -123,10 +123,10 @@ export function MyReviews() {
   }
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white font-sans overflow-x-hidden pb-20">
-      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-50 bg-[#141414]/90 backdrop-blur-md border-b border-gray-800 pt-4 pb-4 px-4 sm:px-8 flex justify-between items-center transition-all">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] font-sans overflow-x-hidden pb-20">
+      <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-50 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)] pt-4 pb-4 px-4 sm:px-8 flex justify-between items-center transition-all">
         <div className="flex items-center gap-4 text-red-600 font-black text-2xl tracking-tighter">
-          <Link to="/media" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit bg-[#242424] text-gray-400 hover:text-white">
+          <Link to="/media" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit bg-[var(--surface-2)] text-[var(--text-muted)] hover:text-[var(--text)]">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <span className="flex items-center gap-2"><Star size={24} fill="currentColor" /> MES CRITIQUES</span>
@@ -136,17 +136,17 @@ export function MyReviews() {
       <div className="max-w-5xl mx-auto px-4 py-12">
         {isLoading ? (
           <div className="animate-pulse space-y-8">
-            <div className="h-32 bg-[#181818] rounded-2xl border border-[#333]"></div>
-            <div className="h-48 bg-[#181818] rounded-2xl border border-[#333]"></div>
-            <div className="h-48 bg-[#181818] rounded-2xl border border-[#333]"></div>
+            <div className="h-32 bg-[var(--surface-2)] rounded-2xl border border-[var(--border)]"></div>
+            <div className="h-48 bg-[var(--surface-2)] rounded-2xl border border-[var(--border)]"></div>
+            <div className="h-48 bg-[var(--surface-2)] rounded-2xl border border-[var(--border)]"></div>
           </div>
         ) : reviews.length === 0 ? (
-          <div className="text-center py-32 bg-[#181818] rounded-2xl border border-[#333] shadow-2xl">
-            <div className="w-20 h-20 bg-[#242424] rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="text-center py-32 bg-[var(--surface-2)] rounded-2xl border border-[var(--border)] shadow-2xl">
+            <div className="w-20 h-20 bg-[var(--surface-3)] rounded-full flex items-center justify-center mx-auto mb-6">
               <Star size={32} className="text-gray-500" />
             </div>
             <h2 className="text-2xl font-bold mb-2">Aucune critique</h2>
-            <p className="text-gray-400 mb-8 max-w-md mx-auto">Tu n'as pas encore partagé ton avis sur des films ou séries. Explore le catalogue et laisse ta première critique !</p>
+            <p className="text-[var(--text-muted)] mb-8 max-w-md mx-auto">Tu n'as pas encore partagé ton avis sur des films ou séries. Explore le catalogue et laisse ta première critique !</p>
             <Link to="/media" className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition-all shadow-lg hover:shadow-red-600/30">
               Explorer MongeFlix
             </Link>
@@ -155,33 +155,33 @@ export function MyReviews() {
           <>
             {/* Stats Header */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
-              <div className="bg-[#181818] rounded-2xl p-6 border border-[#333] shadow-lg flex items-center gap-5">
+              <div className="bg-[var(--surface-2)] rounded-2xl p-6 border border-[var(--border)] shadow-lg flex items-center gap-5">
                 <div className="w-14 h-14 bg-red-600/20 rounded-full flex items-center justify-center shrink-0">
                   <Hash size={24} className="text-red-500" />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400 font-bold mb-1 uppercase tracking-wider">Total</div>
+                  <div className="text-sm text-[var(--text-muted)] font-bold mb-1 uppercase tracking-wider">Total</div>
                   <div className="text-3xl font-black">{stats.total} <span className="text-base font-normal text-gray-500">critiques</span></div>
                 </div>
               </div>
               
-              <div className="bg-[#181818] rounded-2xl p-6 border border-[#333] shadow-lg flex items-center gap-5">
+              <div className="bg-[var(--surface-2)] rounded-2xl p-6 border border-[var(--border)] shadow-lg flex items-center gap-5">
                 <div className="w-14 h-14 bg-yellow-500/20 rounded-full flex items-center justify-center shrink-0">
                   <BarChart2 size={24} className="text-yellow-500" />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400 font-bold mb-1 uppercase tracking-wider">Moyenne Donnée</div>
+                  <div className="text-sm text-[var(--text-muted)] font-bold mb-1 uppercase tracking-wider">Moyenne Donnée</div>
                   <div className="text-3xl font-black">{stats.averageRating}<span className="text-xl text-gray-500">/5</span></div>
                 </div>
               </div>
 
-              <div className="bg-[#181818] rounded-2xl p-6 border border-[#333] shadow-lg flex items-center gap-5">
+              <div className="bg-[var(--surface-2)] rounded-2xl p-6 border border-[var(--border)] shadow-lg flex items-center gap-5">
                 <div className="w-14 h-14 bg-blue-500/20 rounded-full flex items-center justify-center shrink-0">
                   <Film size={24} className="text-blue-500" />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-400 font-bold mb-1 uppercase tracking-wider">Genres Préférés</div>
-                  <div className="text-lg font-bold leading-tight text-gray-200">
+                  <div className="text-sm text-[var(--text-muted)] font-bold mb-1 uppercase tracking-wider">Genres Préférés</div>
+                  <div className="text-lg font-bold leading-tight text-[var(--text)]">
                     {stats.topGenres.length > 0 ? stats.topGenres.join(', ') : 'Calcul...'}
                   </div>
                 </div>
@@ -197,7 +197,7 @@ export function MyReviews() {
                 const year = review.media.release_year || '';
 
                 return (
-                  <div key={review.id} className="bg-[#181818] p-5 sm:p-6 rounded-2xl flex flex-col sm:flex-row gap-6 border border-[#333] shadow-lg relative group transition-all hover:border-gray-600">
+                  <div key={review.id} className="bg-[var(--surface-2)] p-5 sm:p-6 rounded-2xl flex flex-col sm:flex-row gap-6 border border-[var(--border)] shadow-lg relative group transition-all hover:border-gray-500">
                     <button
                       onClick={() => deleteReview(review.id)}
                       className="absolute top-4 right-4 p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-full transition-all opacity-100 sm:opacity-0 group-hover:opacity-100"
@@ -210,7 +210,7 @@ export function MyReviews() {
                       {review.media.poster_url ? (
                         <img src={review.media.poster_url} className="w-full h-full object-cover" alt="poster" />
                       ) : (
-                        <div className="w-full h-full bg-[#242424] flex items-center justify-center"><Film className="text-gray-600" /></div>
+                        <div className="w-full h-full bg-[var(--surface-3)] flex items-center justify-center"><Film className="text-gray-600" /></div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                       <div className="absolute bottom-2 left-0 right-0 flex justify-center text-yellow-400 gap-0.5 drop-shadow-md">
@@ -221,11 +221,11 @@ export function MyReviews() {
                     <div className="flex-1 flex flex-col">
                       <div className="flex items-start justify-between mb-2 pr-10">
                         <div>
-                          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-3">
+                          <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-3 text-[var(--text)]">
                             {review.media.title}
-                            {year && <span className="text-sm font-normal text-gray-500">({year})</span>}
+                            {year && <span className="text-sm font-normal text-[var(--text-muted)]">({year})</span>}
                           </h2>
-                          <div className="text-gray-500 text-xs font-medium uppercase tracking-wider mt-1">
+                          <div className="text-[var(--text-muted)] text-xs font-medium uppercase tracking-wider mt-1">
                             {review.season_number ? `Saison ${review.season_number} ` : ''}
                             {review.episode_number ? `Épisode ${review.episode_number} ` : ''}
                             • Publiée le {new Date(review.created_at).toLocaleDateString('fr-FR')}
@@ -233,21 +233,21 @@ export function MyReviews() {
                         </div>
                       </div>
 
-                      <div className="bg-[#242424] p-4 rounded-xl text-gray-300 italic mb-5 mt-2 flex-1 border border-[#333]">
+                      <div className="bg-[var(--surface-3)] p-4 rounded-xl text-[var(--text)] italic mb-5 mt-2 flex-1 border border-[var(--border)]">
                         "{review.review_text}"
                       </div>
 
                       <div className="flex items-center gap-3 mt-auto">
                         <button
                           onClick={() => handleReact(review.id, myReaction === 'up' ? null : 'up')}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs sm:text-sm font-bold border ${myReaction === 'up' ? 'bg-green-500/20 text-green-500 border-green-500/30' : 'bg-[#242424] text-gray-400 border-[#333] hover:border-gray-500 hover:text-white'}`}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs sm:text-sm font-bold border ${myReaction === 'up' ? 'bg-green-500/20 text-green-500 border-green-500/30' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border)] hover:border-gray-500 hover:text-[var(--text)]'}`}
                         >
                           <ThumbsUp size={16} fill={myReaction === 'up' ? 'currentColor' : 'transparent'} />
                           {upvotes > 0 ? upvotes : 'J\'aime'}
                         </button>
                         <button
                           onClick={() => handleReact(review.id, myReaction === 'down' ? null : 'down')}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs sm:text-sm font-bold border ${myReaction === 'down' ? 'bg-red-500/20 text-red-500 border-red-500/30' : 'bg-[#242424] text-gray-400 border-[#333] hover:border-gray-500 hover:text-white'}`}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all text-xs sm:text-sm font-bold border ${myReaction === 'down' ? 'bg-red-500/20 text-red-500 border-red-500/30' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border-[var(--border)] hover:border-gray-500 hover:text-[var(--text)]'}`}
                         >
                           <ThumbsDown size={16} fill={myReaction === 'down' ? 'currentColor' : 'transparent'} />
                           {downvotes > 0 ? downvotes : ''}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Plus, Trash2, Calendar, BookOpen, Link as LinkIcon, Edit2, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2, Calendar, BookOpen, Link as LinkIcon, Edit2, ArrowLeft, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { Link } from 'react-router-dom'
 
@@ -243,7 +243,23 @@ export function KanbanBoard() {
   const todoTasks = tasks.filter(t => new Date(t.due_date) >= today)
   const doneTasks = tasks.filter(t => new Date(t.due_date) < today)
 
-  if (loading) return <div className="p-8 text-center animate-pulse text-indigo-500 font-bold">Chargement des devoirs...</div>
+  if (loading) return (
+    <div className="min-h-screen pt-24 pb-12 px-4" style={{ background: 'var(--bg)' }}>
+      <div className="max-w-5xl mx-auto">
+        <div className="w-48 h-6 rounded-lg mb-6 animate-pulse" style={{ background: 'var(--surface-2)' }} />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[1,2,3].map(col => (
+            <div key={col} className="rounded-2xl p-4 space-y-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div className="w-24 h-4 rounded-lg animate-pulse" style={{ background: 'var(--surface-2)' }} />
+              {Array.from({ length: 3 }).map((_, row) => (
+                <div key={row} className="h-16 rounded-xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 flex flex-col min-h-screen pb-24">
@@ -285,7 +301,7 @@ export function KanbanBoard() {
               Aucun devoir prévu pour le moment. Ne t'inquiète pas, ça arrive 😁.
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-3">
               {todoTasks.map(task => (
                 <TaskCard
                   key={task.id}
@@ -302,14 +318,14 @@ export function KanbanBoard() {
 
         {/* Colonne : Terminé */}
         {doneTasks.length > 0 && (
-          <div className="mt-16 opacity-80">
+          <div className="mt-12 opacity-80">
             <div className="flex items-center gap-3 mb-6">
-              <h2 className="text-2xl font-bold text-gray-400">Devoirs passés</h2>
-              <span className="bg-gray-100 text-gray-500 dark:bg-gray-800 font-bold px-3 py-1 rounded-full text-base">
+              <h2 className="text-xl font-bold text-gray-400">Devoirs passés</h2>
+              <span className="bg-gray-100 text-gray-500 dark:bg-gray-800 font-bold px-3 py-1 rounded-full text-sm">
                 {doneTasks.length}
               </span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-3">
               {doneTasks.map(task => (
                 <TaskCard
                   key={task.id}
@@ -452,52 +468,53 @@ export function KanbanBoard() {
 
 function TaskCard({ task, onDelete, onEdit, formatDate, isUrgent, isPast }) {
   return (
-    <div className={`p-6 sm:p-7 rounded-3xl border transition-all hover:-translate-y-1 hover:shadow-xl group ${isPast ? 'bg-gray-50/50 dark:bg-slate-900/50 grayscale hover:grayscale-0' : 'bg-white dark:bg-slate-800 shadow-sm'} ${isUrgent && !isPast ? 'border-red-300 dark:border-red-800 shadow-red-500/10' : 'border-gray-100 dark:border-slate-700'}`}>
-      <div className="flex justify-between items-start mb-4">
-        <div className={`inline-block px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border ${SUBJECT_COLORS[task.subject] || 'bg-gray-100 text-gray-700'}`}>
-          {task.subject}
+    <div className={`p-4 rounded-2xl border transition-all hover:shadow-md group flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${isPast ? 'bg-[var(--surface-2)] opacity-70 grayscale hover:grayscale-0' : 'bg-[var(--surface)]'} ${isUrgent && !isPast ? 'border-red-400 shadow-red-500/10' : 'border-[var(--border)] hover:border-[var(--accent)]'}`}>
+      
+      {/* Left side: Subject Badge + Title + Date */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-2 sm:mb-1.5">
+          <span className={`inline-block px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${SUBJECT_COLORS[task.subject] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}>
+            {task.subject}
+          </span>
+          {isUrgent && !isPast && <span className="text-[10px] font-bold text-red-500 uppercase flex items-center gap-1"><AlertTriangle size={10} /> Urgent</span>}
         </div>
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={onEdit}
-            className="text-gray-400 hover:text-indigo-500 transition-colors p-2 rounded-full hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
-            title="Modifier"
-          >
-            <Edit2 size={18} />
-          </button>
-          <button
-            onClick={onDelete}
-            className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/30"
-            title="Supprimer"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
-      </div>
-
-      <h3 className="font-extrabold text-xl mb-6 leading-relaxed" style={{ color: 'var(--text)' }}>
-        {task.title}
-      </h3>
-
-      <div className="flex items-center justify-between border-t border-gray-100 dark:border-slate-700 pt-5 mt-auto">
-        <div className="flex items-center gap-2 text-base font-bold">
-          <Calendar size={18} className={isUrgent ? 'text-red-500' : 'text-gray-400'} />
-          <span className={isUrgent ? 'text-red-500' : 'text-gray-600 dark:text-gray-300'}>
+        
+        <h3 className="font-bold text-base leading-snug truncate mb-2 sm:mb-1.5" style={{ color: 'var(--text)' }} title={task.title}>
+          {task.title}
+        </h3>
+        
+        <div className="flex items-center gap-2 text-xs font-medium">
+          <Calendar size={12} className={isUrgent && !isPast ? 'text-red-500' : 'text-[var(--text-muted)]'} />
+          <span className={isUrgent && !isPast ? 'text-red-500 font-bold' : 'text-[var(--text-muted)]'}>
             {formatDate(task.due_date)}
           </span>
         </div>
+      </div>
 
+      {/* Right side: Actions & Link */}
+      <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 border-t sm:border-t-0 border-[var(--border)] pt-3 sm:pt-0 mt-2 sm:mt-0">
+        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+          <button onClick={onEdit} className="p-2 rounded-xl text-[var(--text-muted)] hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors" title="Modifier">
+            <Edit2 size={16} />
+          </button>
+          <button onClick={onDelete} className="p-2 rounded-xl text-[var(--text-muted)] hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors" title="Supprimer">
+            <Trash2 size={16} />
+          </button>
+        </div>
+        
         {task.link && (
           <a
             href={task.link.startsWith('http') ? task.link : `https://${task.link}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm font-bold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 px-4 py-2 rounded-xl transition-colors"
+            className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 transition-colors flex items-center gap-2 text-xs font-bold sm:ml-2"
+            title="Lien attaché"
           >
-            <LinkIcon size={14} /> Voir plus
+            <LinkIcon size={14} /> <span className="sm:hidden">Lien</span>
           </a>
         )}
       </div>
+
     </div>
   )
 }

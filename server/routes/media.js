@@ -62,6 +62,57 @@ router.get('/trending', authenticateToken, async (req, res) => {
 });
 
 // ----------------------------------------------------------------------
+// GET /api/media/upcoming - Sorties à venir (Cinéma & TV)
+// ----------------------------------------------------------------------
+router.get('/upcoming', authenticateToken, async (req, res) => {
+  const tmdbKey = process.env.TMDB_API_KEY;
+  if (!tmdbKey) return res.status(400).json({ error: 'Clé API TMDB manquante' });
+
+  try {
+    // Films à venir
+    const movieRes = await axios.get(`https://api.themoviedb.org/3/movie/upcoming`, {
+      params: { api_key: tmdbKey, language: 'fr-FR', region: 'FR', page: 1 }
+    });
+
+    // Séries à venir (diffusées aujourd'hui ou dans le futur)
+    const tvRes = await axios.get(`https://api.themoviedb.org/3/discover/tv`, {
+      params: { 
+        api_key: tmdbKey, 
+        language: 'fr-FR', 
+        sort_by: 'popularity.desc',
+        'first_air_date.gte': new Date().toISOString().split('T')[0],
+        page: 1 
+      }
+    });
+
+    let results = [
+      ...movieRes.data.results.map(i => ({ ...i, media_type: 'movie' })),
+      ...tvRes.data.results.map(i => ({ ...i, media_type: 'tv' }))
+    ];
+
+    // Trier par date de sortie croissante (les plus proches en premier)
+    // On exclut les dates passées juste au cas où
+    const today = new Date().toISOString().split('T')[0];
+    results = results.filter(r => {
+      const date = r.release_date || r.first_air_date;
+      return date && date >= today;
+    });
+
+    results.sort((a, b) => {
+      const dateA = a.release_date || a.first_air_date || '';
+      const dateB = b.release_date || b.first_air_date || '';
+      return dateA.localeCompare(dateB);
+    });
+
+    // Retourner les 20 premiers
+    res.json(formatTmdbResults(results.slice(0, 20)));
+  } catch (error) {
+    console.error('Erreur upcoming TMDB:', error.message);
+    res.status(500).json({ error: 'Erreur TMDB' });
+  }
+});
+
+// ----------------------------------------------------------------------
 // GET /api/media/popular/:type - Films ou séries populaires
 // ----------------------------------------------------------------------
 router.get('/popular/:type', authenticateToken, async (req, res) => {

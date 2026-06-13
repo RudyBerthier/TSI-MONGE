@@ -46,6 +46,8 @@ const MATH_PREF_KEY = 'tsi_math_site_pref'
 import WeatherWidget from '../components/widgets/WeatherWidget'
 import { useWeatherCurrent } from '../components/widgets/useWeatherCurrent'
 import NotesWidget from '../components/widgets/NotesWidget'
+import { WeatherParticles } from '../components/WeatherParticles'
+import { TransportWidget } from '../components/widgets/TransportWidget'
 
 const NAV_ITEMS = [
   { href: '/emploi-du-temps', label: 'EDT & Kholles', Icon: Calendar, color: '#1D4ED8' },
@@ -322,7 +324,8 @@ export function IndexPage() {
 
   /* ── render ─────────────────────────────────────────────── */
   return (
-    <div style={{ background: 'var(--bg)' }}>
+    <div style={{ background: 'var(--bg)', position: 'relative' }}>
+      <WeatherParticles />
 
       {/* ════════════════════════════════════════════════════
           ANNOUNCEMENT BANNER
@@ -360,7 +363,9 @@ export function IndexPage() {
       {/* ════════════════════════════════════════════════════
           VACATION COUNTDOWN
       ════════════════════════════════════════════════════ */}
-      <VacationCountdown />
+      <VacationCountdown>
+        <MiniTransportPill />
+      </VacationCountdown>
 
       {/* ════════════════════════════════════════════════════
           HERO
@@ -452,7 +457,9 @@ export function IndexPage() {
               <br />
               <span>MONGE</span>
             </h1>
-            <MiniWeatherPill />
+            <div className="flex flex-col items-end gap-1">
+              <MiniWeatherPill />
+            </div>
           </div>
 
           {/* Animated cyan rule */}
@@ -1150,6 +1157,69 @@ function MiniNotesPill() {
         <line x1="8" y1="16" x2="12" y2="16" stroke="#6366F1" strokeWidth="1.5" strokeLinecap="round" />
       </svg>
       <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Notes</span>
+    </Link>
+  )
+}
+
+function MiniTransportPill() {
+  const { getToken, userSettings } = useAuth()
+  const [nextBus, setNextBus] = useState(null)
+  
+  useEffect(() => {
+    const favorites = userSettings?.tsi_transit_favorites || []
+    if (favorites.length === 0) return
+
+    const fetchNext = async () => {
+      try {
+        const stopIds = [...new Set(favorites.map(f => f.stopId))].join(',')
+        const res = await fetch(`/api/transit/chambery?stops=${stopIds}`, {
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        })
+        if (res.ok) {
+          const d = await res.json()
+          if (d.arrivals) {
+            const myArrivals = d.arrivals.filter(a => 
+              favorites.some(f => f.stopId === a.stop_id && f.routeId === a.route_id && f.headsign === a.headsign)
+            )
+            if (myArrivals.length > 0) {
+              myArrivals.sort((a, b) => a.delay_minutes - b.delay_minutes)
+              setNextBus(myArrivals[0])
+            }
+          }
+        }
+      } catch (err) {}
+    }
+    fetchNext()
+    const int = setInterval(fetchNext, 60000)
+    return () => clearInterval(int)
+  }, [userSettings, getToken])
+
+  if (!nextBus) return null
+
+  const isImminent = nextBus.delay_minutes <= 5
+
+  return (
+    <Link
+      to="/transport"
+      className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all hover:scale-105 shrink-0"
+      style={{
+        background: 'rgba(34, 197, 94, 0.08)',
+        border: '1px solid var(--border)',
+        backdropFilter: 'blur(8px)',
+        textDecoration: 'none',
+        marginTop: '0.2rem',
+      }}
+      title={`Prochain bus : ${nextBus.route_short_name} vers ${nextBus.headsign}`}
+    >
+      <div 
+        className="w-5 h-5 flex items-center justify-center rounded-[6px] font-bold text-[10px]"
+        style={{ backgroundColor: `#${nextBus.route_color || 'ccc'}`, color: `#${nextBus.route_text_color || 'fff'}` }}
+      >
+        {nextBus.route_short_name || 'Bus'}
+      </div>
+      <span className={`text-sm font-bold ${isImminent ? 'text-red-500 animate-pulse' : 'text-green-600 dark:text-green-400'}`}>
+        {nextBus.delay_minutes <= 0 ? 'Là' : `${nextBus.delay_minutes}m`}
+      </span>
     </Link>
   )
 }

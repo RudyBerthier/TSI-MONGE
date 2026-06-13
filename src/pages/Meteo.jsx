@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, MapPin, Plus, Search, X, Trash2, Map, ChevronLeft, ChevronRight, Crosshair, AlertTriangle, GripVertical } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
-const LAT = 45.5646;
-const LON = 5.9178;
+const DEFAULT_CITY = { id: 'chambery', name: 'Chambéry', lat: 45.5646, lon: 5.9178 };
 
 /* ═══════════════════════════════════════════════════════════════
    Custom SVG Weather Icons
@@ -163,6 +166,43 @@ const uvLevel = (uv) => {
 
 const fmt = (iso) => iso ? new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
 const windDir = (deg) => ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'][Math.round((deg || 0) / 45) % 8];
+
+/* ═══ Dynamic Background Gradient ═══ */
+const getWeatherBg = (code) => {
+    if (code === undefined || code === null) return 'var(--bg)';
+    if (code === 0) return 'linear-gradient(180deg, #1e3a5f 0%, #3b82f6 30%, #93c5fd 100%)';
+    if (code <= 2) return 'linear-gradient(180deg, #1e3a5f 0%, #64748b 40%, #94a3b8 100%)';
+    if (code === 3) return 'linear-gradient(180deg, #1e293b 0%, #475569 40%, #64748b 100%)';
+    if (code <= 48) return 'linear-gradient(180deg, #334155 0%, #64748b 40%, #94a3b8 100%)';
+    if (code <= 67 || (code >= 80 && code <= 82)) return 'linear-gradient(180deg, #0f172a 0%, #1e3a5f 30%, #334155 100%)';
+    if (code <= 77 || (code >= 85 && code <= 86)) return 'linear-gradient(180deg, #1e293b 0%, #475569 30%, #cbd5e1 100%)';
+    if (code >= 95) return 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 30%, #312e81 100%)';
+    return 'var(--bg)';
+};
+
+/* ═══ Weather Alerts ═══ */
+const getWeatherAlert = (weather) => {
+    if (!weather?.daily) return null;
+    const { weather_code, temperature_2m_max, precipitation_sum, wind_speed_10m_max } = weather.daily;
+    const todayCode = weather_code?.[0];
+    const todayMax = temperature_2m_max?.[0];
+    const todayPrecip = precipitation_sum?.[0] || 0;
+    const todayWind = wind_speed_10m_max?.[0] || 0;
+
+    // Heatwave
+    if (todayMax >= 35) return { type: 'danger', message: `Canicule ! Température max prévue de ${Math.round(todayMax)}°C. Restez hydraté.`, color: '#ef4444', bg: 'rgba(239,68,68,0.12)' };
+    if (todayMax >= 32) return { type: 'warning', message: `Forte chaleur prévue (${Math.round(todayMax)}°C). Pensez à boire régulièrement.`, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' };
+    // Heavy rain / storms
+    if ([65, 67, 82, 95, 96, 99].includes(todayCode)) return { type: 'danger', message: `Fortes intempéries prévues aujourd'hui. ${todayPrecip > 0 ? `${todayPrecip} mm de pluie attendus.` : ''}`, color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' };
+    if (todayPrecip >= 20) return { type: 'warning', message: `Pluie abondante prévue : ${todayPrecip} mm. Prenez un parapluie !`, color: '#3b82f6', bg: 'rgba(59,130,246,0.12)' };
+    // Snow
+    if ([71, 73, 75, 77, 85, 86].includes(todayCode)) return { type: 'info', message: 'Chutes de neige prévues aujourd\'hui. Soyez prudent sur les routes.', color: '#93c5fd', bg: 'rgba(147,197,253,0.12)' };
+    // Strong wind
+    if (todayWind >= 60) return { type: 'warning', message: `Vents forts prévus (${Math.round(todayWind)} km/h). Soyez vigilant.`, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' };
+    // Freezing
+    if (todayMax <= 0) return { type: 'info', message: `Températures négatives prévues (max ${Math.round(todayMax)}°C). Risque de verglas.`, color: '#93c5fd', bg: 'rgba(147,197,253,0.12)' };
+    return null;
+};
 
 /* ═══ SVG Temperature Curve ═══ */
 function TempCurve({ data, height = 110 }) {
@@ -390,58 +430,315 @@ function SunArc({ sunrise, sunset, now }) {
     );
 }
 
+/* ═══ Sortable City Item ═══ */
+function SortableCityItem({ city, idx, currentCityIndex, setCurrentCityIndex, setShowSearch, removeCity, savedCitiesLength }) {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: city.id });
+    const style = { 
+        transform: CSS.Transform.toString(transform), 
+        transition,
+        background: 'var(--surface)', 
+        border: '1px solid var(--border)' 
+    };
+
+    return (
+        <div ref={setNodeRef} {...attributes} {...listeners} style={style} className="flex items-center gap-2 p-3 rounded-xl relative z-50 bg-[var(--surface)] cursor-grab active:cursor-grabbing touch-none hover:border-[var(--accent)] transition-colors">
+            <div className="p-2 -ml-2 text-[var(--text-muted)] transition-colors pointer-events-none">
+                <GripVertical size={16} />
+            </div>
+            <button onClick={(e) => { e.stopPropagation(); setCurrentCityIndex(idx); setShowSearch(false); }} className="flex-1 text-left min-w-0 py-1">
+                <div className="font-bold text-sm truncate" style={{ color: idx === currentCityIndex ? 'var(--accent)' : 'var(--text)' }}>
+                    {city.isGeo && <MapPin size={12} className="inline mr-1 -mt-0.5" />}
+                    {city.name}
+                </div>
+            </button>
+            {savedCitiesLength > 1 && (
+                <button onClick={(e) => { e.stopPropagation(); removeCity(idx, e); }} onPointerDown={(e) => e.stopPropagation()} className="p-2 rounded-full hover:bg-red-500/10 text-red-500 transition-colors shrink-0 z-10 relative">
+                    <Trash2 size={15} />
+                </button>
+            )}
+        </div>
+    );
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MAIN PAGE
    ═══════════════════════════════════════════════════════════════ */
 
 export function Meteo() {
     const navigate = useNavigate();
+    
+    // Multiple cities
+    const [savedCities, setSavedCities] = useState(() => {
+        const cached = localStorage.getItem('tsi_weather_cities');
+        if (cached) {
+            try { return JSON.parse(cached); } catch (e) { console.error(e); }
+        }
+        return [DEFAULT_CITY];
+    });
+    const [currentCityIndex, setCurrentCityIndex] = useState(0);
+    const activeCity = savedCities[currentCityIndex] || DEFAULT_CITY;
+
+    // Search modal
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+
+    // Weather
     const [weather, setWeather] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [geolocating, setGeolocating] = useState(false);
+
+    // Selected Day
+    const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+
+    // Helper: check duplicate by proximity (< ~5km)
+    const findDuplicate = (lat, lon, cities = savedCities) => {
+        return cities.findIndex(c => 
+            Math.abs(c.lat - lat) < 0.05 && Math.abs(c.lon - lon) < 0.05
+        );
+    };
+
+    // Auto-geolocation on first load
+    useEffect(() => {
+        const alreadyTriedGeo = localStorage.getItem('tsi_weather_geo_tried');
+        if (alreadyTriedGeo) return;
+        
+        if (!navigator.geolocation) return;
+        
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                localStorage.setItem('tsi_weather_geo_tried', '1');
+                try {
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=fr`);
+                    const geoData = await geoRes.json();
+                    const cityName = geoData.address?.city || geoData.address?.town || geoData.address?.village || geoData.address?.municipality || 'Ma position';
+                    const geoCity = {
+                        id: `geo_${Math.round(pos.coords.latitude * 100)}_${Math.round(pos.coords.longitude * 100)}`,
+                        name: cityName,
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        isGeo: true
+                    };
+                    
+                    setSavedCities(prev => {
+                        const dupIdx = findDuplicate(geoCity.lat, geoCity.lon, prev);
+                        if (dupIdx >= 0) {
+                            setCurrentCityIndex(dupIdx);
+                            return prev;
+                        }
+                        const newCities = [geoCity, ...prev.filter(c => c.id !== DEFAULT_CITY.id)];
+                        setCurrentCityIndex(0);
+                        return newCities;
+                    });
+                } catch (e) {
+                    console.error('Geo reverse failed:', e);
+                }
+            },
+            () => {
+                // Permission denied — keep saved cities as-is
+                localStorage.setItem('tsi_weather_geo_tried', '1');
+            },
+            { enableHighAccuracy: false, timeout: 8000 }
+        );
+    }, []);
+
+    // Save cities
+    useEffect(() => {
+        localStorage.setItem('tsi_weather_cities', JSON.stringify(savedCities));
+    }, [savedCities]);
 
     useEffect(() => {
-        const cached = localStorage.getItem('tsi_weather_full_cache');
+        setLoading(true);
+        setSelectedDayIndex(0); // Reset day on city change
+        const cacheKey = `tsi_weather_${activeCity.id}`;
+        const cached = localStorage.getItem(cacheKey);
         if (cached) {
             try {
                 const { data, ts } = JSON.parse(cached);
                 if (Date.now() - ts < 10 * 60 * 1000) { setWeather(data); setLoading(false); return; }
-            } catch { }
+            } catch (e) { console.error(e); }
         }
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure&hourly=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,precipitation_probability,uv_index,visibility&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,uv_index_max,precipitation_sum,wind_speed_10m_max,precipitation_probability_max&timezone=Europe/Paris&forecast_days=7`)
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${activeCity.lat}&longitude=${activeCity.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure&hourly=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,precipitation_probability,uv_index,visibility&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset,uv_index_max,precipitation_sum,wind_speed_10m_max,precipitation_probability_max&timezone=Europe/Paris&forecast_days=7`)
             .then(r => r.json())
             .then(data => {
                 setWeather(data);
-                localStorage.setItem('tsi_weather_full_cache', JSON.stringify({ data, ts: Date.now() }));
+                localStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
             })
-            .catch(() => { if (cached) try { setWeather(JSON.parse(cached).data); } catch { } })
+            .catch(() => { if (cached) try { setWeather(JSON.parse(cached).data); } catch (e) { console.error(e); } })
             .finally(() => setLoading(false));
-    }, []);
+    }, [activeCity.lat, activeCity.lon, activeCity.id]);
+
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setSearchResults([]);
+            return;
+        }
+        setIsSearching(true);
+        const delayDebounceFn = setTimeout(() => {
+            fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=5&language=fr&format=json`)
+                .then(res => res.json())
+                .then(data => setSearchResults(data.results || []))
+                .catch(console.error)
+                .finally(() => setIsSearching(false));
+        }, 400);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery]);
+
+    const addCity = (city) => {
+        const newCity = {
+            id: `${city.id}`,
+            name: city.name + (city.admin1 ? `, ${city.admin1}` : '') + (city.country ? ` (${city.country})` : ''),
+            lat: city.latitude,
+            lon: city.longitude
+        };
+        // Check duplicate by ID or coords proximity
+        const dupById = savedCities.findIndex(c => c.id === newCity.id);
+        const dupByCoords = findDuplicate(newCity.lat, newCity.lon);
+        const dupIdx = dupById >= 0 ? dupById : dupByCoords;
+        
+        if (dupIdx >= 0) {
+            setCurrentCityIndex(dupIdx);
+        } else {
+            const newCities = [...savedCities, newCity];
+            setSavedCities(newCities);
+            setCurrentCityIndex(newCities.length - 1);
+        }
+        setShowSearch(false);
+        setSearchQuery('');
+        setSearchResults([]);
+    };
+
+    const handleGeolocate = () => {
+        if (!navigator.geolocation) return;
+        setGeolocating(true);
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                try {
+                    const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=fr`);
+                    const geoData = await geoRes.json();
+                    const cityName = geoData.address?.city || geoData.address?.town || geoData.address?.village || geoData.address?.municipality || 'Ma position';
+                    const newCity = {
+                        id: `geo_${Math.round(pos.coords.latitude * 100)}_${Math.round(pos.coords.longitude * 100)}`,
+                        name: cityName,
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        isGeo: true
+                    };
+                    // Check duplicate by coords
+                    const dupIdx = findDuplicate(newCity.lat, newCity.lon);
+                    if (dupIdx >= 0) {
+                        setCurrentCityIndex(dupIdx);
+                    } else {
+                        setSavedCities(prev => {
+                            const newCities = [...prev, newCity];
+                            setCurrentCityIndex(newCities.length - 1);
+                            return newCities;
+                        });
+                    }
+                    setShowSearch(false);
+                } catch (e) {
+                    console.error(e);
+                } finally {
+                    setGeolocating(false);
+                }
+            },
+            () => setGeolocating(false),
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    };
+
+    const removeCity = (index, e) => {
+        if (e) e.stopPropagation();
+        if (savedCities.length <= 1) return;
+        const newCities = savedCities.filter((_, i) => i !== index);
+        setSavedCities(newCities);
+        if (currentCityIndex >= newCities.length) {
+            setCurrentCityIndex(newCities.length - 1);
+        } else if (currentCityIndex > index) {
+            setCurrentCityIndex(c => c - 1);
+        }
+    };
+
+
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        if (over && active.id !== over.id) {
+            setSavedCities((items) => {
+                const oldIndex = items.findIndex(c => c.id === active.id);
+                const newIndex = items.findIndex(c => c.id === over.id);
+                
+                let newCurrentIndex = currentCityIndex;
+                if (currentCityIndex === oldIndex) {
+                    newCurrentIndex = newIndex;
+                } else if (oldIndex < currentCityIndex && newIndex >= currentCityIndex) {
+                    newCurrentIndex--;
+                } else if (oldIndex > currentCityIndex && newIndex <= currentCityIndex) {
+                    newCurrentIndex++;
+                }
+                setCurrentCityIndex(newCurrentIndex);
+                
+                return arrayMove(items, oldIndex, newIndex);
+            });
+        }
+    };
 
     const now = new Date();
     const currentHour = now.getHours();
 
     const hourlyData = useMemo(() => {
         if (!weather?.hourly) return [];
-        const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(currentHour).padStart(2, '0')}:00`;
-        const startIdx = weather.hourly.time.indexOf(nowStr);
+        let startIdx;
+        
+        if (selectedDayIndex === 0) {
+            const nowStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(currentHour).padStart(2, '0')}:00`;
+            startIdx = weather.hourly.time.indexOf(nowStr);
+        } else {
+            const selectedDateStr = weather.daily.time[selectedDayIndex];
+            const targetStr = `${selectedDateStr}T00:00`;
+            startIdx = weather.hourly.time.indexOf(targetStr);
+        }
+
         if (startIdx < 0) return [];
         const items = [];
         for (let i = 0; i < 24 && startIdx + i < weather.hourly.time.length; i++) {
             const idx = startIdx + i;
             items.push({
-                hour: i === 0 ? 'Mtn' : weather.hourly.time[idx].split('T')[1].substring(0, 5),
+                hour: (selectedDayIndex === 0 && i === 0) ? 'Mtn' : weather.hourly.time[idx].split('T')[1].substring(0, 5),
                 temp: Math.round(weather.hourly.temperature_2m[idx]),
                 code: weather.hourly.weather_code[idx],
                 precip: weather.hourly.precipitation_probability?.[idx] || 0,
             });
         }
         return items;
-    }, [weather, currentHour]);
+    }, [weather, currentHour, selectedDayIndex, now]);
 
-    if (loading) {
+    if (loading && !weather) {
         return (
-            <div className="min-h-screen pt-24 pb-12 px-4 flex items-center justify-center" style={{ background: 'var(--bg)' }}>
-                <div className="animate-pulse text-lg font-medium" style={{ color: 'var(--text-muted)' }}>Chargement météo...</div>
+            <div className="min-h-screen pt-20 pb-12 px-4" style={{ background: 'var(--bg)' }}>
+                <div className="max-w-lg mx-auto">
+                    <div className="w-16 h-3 rounded-full mx-auto mb-6 animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                    <div className="text-center space-y-4 mb-8">
+                        <div className="w-20 h-3 rounded-full mx-auto animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                        <div className="w-[72px] h-[72px] rounded-full mx-auto animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                        <div className="w-24 h-12 rounded-xl mx-auto animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                        <div className="w-28 h-4 rounded-full mx-auto animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                    </div>
+                    <div className="h-[140px] rounded-2xl mb-4 animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                    <div className="h-[260px] rounded-2xl mb-4 animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                    <div className="grid grid-cols-2 gap-3">
+                        {[1,2,3,4].map(i => (
+                            <div key={i} className="h-[130px] rounded-2xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                        ))}
+                    </div>
+                </div>
             </div>
         );
     }
@@ -451,207 +748,401 @@ export function Meteo() {
     const cur = weather.current;
     const daily = weather.daily;
     const hourly = weather.hourly;
+    
+    // Day specific info
+    const isToday = selectedDayIndex === 0;
+    
+    // Current weather info (always today's current conditions for the hero section)
     const info = getW(cur.weather_code);
     const CurIcon = info.Icon;
 
-    const uvMax = daily?.uv_index_max?.[0] || 0;
+    // Detailed metrics for the selected day
+    const uvMax = daily?.uv_index_max?.[selectedDayIndex] || 0;
     const uvInfo = uvLevel(uvMax);
+    const sunrise = daily?.sunrise?.[selectedDayIndex];
+    const sunset = daily?.sunset?.[selectedDayIndex];
+    const precipSum = daily?.precipitation_sum?.[selectedDayIndex] || 0;
+    const precipProb = daily?.precipitation_probability_max?.[selectedDayIndex] || 0;
+    
+    // Use selected day's max wind speed, or current wind speed if today
+    const windSpeed = isToday ? cur.wind_speed_10m : daily?.wind_speed_10m_max?.[selectedDayIndex] || 0;
+    const windDirStr = isToday ? windDir(cur.wind_direction_10m) : 'Max';
 
     const nowHourStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(currentHour).padStart(2, '0')}:00`;
     const visIdx = hourly?.time?.indexOf(nowHourStr);
     const visibility = visIdx >= 0 && hourly?.visibility ? (hourly.visibility[visIdx] / 1000).toFixed(1) : null;
 
+    const weatherAlert = getWeatherAlert(weather);
+    const weatherBg = getWeatherBg(cur.weather_code);
+
     return (
-        <div className="min-h-screen pb-12" style={{ background: 'var(--bg)' }}>
+        <div className="min-h-screen pb-12 overflow-x-hidden" style={{ background: 'var(--bg)' }}>
             <div style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }} />
 
-            <div className="max-w-lg mx-auto px-5">
-                <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
+            {/* Navigation & Add City */}
+            <div className="max-w-lg mx-auto px-5 flex items-center justify-between mb-4 relative z-10">
+                <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-70" style={{ color: 'var(--text-muted)' }}>
                     <ArrowLeft size={16} /> Retour
                 </button>
+                <div className="flex items-center gap-1">
+                    <button onClick={handleGeolocate} disabled={geolocating} className="p-2 rounded-full transition-colors hover:bg-[var(--surface-2)]" style={{ color: 'var(--text)' }} title="Ma position">
+                        <Crosshair size={18} className={geolocating ? 'animate-pulse' : ''} />
+                    </button>
+                    <button onClick={() => setShowSearch(true)} className="p-2 rounded-full transition-colors hover:bg-[var(--surface-2)]" style={{ color: 'var(--text)' }}>
+                        <Plus size={20} />
+                    </button>
+                </div>
             </div>
 
-            {/* ═══ Hero ═══ */}
-            <div className="text-center px-5 mb-8">
-                <div className="flex items-center justify-center gap-1.5 mb-3" style={{ color: 'var(--text-muted)' }}>
-                    <MapPin size={13} />
-                    <span className="text-sm font-medium tracking-wide">Chambéry</span>
+            {/* Weather Alert */}
+            {weatherAlert && isToday && (
+                <div className="max-w-lg mx-auto px-5 mb-4 relative z-10">
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ background: weatherAlert.bg, border: `1px solid ${weatherAlert.color}30` }}>
+                        <AlertTriangle size={18} style={{ color: weatherAlert.color, flexShrink: 0 }} />
+                        <p className="text-sm font-medium" style={{ color: weatherAlert.color }}>{weatherAlert.message}</p>
+                    </div>
                 </div>
-                <div className="flex justify-center mb-2">
-                    <CurIcon size={72} />
-                </div>
-                <div className="text-8xl font-extralight tracking-tighter leading-none" style={{ color: 'var(--text)', fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
-                    {Math.round(cur.temperature_2m)}°
-                </div>
-                <p className="text-lg font-semibold mt-2" style={{ color: info.color }}>{info.label}</p>
-                {daily && (
-                    <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
-                        H:{Math.round(daily.temperature_2m_max[0])}°  L:{Math.round(daily.temperature_2m_min[0])}°
-                    </p>
-                )}
-            </div>
+            )}
 
-            {/* ═══ Hourly Forecast ═══ */}
-            <div className="max-w-lg mx-auto px-5 mb-6 mt-2 relative z-10 block">
-                <Card label="Prévisions horaires" className="pt-5 overflow-visible">
-                    <TempCurve data={hourlyData} height={110} />
-                </Card>
-            </div>
+            {/* Search Modal */}
+            <AnimatePresence>
+                {showSearch && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        className="fixed inset-0 z-[100] flex flex-col p-4 sm:p-8"
+                        style={{ background: 'var(--bg)' }}
+                    >
+                        <div className="max-w-lg mx-auto w-full relative">
+                            <div className="flex items-center gap-3 mb-6">
+                                <form onSubmit={e => e.preventDefault()} className="flex-1 relative">
+                                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                                    <input 
+                                        type="text" 
+                                        autoFocus
+                                        value={searchQuery}
+                                        onChange={e => setSearchQuery(e.target.value)}
+                                        placeholder="Rechercher une ville..." 
+                                        className="w-full pl-12 pr-4 py-3 rounded-2xl outline-none"
+                                        style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                                    />
+                                </form>
+                                <button onClick={() => setShowSearch(false)} className="p-3 rounded-2xl transition-colors hover:bg-[var(--surface-2)]" style={{ color: 'var(--text)' }}>
+                                    <X size={20} />
+                                </button>
+                            </div>
 
-            {/* ═══ 7-Day Forecast ═══ */}
-            <div className="max-w-lg mx-auto px-5 mb-4">
-                <Card label="Prévisions 7 jours">
-                    {daily?.time?.map((date, i) => {
-                        const dInfo = getW(daily.weather_code[i]);
-                        const DIcon = dInfo.Icon;
-                        const isToday = i === 0;
-                        const dayName = isToday ? 'Auj.' : new Date(date).toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
-                        const globalMin = Math.min(...daily.temperature_2m_min);
-                        const globalMax = Math.max(...daily.temperature_2m_max);
-                        const range = globalMax - globalMin || 1;
-                        const barLeft = ((daily.temperature_2m_min[i] - globalMin) / range) * 100;
-                        const barRight = 100 - ((daily.temperature_2m_max[i] - globalMin) / range) * 100;
-
-                        return (
-                            <div key={date} className="flex items-center gap-3 py-2.5" style={{ borderTop: i > 0 ? '1px solid var(--border)' : 'none' }}>
-                                <span className="w-10 text-sm font-medium capitalize" style={{ color: isToday ? 'var(--text)' : 'var(--text-muted)' }}>{dayName}</span>
-                                <div className="w-8 flex justify-center"><DIcon size={24} /></div>
-                                <span className="w-8 text-right text-sm font-medium" style={{ color: 'var(--text-muted)' }}>{Math.round(daily.temperature_2m_min[i])}°</span>
-                                <div className="flex-1 h-1.5 rounded-full relative mx-1" style={{ background: 'var(--surface-2)' }}>
-                                    <div className="absolute h-full rounded-full" style={{
-                                        left: `${barLeft}%`, right: `${barRight}%`,
-                                        background: 'linear-gradient(90deg, #60A5FA, #FBBF24, #F97316)',
-                                    }} />
+                            {isSearching ? (
+                                <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>Recherche en cours...</div>
+                            ) : searchResults.length > 0 ? (
+                                <div className="flex flex-col gap-2">
+                                    {searchResults.map(res => (
+                                        <button 
+                                            key={res.id} 
+                                            onClick={() => addCity(res)}
+                                            className="flex items-center justify-between p-4 rounded-xl text-left transition-colors hover:bg-[var(--surface)] border border-transparent hover:border-[var(--border)]"
+                                        >
+                                            <div>
+                                                <div className="font-bold text-base" style={{ color: 'var(--text)' }}>{res.name}</div>
+                                                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{res.admin1 ? `${res.admin1}, ` : ''}{res.country}</div>
+                                            </div>
+                                            <MapPin size={16} style={{ color: 'var(--text-muted)' }} />
+                                        </button>
+                                    ))}
                                 </div>
-                                <span className="w-8 text-sm font-bold" style={{ color: 'var(--text)' }}>{Math.round(daily.temperature_2m_max[i])}°</span>
+                            ) : searchQuery ? (
+                                <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>Aucune ville trouvée</div>
+                            ) : (
+                                <div className="mt-8">
+                                    <h3 className="text-sm font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--text-muted)' }}>Villes sauvegardées</h3>
+                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                        <SortableContext items={savedCities.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                                            <div className="flex flex-col gap-2">
+                                                {savedCities.map((city, idx) => (
+                                                    <SortableCityItem 
+                                                        key={city.id} 
+                                                        city={city} 
+                                                        idx={idx} 
+                                                        currentCityIndex={currentCityIndex} 
+                                                        setCurrentCityIndex={setCurrentCityIndex} 
+                                                        setShowSearch={setShowSearch} 
+                                                        removeCity={removeCity} 
+                                                        savedCitiesLength={savedCities.length} 
+                                                    />
+                                                ))}
+                                            </div>
+                                        </SortableContext>
+                                    </DndContext>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Slider Dots */}
+            {savedCities.length > 1 && (
+                <div className="flex justify-center gap-1.5 mb-2 relative z-10">
+                    {savedCities.map((_, i) => (
+                        <button 
+                            key={i} 
+                            onClick={() => setCurrentCityIndex(i)}
+                            className="p-1.5 cursor-pointer hover:opacity-80 transition-opacity"
+                        >
+                            <div className={`h-2 rounded-full transition-all ${i === currentCityIndex ? 'w-4' : 'w-2 opacity-40'}`} style={{ background: i === currentCityIndex ? 'var(--text)' : 'var(--text-muted)' }} />
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            <motion.div
+                key={currentCityIndex}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                style={{ position: 'relative', zIndex: 1 }}
+                onDragEnd={(e, { offset }) => {
+                    const swipeThreshold = 50;
+                    if (offset.x < -swipeThreshold && currentCityIndex < savedCities.length - 1) {
+                        setCurrentCityIndex(c => c + 1);
+                    } else if (offset.x > swipeThreshold && currentCityIndex > 0) {
+                        setCurrentCityIndex(c => c - 1);
+                    }
+                }}
+            >
+                {/* ═══ Hero ═══ */}
+                <div className="text-center px-5 mb-8">
+                    <div className="flex items-center justify-center gap-1.5 mb-3" style={{ color: 'var(--text-muted)' }}>
+                        {savedCities.length > 1 && (
+                            <button 
+                                onClick={() => setCurrentCityIndex(c => Math.max(0, c - 1))} 
+                                className="p-1 hover:bg-[var(--surface-2)] rounded-full transition-colors hidden sm:block" 
+                                disabled={currentCityIndex === 0}
+                            >
+                                <ChevronLeft size={16} style={{ opacity: currentCityIndex === 0 ? 0.3 : 1 }} />
+                            </button>
+                        )}
+                        <MapPin size={13} />
+                        <span className="text-sm font-medium tracking-wide">{activeCity.name}</span>
+                        {savedCities.length > 1 && (
+                            <button 
+                                onClick={() => setCurrentCityIndex(c => Math.min(savedCities.length - 1, c + 1))} 
+                                className="p-1 hover:bg-[var(--surface-2)] rounded-full transition-colors hidden sm:block" 
+                                disabled={currentCityIndex === savedCities.length - 1}
+                            >
+                                <ChevronRight size={16} style={{ opacity: currentCityIndex === savedCities.length - 1 ? 0.3 : 1 }} />
+                            </button>
+                        )}
+                    </div>
+                    {isToday ? (
+                        <>
+                            <div className="flex justify-center mb-2"><CurIcon size={72} /></div>
+                            <div className="text-8xl font-extralight tracking-tighter leading-none" style={{ color: 'var(--text)', fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                {Math.round(cur.temperature_2m)}°
                             </div>
+                            <p className="text-lg font-semibold mt-2" style={{ color: info.color }}>{info.label}</p>
+                        </>
+                    ) : (() => {
+                        const sInfo = getW(daily.weather_code[selectedDayIndex]);
+                        const SIcon = sInfo.Icon;
+                        return (
+                            <>
+                                <div className="flex justify-center mb-2"><SIcon size={72} /></div>
+                                <div className="text-8xl font-extralight tracking-tighter leading-none" style={{ color: 'var(--text)', fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+                                    {Math.round(daily.temperature_2m_max[selectedDayIndex])}°
+                                </div>
+                                <p className="text-lg font-semibold mt-2" style={{ color: sInfo.color }}>{sInfo.label}</p>
+                            </>
                         );
-                    })}
-                </Card>
-            </div>
+                    })()}
+                    {daily && (
+                        <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>
+                            H:{Math.round(daily.temperature_2m_max[selectedDayIndex])}°  L:{Math.round(daily.temperature_2m_min[selectedDayIndex])}°
+                        </p>
+                    )}
+                </div>
 
-            {/* ═══ Detail Grid ═══ */}
-            <div className="max-w-lg mx-auto px-5">
-                <div className="grid grid-cols-2 gap-3">
-
-                    {/* UV */}
-                    <Card>
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <SunIcon size={14} />
-                            <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Indice UV</span>
-                        </div>
-                        <div className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{uvMax}</div>
-                        <div className="text-sm font-semibold" style={{ color: uvInfo.color }}>{uvInfo.label}</div>
-                        <UVGauge value={uvMax} />
-                        <p className="text-[0.6rem] mt-2" style={{ color: 'var(--text-muted)' }}>{uvInfo.desc}</p>
-                    </Card>
-
-                    {/* Sunrise/Sunset */}
-                    <Card>
-                        <div className="flex items-center gap-1.5 mb-1">
-                            <SunIcon size={14} />
-                            <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Soleil</span>
-                        </div>
-                        <SunArc sunrise={daily?.sunrise?.[0]} sunset={daily?.sunset?.[0]} now={now} />
-                    </Card>
-
-                    {/* Wind */}
-                    <Card>
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <WindyIcon size={16} />
-                            <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Vent</span>
-                        </div>
-                        <div className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{Math.round(cur.wind_speed_10m)} <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>km/h</span></div>
-                        <div className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Direction {windDir(cur.wind_direction_10m)}</div>
-                        {daily?.wind_speed_10m_max && (
-                            <div className="text-xs mt-2 pt-2" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-muted)' }}>
-                                Rafales: {Math.round(daily.wind_speed_10m_max[0])} km/h
-                            </div>
+                {/* ═══ Hourly Forecast ═══ */}
+                <div className="max-w-lg mx-auto px-5 mb-6 mt-2 relative z-10 block">
+                    <Card label={isToday ? "Prévisions horaires" : `Prévisions horaires (${new Date(daily.time[selectedDayIndex]).toLocaleDateString('fr-FR', { weekday: 'long' })})`} className="pt-5 overflow-visible">
+                        {loading ? (
+                            <div className="h-[110px] flex items-center justify-center text-xs opacity-50">Chargement...</div>
+                        ) : (
+                            <TempCurve data={hourlyData} height={110} />
                         )}
                     </Card>
+                </div>
 
-                    {/* Precipitation */}
-                    <Card>
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <RainIcon size={16} />
-                            <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Précipitations</span>
-                        </div>
-                        <div className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{daily?.precipitation_sum?.[0]?.toFixed(1) || '0'} <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>mm</span></div>
-                        <div className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Probabilité: {daily?.precipitation_probability_max?.[0] || 0}%</div>
-                    </Card>
+                {/* ═══ 7-Day Forecast ═══ */}
+                <div className="max-w-lg mx-auto px-5 mb-4 relative z-10">
+                    <Card label="Prévisions 7 jours">
+                        {daily?.time?.map((date, i) => {
+                            const dInfo = getW(daily.weather_code[i]);
+                            const DIcon = dInfo.Icon;
+                            const isTodayRow = i === 0;
+                            const isSelected = i === selectedDayIndex;
+                            const dayName = isTodayRow ? 'Auj.' : new Date(date).toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
+                            const globalMin = Math.min(...daily.temperature_2m_min);
+                            const globalMax = Math.max(...daily.temperature_2m_max);
+                            const range = globalMax - globalMin || 1;
+                            const barLeft = ((daily.temperature_2m_min[i] - globalMin) / range) * 100;
+                            const barRight = 100 - ((daily.temperature_2m_max[i] - globalMin) / range) * 100;
 
-                    {/* Feels Like */}
-                    <Card>
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                                <rect x="10" y="2" width="4" height="16" rx="2" stroke="var(--text-muted)" strokeWidth="1.5" fill="none" />
-                                <circle cx="12" cy="19" r="3" fill="#EF4444" />
-                                <rect x="11" y="10" width="2" height="8" rx="1" fill="#EF4444" />
-                            </svg>
-                            <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Ressenti</span>
-                        </div>
-                        <div className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{Math.round(cur.apparent_temperature)}°</div>
-                        <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                            {cur.apparent_temperature < cur.temperature_2m ? 'Le vent rend l\'air plus froid.'
-                                : cur.apparent_temperature > cur.temperature_2m ? 'L\'humidité rend l\'air plus chaud.'
-                                    : 'Similaire à la température réelle.'}
-                        </p>
-                    </Card>
-
-                    {/* Humidity */}
-                    <Card>
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                                <path d="M12 3 C12 3 5 12 5 16 C5 19.9 8.1 23 12 23 C15.9 23 19 19.9 19 16 C19 12 12 3 12 3Z" fill="#60A5FA" opacity="0.3" stroke="#3B82F6" strokeWidth="1.5" />
-                            </svg>
-                            <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Humidité</span>
-                        </div>
-                        <div className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{cur.relative_humidity_2m}%</div>
-                        <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                            {cur.relative_humidity_2m > 70 ? 'L\'air est très humide.' : cur.relative_humidity_2m < 30 ? 'L\'air est sec.' : 'Niveau confortable.'}
-                        </p>
-                    </Card>
-
-                    {/* Visibility */}
-                    {visibility && (
-                        <Card>
-                            <div className="flex items-center gap-1.5 mb-2">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="var(--text-muted)" strokeWidth="1.5" fill="none" />
-                                    <circle cx="12" cy="12" r="3" stroke="var(--text-muted)" strokeWidth="1.5" fill="var(--text-muted)" opacity="0.3" />
-                                </svg>
-                                <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Visibilité</span>
-                            </div>
-                            <div className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{visibility} <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>km</span></div>
-                            <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                                {parseFloat(visibility) > 10 ? 'Excellente visibilité.' : parseFloat(visibility) > 5 ? 'Bonne visibilité.' : 'Visibilité réduite.'}
-                            </p>
-                        </Card>
-                    )}
-
-                    {/* Pressure */}
-                    <Card>
-                        <div className="flex items-center gap-1.5 mb-2">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="12" r="10" stroke="var(--text-muted)" strokeWidth="1.5" fill="none" />
-                                <line x1="12" y1="12" x2="12" y2="6" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" />
-                                <line x1="12" y1="12" x2="16" y2="14" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
-                                <circle cx="12" cy="12" r="1.5" fill="var(--text-muted)" />
-                            </svg>
-                            <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Pression</span>
-                        </div>
-                        <div className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{Math.round(cur.surface_pressure)}</div>
-                        <div className="text-sm" style={{ color: 'var(--text-muted)' }}>hPa</div>
-                        <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                            {cur.surface_pressure > 1020 ? 'Haute pression — temps stable.' : cur.surface_pressure < 1000 ? 'Basse pression — temps instable.' : 'Pression normale.'}
-                        </p>
+                            return (
+                                <div 
+                                    key={date} 
+                                    onClick={() => setSelectedDayIndex(i)}
+                                    className={`flex items-center gap-3 py-2.5 px-2 -mx-2 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-[var(--surface-3)] ring-1 ring-[var(--border)]' : 'hover:bg-[var(--surface-2)]'}`} 
+                                >
+                                    <span className="w-10 text-sm font-bold capitalize" style={{ color: isSelected || isTodayRow ? 'var(--text)' : 'var(--text-muted)' }}>{dayName}</span>
+                                    <div className="w-8 flex justify-center"><DIcon size={24} /></div>
+                                    <span className="w-8 text-right text-sm font-medium" style={{ color: 'var(--text-muted)' }}>{Math.round(daily.temperature_2m_min[i])}°</span>
+                                    <div className="flex-1 h-1.5 rounded-full relative mx-1" style={{ background: 'var(--surface-2)' }}>
+                                        <div className="absolute h-full rounded-full" style={{
+                                            left: `${barLeft}%`, right: `${barRight}%`,
+                                            background: 'linear-gradient(90deg, #60A5FA, #FBBF24, #F97316)',
+                                        }} />
+                                    </div>
+                                    <span className="w-8 text-sm font-bold" style={{ color: 'var(--text)' }}>{Math.round(daily.temperature_2m_max[i])}°</span>
+                                </div>
+                            );
+                        })}
                     </Card>
                 </div>
-            </div>
 
-            <div className="max-w-lg mx-auto px-5 mt-8 text-center">
-                <p className="text-[0.6rem]" style={{ color: 'var(--text-muted)' }}>Données Open-Meteo · Mise à jour toutes les 10 min</p>
-            </div>
+                {/* ═══ Detail Grid ═══ */}
+                <div className="max-w-lg mx-auto px-5 relative z-10">
+                    <div className="grid grid-cols-2 gap-3">
+
+                        {/* UV */}
+                        <Card>
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <SunIcon size={14} />
+                                <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Indice UV max</span>
+                            </div>
+                            <div className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{uvMax}</div>
+                            <div className="text-sm font-semibold" style={{ color: uvInfo.color }}>{uvInfo.label}</div>
+                            <UVGauge value={uvMax} />
+                            <p className="text-[0.6rem] mt-2" style={{ color: 'var(--text-muted)' }}>{uvInfo.desc}</p>
+                        </Card>
+
+                        {/* Sunrise/Sunset */}
+                        <Card>
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <SunIcon size={14} />
+                                <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Soleil</span>
+                            </div>
+                            <SunArc sunrise={sunrise} sunset={sunset} now={isToday ? now : new Date(sunrise)} />
+                        </Card>
+
+                        {/* Wind */}
+                        <Card>
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <WindyIcon size={16} />
+                                <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Vent</span>
+                            </div>
+                            <div className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{Math.round(windSpeed)} <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>km/h</span></div>
+                            <div className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Direction {windDirStr}</div>
+                            {daily?.wind_speed_10m_max && isToday && (
+                                <div className="text-xs mt-2 pt-2" style={{ borderTop: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+                                    Rafales: {Math.round(daily.wind_speed_10m_max[selectedDayIndex])} km/h
+                                </div>
+                            )}
+                        </Card>
+
+                        {/* Precipitation */}
+                        <Card>
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <RainIcon size={16} />
+                                <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Précipitations</span>
+                            </div>
+                            <div className="text-2xl font-bold" style={{ color: 'var(--text)' }}>{precipSum?.toFixed(1) || '0'} <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>mm</span></div>
+                            <div className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Probabilité: {precipProb || 0}%</div>
+                        </Card>
+
+                        {/* Feels Like (only today) */}
+                        {isToday && (
+                            <Card>
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                        <rect x="10" y="2" width="4" height="16" rx="2" stroke="var(--text-muted)" strokeWidth="1.5" fill="none" />
+                                        <circle cx="12" cy="19" r="3" fill="#EF4444" />
+                                        <rect x="11" y="10" width="2" height="8" rx="1" fill="#EF4444" />
+                                    </svg>
+                                    <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Ressenti</span>
+                                </div>
+                                <div className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{Math.round(cur.apparent_temperature)}°</div>
+                                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                                    {cur.apparent_temperature < cur.temperature_2m ? "Le vent rend l'air plus froid."
+                                        : cur.apparent_temperature > cur.temperature_2m ? "L'humidité rend l'air plus chaud."
+                                            : "Similaire à la température réelle."}
+                                </p>
+                            </Card>
+                        )}
+
+                        {/* Humidity (only today) */}
+                        {isToday && (
+                            <Card>
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 3 C12 3 5 12 5 16 C5 19.9 8.1 23 12 23 C15.9 23 19 19.9 19 16 C19 12 12 3 12 3Z" fill="#60A5FA" opacity="0.3" stroke="#3B82F6" strokeWidth="1.5" />
+                                    </svg>
+                                    <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Humidité</span>
+                                </div>
+                                <div className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{cur.relative_humidity_2m}%</div>
+                                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                                    {cur.relative_humidity_2m > 70 ? "L'air est très humide." : cur.relative_humidity_2m < 30 ? "L'air est sec." : "Niveau confortable."}
+                                </p>
+                            </Card>
+                        )}
+
+                        {/* Visibility (only today) */}
+                        {isToday && visibility && (
+                            <Card>
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="var(--text-muted)" strokeWidth="1.5" fill="none" />
+                                        <circle cx="12" cy="12" r="3" stroke="var(--text-muted)" strokeWidth="1.5" fill="var(--text-muted)" opacity="0.3" />
+                                    </svg>
+                                    <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Visibilité</span>
+                                </div>
+                                <div className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{visibility} <span className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>km</span></div>
+                                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                                    {parseFloat(visibility) > 10 ? 'Excellente visibilité.' : parseFloat(visibility) > 5 ? 'Bonne visibilité.' : 'Visibilité réduite.'}
+                                </p>
+                            </Card>
+                        )}
+
+                        {/* Pressure (only today) */}
+                        {isToday && (
+                            <Card>
+                                <div className="flex items-center gap-1.5 mb-2">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="var(--text-muted)" strokeWidth="1.5" fill="none" />
+                                        <line x1="12" y1="12" x2="12" y2="6" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" />
+                                        <line x1="12" y1="12" x2="16" y2="14" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" />
+                                        <circle cx="12" cy="12" r="1.5" fill="var(--text-muted)" />
+                                    </svg>
+                                    <span className="text-[0.6rem] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>Pression</span>
+                                </div>
+                                <div className="text-3xl font-bold" style={{ color: 'var(--text)' }}>{Math.round(cur.surface_pressure)}</div>
+                                <div className="text-sm" style={{ color: 'var(--text-muted)' }}>hPa</div>
+                                <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                                    {cur.surface_pressure > 1020 ? 'Haute pression — temps stable.' : cur.surface_pressure < 1000 ? 'Basse pression — temps instable.' : 'Pression normal.'}
+                                </p>
+                            </Card>
+                        )}
+                    </div>
+                </div>
+
+                <div className="max-w-lg mx-auto px-5 mt-8 pb-12 text-center relative z-10">
+                    <p className="text-[0.6rem]" style={{ color: 'var(--text-muted)' }}>Données Open-Meteo · Mise à jour toutes les 10 min</p>
+                </div>
+            </motion.div>
         </div>
     );
 }

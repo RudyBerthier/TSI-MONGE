@@ -19,6 +19,13 @@ const MediaCard = ({ media, onClick }) => {
 
   const year = media.release_date ? media.release_date.substring(0, 4) : '';
   const typeLabel = media.type === 'tv' || media.media_type === 'tv' ? 'Série' : 'Film';
+  
+  const isUpcoming = media.release_date && media.release_date > new Date().toISOString().split('T')[0];
+  let displayDate = year;
+  if (isUpcoming && media.release_date.length === 10) {
+    const [y, m, d] = media.release_date.split('-');
+    displayDate = `${d}/${m}/${y}`;
+  }
 
   return (
     <div
@@ -38,7 +45,7 @@ const MediaCard = ({ media, onClick }) => {
 
         {/* Note promo (badge spécial) */}
         {promoNote && (
-          <div className="absolute top-1 left-1 bg-red-600/90 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] font-bold text-[var(--text)] flex items-center gap-1 shadow-md z-10 group-hover/card:opacity-0 transition-opacity duration-300 delay-0 group-hover/card:delay-[400ms]">
+          <div className="absolute top-1 left-1 bg-red-600/90 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] font-bold text-white flex items-center gap-1 shadow-md z-10 group-hover/card:opacity-0 transition-opacity duration-300 delay-0 group-hover/card:delay-[400ms]">
             <Users size={10} /> {promoNote}
           </div>
         )}
@@ -52,11 +59,15 @@ const MediaCard = ({ media, onClick }) => {
 
         {/* Overlay Hover Netflix-style */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/80 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 delay-0 group-hover/card:delay-[400ms] flex flex-col justify-end p-3 pointer-events-none group-hover/card:pointer-events-auto">
-          <h4 className="text-[var(--text)] font-bold text-sm leading-tight mb-1.5 drop-shadow-md line-clamp-2">{media.title}</h4>
+          <h4 className="text-white font-bold text-sm leading-tight mb-1.5 drop-shadow-md line-clamp-2">{media.title}</h4>
 
-          <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold text-[var(--text)] mb-2 leading-none">
-            {media.vote_average > 0 && <span className="text-green-500">Recommandé à {(media.vote_average * 10).toFixed(0)}%</span>}
-            {year && <span>{year}</span>}
+          <div className="flex flex-wrap items-center gap-1.5 text-[9px] font-bold text-white mb-2 leading-none">
+            {media.vote_average > 0 && !isUpcoming && <span className="text-green-500">Recommandé à {(media.vote_average * 10).toFixed(0)}%</span>}
+            {displayDate && (
+              <span className={isUpcoming ? "text-yellow-400 bg-yellow-400/20 px-1 py-0.5 rounded border border-yellow-500/30" : ""}>
+                {isUpcoming ? `Sortie: ${displayDate}` : displayDate}
+              </span>
+            )}
             <span className="border border-gray-600 px-1 py-0.5 rounded-[3px] uppercase text-[8px] leading-none shrink-0">{typeLabel}</span>
           </div>
 
@@ -69,14 +80,14 @@ const MediaCard = ({ media, onClick }) => {
               <Info size={14} />
             </button>
             <button
-              className={`border-2 p-1.5 rounded-full transition-colors shadow-lg ml-auto ${isWatched ? 'border-green-500 text-green-500 bg-green-500/20' : 'border-gray-400 text-[var(--text)] hover:border-white hover:bg-white/20'}`}
+              className={`border-2 p-1.5 rounded-full transition-colors shadow-lg ml-auto ${isWatched ? 'border-green-500 text-green-500 bg-green-500/20' : 'border-gray-400 text-white hover:border-white hover:bg-white/20'}`}
               onClick={(e) => { e.stopPropagation(); toggleWatched && toggleWatched(media); }}
               title={isWatched ? "Marqué comme vu" : "Marquer comme vu"}
             >
               <Eye size={14} />
             </button>
             <button
-              className={`border-2 p-1.5 rounded-full transition-colors shadow-lg ${isWatchlisted ? 'border-white text-[var(--text)] bg-white/20' : 'border-gray-400 text-[var(--text)] hover:border-white hover:bg-white/20'}`}
+              className={`border-2 p-1.5 rounded-full transition-colors shadow-lg ${isWatchlisted ? 'border-white text-white bg-white/20' : 'border-gray-400 text-white hover:border-white hover:bg-white/20'}`}
               onClick={(e) => { e.stopPropagation(); toggleWatchlist && toggleWatchlist(media, 'personal'); }}
               title={isWatchlisted ? "Dans ma liste" : "Ajouter à ma liste"}
             >
@@ -134,8 +145,8 @@ const CarouselRow = ({ title, items, onCardClick, onDelete }) => {
       <div className="flex items-center gap-4 px-4 sm:px-12 mb-2">
         <h2 className="text-xl font-bold text-[var(--text)]">{title}</h2>
         {onDelete && (
-          <button 
-            onClick={onDelete} 
+          <button
+            onClick={onDelete}
             className="text-gray-500 hover:text-red-500 transition-colors bg-white/5 hover:bg-red-500/10 p-1.5 rounded-full"
             title="Supprimer la liste"
           >
@@ -157,7 +168,7 @@ const CarouselRow = ({ title, items, onCardClick, onDelete }) => {
           onClick={() => scroll('left')}
           className="absolute left-0 top-9 bottom-4 z-[60] bg-gradient-to-r from-black/80 to-transparent w-12 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex items-center justify-start pl-2 hover:from-black"
         >
-          <ChevronLeft size={40} className="text-[var(--text)] hover:scale-125 transition-transform" />
+          <ChevronLeft size={40} className="text-white hover:scale-125 transition-transform" />
         </button>
       )}
 
@@ -177,7 +188,7 @@ const CarouselRow = ({ title, items, onCardClick, onDelete }) => {
           onClick={() => scroll('right')}
           className="absolute right-0 top-9 bottom-4 z-[60] bg-gradient-to-l from-black/80 to-transparent w-12 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:flex items-center justify-end pr-2 hover:from-black"
         >
-          <ChevronRight size={40} className="text-[var(--text)] hover:scale-125 transition-transform" />
+          <ChevronRight size={40} className="text-white hover:scale-125 transition-transform" />
         </button>
       )}
     </div>
@@ -254,6 +265,8 @@ export function MediaHub() {
   const [classWatchlist, setClassWatchlist] = useState([])
   const [watchedList, setWatchedList] = useState([])
   const [customLists, setCustomLists] = useState([])
+  const [upcoming, setUpcoming] = useState([])
+  const [reminders, setReminders] = useState([])
   const [promoStats, setPromoStats] = useState(null)
   const [feed, setFeed] = useState([])
   const [showFilters, setShowFilters] = useState(false)
@@ -265,7 +278,7 @@ export function MediaHub() {
   const [newListPublic, setNewListPublic] = useState(false)
   const [promoRatings, setPromoRatings] = useState({})
   const [heroIndex, setHeroIndex] = useState(0)
-  
+
   const [selectedSeason, setSelectedSeason] = useState(1)
   const [seasonEpisodes, setSeasonEpisodes] = useState([])
   const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false)
@@ -335,13 +348,14 @@ export function MediaHub() {
       const token = getToken()
       const headers = { 'Authorization': `Bearer ${token}` }
 
-      const [trendRes, watchRes, feedRes, promoRes, listsRes, statsRes] = await Promise.all([
+      const [trendRes, watchRes, feedRes, promoRes, listsRes, statsRes, upcomingRes] = await Promise.all([
         fetch('/api/media/trending', { headers }),
         fetch('/api/media/watchlist', { headers }),
         fetch('/api/media/feed'),
         fetch('/api/media/promo_ratings'),
         fetch('/api/media/lists', { headers }),
-        fetch('/api/media/stats', { headers })
+        fetch('/api/media/stats', { headers }),
+        fetch('/api/media/upcoming', { headers })
       ])
 
       if (trendRes.ok) setTrending(await trendRes.json())
@@ -352,7 +366,27 @@ export function MediaHub() {
         setWatchlist(watchData.filter(w => w.type === 'personal' && w.status !== 'watched').map(w => ({ ...w.media, watchlist_id: w.id })))
         setWatchedList(watchData.filter(w => w.type === 'personal' && w.status === 'watched').map(w => ({ ...w.media, watchlist_id: w.id })))
         setClassWatchlist(watchData.filter(w => w.type === 'class').map(w => ({ ...w.media, watchlist_id: w.id, added_by: w.user })))
+        
+        const userReminders = watchData.filter(w => w.type === 'reminder').map(w => ({ ...w.media, watchlist_id: w.id }))
+        setReminders(userReminders)
+
+        // Check for released reminders
+        const today = new Date().toISOString().split('T')[0]
+        const releasedReminders = userReminders.filter(r => {
+           // Si release_year contient une date complète YYYY-MM-DD
+           if (r.release_year && r.release_year.length >= 10) {
+              return r.release_year.substring(0, 10) <= today
+           }
+           return false
+        })
+        if (releasedReminders.length > 0) {
+           setTimeout(() => {
+             showToast(`C'est le grand jour ! ${releasedReminders[0].title} est enfin sorti !`)
+           }, 1000)
+        }
       }
+
+      if (upcomingRes.ok) setUpcoming(await upcomingRes.json())
 
       if (listsRes.ok) setCustomLists(await listsRes.json())
       if (statsRes.ok) setPromoStats(await statsRes.json())
@@ -481,22 +515,22 @@ export function MediaHub() {
   useEffect(() => {
     const type = selectedMedia?.type || selectedMedia?.media_type;
     const tmdbId = selectedMedia?.tmdb_id || selectedMedia?.id?.toString();
-    
+
     if (type === 'tv' && tmdbId) {
       const fetchEpisodes = async () => {
         setIsLoadingEpisodes(true);
         try {
-           const res = await fetch(`/api/media/series/${tmdbId}/season/${selectedSeason}`, {
-              headers: { 'Authorization': `Bearer ${getToken()}` }
-           });
-           if (res.ok) {
-              const data = await res.json();
-              setSeasonEpisodes(data.episodes || []);
-           }
+          const res = await fetch(`/api/media/series/${tmdbId}/season/${selectedSeason}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setSeasonEpisodes(data.episodes || []);
+          }
         } catch (err) {
-           console.error(err);
+          console.error(err);
         } finally {
-           setIsLoadingEpisodes(false);
+          setIsLoadingEpisodes(false);
         }
       }
       fetchEpisodes();
@@ -611,7 +645,10 @@ export function MediaHub() {
   }
 
   const toggleWatchlist = async (media, type = 'personal') => {
-    const targetList = type === 'personal' ? watchlist : classWatchlist;
+    let targetList = watchlist;
+    if (type === 'class') targetList = classWatchlist;
+    else if (type === 'reminder') targetList = reminders;
+
     const mediaId = media.tmdb_id || media.id?.toString();
     const existingItem = targetList.find(m => m.tmdb_id === mediaId);
 
@@ -623,7 +660,10 @@ export function MediaHub() {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         if (res.ok) {
-          showToast(type === 'personal' ? 'Retiré de ta Watchlist' : 'Retiré de la Watchlist de la classe')
+          let msg = 'Retiré de ta Watchlist';
+          if (type === 'class') msg = 'Retiré de la Watchlist de la classe';
+          if (type === 'reminder') msg = 'Rappel annulé';
+          showToast(msg)
           fetchAllData()
         }
       } else {
@@ -638,12 +678,15 @@ export function MediaHub() {
             media_type: media.type || media.media_type,
             title: media.title || media.name,
             poster_url: media.poster_url,
-            release_year: media.release_date ? media.release_date.split('-')[0] : media.release_year,
+            release_year: media.release_date || media.release_year,
             type
           })
         })
         if (res.ok) {
-          showToast(type === 'personal' ? 'Ajouté à ta Watchlist !' : 'Ajouté à la Watchlist de la classe !')
+          let msg = 'Ajouté à ta Watchlist !';
+          if (type === 'class') msg = 'Ajouté à la Watchlist de la classe !';
+          if (type === 'reminder') msg = 'Rappel programmé !';
+          showToast(msg)
           fetchAllData()
         }
       }
@@ -666,7 +709,7 @@ export function MediaHub() {
         setShowCreateListModal(false)
         setNewListName('')
         setNewListPublic(false)
-        
+
         if (listMediaContext) {
           // toggleMediaInList handles its own toast and fetchAllData
           await toggleMediaInList(newList.id, listMediaContext)
@@ -767,8 +810,8 @@ export function MediaHub() {
     const myReaction = review.reactions?.find(r => r.user_id === user?.id)?.reaction_type;
 
     return (
-      <div 
-        className="bg-[var(--surface-2)] p-4 rounded-lg flex gap-4 items-start border border-[var(--border)] cursor-pointer hover:bg-[#202020] transition-colors group/review relative"
+      <div
+        className="bg-[var(--surface-2)] p-4 rounded-lg flex gap-4 items-start border border-[var(--border)] cursor-pointer hover:bg-[var(--surface-3)] transition-colors group/review relative"
         onClick={() => {
           if (review.media) {
             setSelectedMedia({
@@ -875,11 +918,11 @@ export function MediaHub() {
             </Link>
             <div className="flex items-center gap-2 select-none cursor-pointer">
               <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_2px_10px_rgba(229,9,20,0.5)] transition-transform hover:scale-105">
-                <path fillRule="evenodd" clipRule="evenodd" d="M10 40V8H18L24 22L30 8H38V40H30V22L24 36L18 22V40H10Z" fill="url(#logo-grad)"/>
+                <path fillRule="evenodd" clipRule="evenodd" d="M10 40V8H18L24 22L30 8H38V40H30V22L24 36L18 22V40H10Z" fill="url(#logo-grad)" />
                 <defs>
                   <linearGradient id="logo-grad" x1="10" y1="8" x2="38" y2="40" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#FF3333"/>
-                    <stop offset="1" stopColor="#990000"/>
+                    <stop stopColor="#FF3333" />
+                    <stop offset="1" stopColor="#990000" />
                   </linearGradient>
                 </defs>
               </svg>
@@ -918,13 +961,13 @@ export function MediaHub() {
               <Link to="/outils" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit hover:bg-[var(--surface-3)]" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <div className="flex items-center gap-2 select-none cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
+              <div className="flex items-center gap-2 select-none cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                 <svg width="36" height="36" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_2px_10px_rgba(229,9,20,0.5)] transition-transform hover:scale-105">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M10 40V8H18L24 22L30 8H38V40H30V22L24 36L18 22V40H10Z" fill="url(#logo-grad)"/>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M10 40V8H18L24 22L30 8H38V40H30V22L24 36L18 22V40H10Z" fill="url(#logo-grad)" />
                   <defs>
                     <linearGradient id="logo-grad" x1="10" y1="8" x2="38" y2="40" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#FF3333"/>
-                      <stop offset="1" stopColor="#990000"/>
+                      <stop stopColor="#FF3333" />
+                      <stop offset="1" stopColor="#990000" />
                     </linearGradient>
                   </defs>
                 </svg>
@@ -998,13 +1041,13 @@ export function MediaHub() {
                     <div>
                       <h5 className="text-xs font-bold text-[var(--text-muted)] mb-3 uppercase tracking-wider">Type de contenu</h5>
                       <div className="flex bg-[var(--surface-3)] rounded-lg p-1">
-                        <button onClick={() => updateFilter({type: 'all'})} className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-colors ${exploreFilters.type === 'all' ? 'bg-red-600 text-[var(--text)] shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[#333]'}`}>
+                        <button onClick={() => updateFilter({ type: 'all' })} className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-colors ${exploreFilters.type === 'all' ? 'bg-red-600 text-[var(--text)] shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[#333]'}`}>
                           <Search size={14} /> Tous
                         </button>
-                        <button onClick={() => updateFilter({type: 'movie'})} className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-colors ${exploreFilters.type === 'movie' ? 'bg-red-600 text-[var(--text)] shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[#333]'}`}>
+                        <button onClick={() => updateFilter({ type: 'movie' })} className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-colors ${exploreFilters.type === 'movie' ? 'bg-red-600 text-[var(--text)] shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[#333]'}`}>
                           <Film size={14} /> Films
                         </button>
-                        <button onClick={() => updateFilter({type: 'tv'})} className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-colors ${exploreFilters.type === 'tv' ? 'bg-red-600 text-[var(--text)] shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[#333]'}`}>
+                        <button onClick={() => updateFilter({ type: 'tv' })} className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-colors ${exploreFilters.type === 'tv' ? 'bg-red-600 text-[var(--text)] shadow-lg' : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[#333]'}`}>
                           <Tv size={14} /> Séries
                         </button>
                       </div>
@@ -1014,8 +1057,8 @@ export function MediaHub() {
                     <div>
                       <h5 className="text-xs font-bold text-[var(--text-muted)] mb-3 uppercase tracking-wider">Genre</h5>
                       <div className="flex flex-wrap gap-2">
-                        {[{id:'', label:'Tous', icon: Check}, {id:'28', label:'Action', icon: Flame}, {id:'35', label:'Comédie', icon: MessageSquare}, {id:'18', label:'Drame', icon: Users}, {id:'878', label:'Sci-Fi', icon: Star}, {id:'27', label:'Horreur', icon: AlertTriangle}, {id:'16', label:'Animation', icon: Play}].map(g => (
-                          <button key={g.label} onClick={() => updateFilter({genre: g.id})} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${exploreFilters.genre === g.id ? 'bg-red-600/20 border-red-500 text-red-500' : 'bg-[var(--surface-3)] border-transparent text-[var(--text-muted)] hover:bg-[#333] hover:text-[var(--text)]'}`}>
+                        {[{ id: '', label: 'Tous', icon: Check }, { id: '28', label: 'Action', icon: Flame }, { id: '35', label: 'Comédie', icon: MessageSquare }, { id: '18', label: 'Drame', icon: Users }, { id: '878', label: 'Sci-Fi', icon: Star }, { id: '27', label: 'Horreur', icon: AlertTriangle }, { id: '16', label: 'Animation', icon: Play }].map(g => (
+                          <button key={g.label} onClick={() => updateFilter({ genre: g.id })} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${exploreFilters.genre === g.id ? 'bg-red-600/20 border-red-500 text-red-500' : 'bg-[var(--surface-3)] border-transparent text-[var(--text-muted)] hover:bg-[#333] hover:text-[var(--text)]'}`}>
                             <g.icon size={12} /> {g.label}
                           </button>
                         ))}
@@ -1026,16 +1069,16 @@ export function MediaHub() {
                     <div>
                       <h5 className="text-xs font-bold text-[var(--text-muted)] mb-3 uppercase tracking-wider">Trier par</h5>
                       <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => updateFilter({sort: 'popularity.desc'})} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-xs font-bold transition-all ${exploreFilters.sort === 'popularity.desc' ? 'bg-red-600/20 text-red-500 border border-red-500/50' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border border-transparent hover:bg-[#333] hover:text-[var(--text)]'}`}>
+                        <button onClick={() => updateFilter({ sort: 'popularity.desc' })} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-xs font-bold transition-all ${exploreFilters.sort === 'popularity.desc' ? 'bg-red-600/20 text-red-500 border border-red-500/50' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border border-transparent hover:bg-[#333] hover:text-[var(--text)]'}`}>
                           <Flame size={18} /> Popularité
                         </button>
-                        <button onClick={() => updateFilter({sort: 'primary_release_date.desc'})} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-xs font-bold transition-all ${exploreFilters.sort === 'primary_release_date.desc' ? 'bg-red-600/20 text-red-500 border border-red-500/50' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border border-transparent hover:bg-[#333] hover:text-[var(--text)]'}`}>
+                        <button onClick={() => updateFilter({ sort: 'primary_release_date.desc' })} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-xs font-bold transition-all ${exploreFilters.sort === 'primary_release_date.desc' ? 'bg-red-600/20 text-red-500 border border-red-500/50' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border border-transparent hover:bg-[#333] hover:text-[var(--text)]'}`}>
                           <Clock size={18} /> Récents
                         </button>
-                        <button onClick={() => updateFilter({sort: 'vote_average.desc'})} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-xs font-bold transition-all ${exploreFilters.sort === 'vote_average.desc' ? 'bg-red-600/20 text-red-500 border border-red-500/50' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border border-transparent hover:bg-[#333] hover:text-[var(--text)]'}`}>
+                        <button onClick={() => updateFilter({ sort: 'vote_average.desc' })} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-xs font-bold transition-all ${exploreFilters.sort === 'vote_average.desc' ? 'bg-red-600/20 text-red-500 border border-red-500/50' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border border-transparent hover:bg-[#333] hover:text-[var(--text)]'}`}>
                           <Star size={18} /> Mieux notés
                         </button>
-                        <button onClick={() => updateFilter({sort: 'promo_rating.desc'})} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-xs font-bold transition-all ${exploreFilters.sort === 'promo_rating.desc' ? 'bg-red-600/20 text-red-500 border border-red-500/50' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border border-transparent hover:bg-[#333] hover:text-[var(--text)]'}`}>
+                        <button onClick={() => updateFilter({ sort: 'promo_rating.desc' })} className={`flex flex-col items-center justify-center gap-2 p-3 rounded-xl text-xs font-bold transition-all ${exploreFilters.sort === 'promo_rating.desc' ? 'bg-red-600/20 text-red-500 border border-red-500/50' : 'bg-[var(--surface-3)] text-[var(--text-muted)] border border-transparent hover:bg-[#333] hover:text-[var(--text)]'}`}>
                           <Heart size={18} /> La Promo
                         </button>
                       </div>
@@ -1132,8 +1175,8 @@ export function MediaHub() {
                       <div className="text-red-500 font-bold tracking-widest text-xs sm:text-sm mb-2 drop-shadow-md">
                         N°{idx + 1} EN TENDANCE
                       </div>
-                      <h1 className="text-3xl sm:text-5xl font-black mb-4 drop-shadow-xl leading-tight">{media.title || media.name}</h1>
-                      <p className="text-sm sm:text-base text-[var(--text)] mb-6 line-clamp-3 drop-shadow-md max-w-xl">
+                      <h1 className="text-3xl sm:text-5xl font-black mb-4 text-white drop-shadow-xl leading-tight">{media.title || media.name}</h1>
+                      <p className="text-sm sm:text-base text-gray-100 mb-6 line-clamp-3 drop-shadow-md max-w-xl">
                         {media.overview || "Découvrez ce titre qui fait fureur en ce moment."}
                       </p>
                       <div className="flex flex-wrap items-center gap-3">
@@ -1145,7 +1188,7 @@ export function MediaHub() {
                         </button>
                         <button
                           onClick={() => toggleWatchlist(media, 'personal')}
-                          className={`px-6 py-2 rounded font-bold flex items-center gap-2 transition-colors shadow-lg ${isHeroInMyList ? 'bg-white/20 text-[var(--text)] hover:bg-white/30 border border-white/50' : 'bg-gray-500/50 text-[var(--text)] hover:bg-gray-500/70 border border-transparent'}`}
+                          className={`px-6 py-2 rounded font-bold flex items-center gap-2 transition-colors shadow-lg ${isHeroInMyList ? 'bg-white/20 text-white hover:bg-white/30 border border-white/50' : 'bg-gray-500/50 text-white hover:bg-gray-500/70 border border-transparent'}`}
                         >
                           {isHeroInMyList ? <Check size={20} /> : <Plus size={20} />}
                           {isHeroInMyList ? 'Dans ma liste' : 'Ma Liste'}
@@ -1160,13 +1203,13 @@ export function MediaHub() {
                   onClick={(e) => { e.stopPropagation(); setHeroIndex(prev => (prev - 1 + heroCandidates.length) % heroCandidates.length) }}
                   className="absolute left-0 top-0 bottom-0 z-[60] bg-gradient-to-r from-black/50 to-transparent w-16 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-start pl-2 hover:from-black/80"
                 >
-                  <ChevronLeft size={40} className="text-[var(--text)] hover:scale-125 transition-transform" />
+                  <ChevronLeft size={40} className="text-white hover:scale-125 transition-transform" />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setHeroIndex(prev => (prev + 1) % heroCandidates.length) }}
                   className="absolute right-0 top-0 bottom-0 z-[60] bg-gradient-to-l from-black/50 to-transparent w-16 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end pr-2 hover:from-black/80"
                 >
-                  <ChevronRight size={40} className="text-[var(--text)] hover:scale-125 transition-transform" />
+                  <ChevronRight size={40} className="text-white hover:scale-125 transition-transform" />
                 </button>
 
                 {/* Pagination Dots */}
@@ -1187,20 +1230,22 @@ export function MediaHub() {
           {/* Main Carousels */}
           {!searchQuery && !isExploring && (
             <div className="relative z-20 pb-12 -mt-12 sm:-mt-24 pt-8 sm:pt-16">
+              <CarouselRow title="Tendances aujourd'hui" items={trending} onCardClick={setSelectedMedia} />
+              <CarouselRow title="Bientôt disponible" items={upcoming} onCardClick={setSelectedMedia} />
               {watchlist.length > 0 && <CarouselRow title="Ma Watchlist" items={watchlist} onCardClick={setSelectedMedia} />}
-              
+
               {/* Custom Lists */}
               {customLists.map(list => (
-                <CarouselRow 
-                  key={list.id} 
+                <CarouselRow
+                  key={list.id}
                   title={
                     <span className="flex items-center gap-2">
                       {list.name}
                       {list.is_public ? <Globe size={18} className="text-[var(--text-muted)]" /> : <Lock size={18} className="text-gray-500" />}
                     </span>
                   }
-                  items={list.media_custom_list_items?.map(i => i.media_items) || []} 
-                  onCardClick={setSelectedMedia} 
+                  items={list.media_custom_list_items?.map(i => i.media_items) || []}
+                  onCardClick={setSelectedMedia}
                   onDelete={() => setListToDelete(list.id)}
                 />
               ))}
@@ -1252,7 +1297,7 @@ export function MediaHub() {
                   <X size={24} />
                 </button>
 
-                <div className={`relative w-full select-none sm:rounded-t-xl overflow-hidden bg-black transition-all duration-300 ${showTrailer ? 'aspect-video mt-16 sm:mt-20' : 'h-[40vh] sm:h-96'}`}>
+                <div className={`relative w-full select-none sm:rounded-t-xl overflow-hidden bg-black transition-all duration-300 aspect-video ${showTrailer ? 'mt-16 sm:mt-20' : ''}`}>
                   {showTrailer && selectedMedia.trailer_key ? (
                     <iframe
                       className="w-full h-full"
@@ -1271,41 +1316,59 @@ export function MediaHub() {
                       ) : (
                         <div className="w-full h-full bg-slate-900" />
                       )}
-                      <div className="absolute inset-0 bg-black/30 pointer-events-none" />
-                      {/* L'ancien bouton trailer absolu a été retiré */}
+                      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+                      {!showTrailer && (
+                        <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#141414] via-[#141414]/60 to-transparent pointer-events-none" />
+                      )}
+
+                      {!showTrailer && (
+                        <div className="absolute inset-x-0 bottom-0 px-4 sm:px-12 pb-6 flex flex-col justify-end pointer-events-auto z-10">
+                          <h2 className="text-3xl sm:text-5xl font-black mb-4 leading-tight text-white drop-shadow-lg max-w-3xl">{selectedMedia.title || selectedMedia.name}</h2>
+                          <div className="flex items-center flex-wrap gap-4 text-sm font-bold text-gray-200 mb-6 drop-shadow-md">
+                            {selectedMedia.vote_average ? (
+                              <span className="text-green-500">Recommandé à {(selectedMedia.vote_average * 10).toFixed(0)}%</span>
+                            ) : null}
+                            <span>
+                              {(() => {
+                                const isUpcomingMedia = selectedMedia.release_date && selectedMedia.release_date > new Date().toISOString().split('T')[0];
+                                if (isUpcomingMedia && selectedMedia.release_date.length === 10) {
+                                  const [y, m, d] = selectedMedia.release_date.split('-');
+                                  return `Sortie le ${d}/${m}/${y}`;
+                                }
+                                return selectedMedia.release_date?.split('-')[0] || selectedMedia.release_year;
+                              })()}
+                            </span>
+                            <span className="uppercase border border-gray-400 px-1.5 py-0.5 rounded text-xs">
+                              {(selectedMedia.type || selectedMedia.media_type)?.toLowerCase() === 'tv' ? 'Série' : 'Film'}
+                            </span>
+                          </div>
+                          {selectedMedia.trailer_key && (
+                            <button
+                              onClick={() => setShowTrailer(true)}
+                              className="flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition-colors bg-white text-black hover:bg-gray-200 hover:scale-105 w-fit shadow-xl"
+                            >
+                              <Play size={20} fill="currentColor" className="text-red-500" />
+                              Bande-annonce
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
 
-                <div className={`px-4 sm:px-12 pb-12 relative z-10 flex flex-col md:flex-row gap-8 transition-all duration-500 ${showTrailer ? 'pt-8' : '-mt-16 sm:-mt-24'}`}>
+                <div className="px-4 sm:px-12 pb-12 pt-6 relative z-10 flex flex-col md:flex-row gap-8 transition-all duration-500">
                   <div className="flex-1">
                     {showTrailer && (
-                      <button 
-                        onClick={() => setShowTrailer(false)} 
-                        className="mb-4 flex items-center gap-2 text-sm font-bold text-[var(--text-muted)] hover:text-[var(--text)] transition-colors bg-gray-800/50 hover:bg-gray-800 px-4 py-1.5 rounded-full w-fit"
-                      >
-                        <ArrowLeft size={16} /> Retour à l'affiche
-                      </button>
-                    )}
-                    <h2 className="text-3xl sm:text-5xl font-black mb-4 leading-tight">{selectedMedia.title || selectedMedia.name}</h2>
-                    <div className="flex items-center flex-wrap gap-4 text-sm font-medium text-[var(--text-muted)] mb-4">
-                      {selectedMedia.vote_average ? (
-                        <span className="text-green-500 font-bold">Recommandé à {(selectedMedia.vote_average * 10).toFixed(0)}%</span>
-                      ) : null}
-                      <span>{selectedMedia.release_date?.split('-')[0] || selectedMedia.release_year}</span>
-                      <span className="uppercase border border-gray-600 px-1.5 py-0.5 rounded text-xs">
-                        {(selectedMedia.type || selectedMedia.media_type)?.toLowerCase() === 'tv' ? 'Série' : 'Film'}
-                      </span>
-                    </div>
-
-                    {selectedMedia.trailer_key && !showTrailer && (
-                      <button
-                        onClick={() => setShowTrailer(true)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full font-bold transition-colors bg-white/10 text-[var(--text)] hover:bg-white/20 hover:scale-105 border border-white/20 w-fit mb-6 shadow-lg"
-                      >
-                        <Play size={16} fill="currentColor" className="text-red-500" />
-                        Bande-annonce
-                      </button>
+                      <>
+                        <button
+                          onClick={() => setShowTrailer(false)}
+                          className="mb-4 flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-[var(--text)] transition-colors bg-[var(--surface-3)] px-4 py-1.5 rounded-full w-fit"
+                        >
+                          <ArrowLeft size={16} /> Retour à l'affiche
+                        </button>
+                        <h2 className="text-3xl sm:text-5xl font-black mb-4 leading-tight text-[var(--text)]">{selectedMedia.title || selectedMedia.name}</h2>
+                      </>
                     )}
                     <p className="text-[var(--text)] text-base sm:text-lg leading-relaxed mb-6">
                       {selectedMedia.overview || "Aucune description disponible pour ce titre."}
@@ -1316,8 +1379,8 @@ export function MediaHub() {
                       <div id="episodes-section" className="mb-8 bg-[var(--surface-2)] rounded-xl p-4 sm:p-6 border border-[var(--border)]">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-xl font-bold text-[var(--text)]">Épisodes</h3>
-                          <select 
-                            value={selectedSeason} 
+                          <select
+                            value={selectedSeason}
                             onChange={(e) => setSelectedSeason(Number(e.target.value))}
                             className="bg-[var(--surface-3)] text-[var(--text)] border border-gray-700 rounded px-3 py-1.5 font-bold outline-none focus:border-red-500 text-sm"
                           >
@@ -1349,7 +1412,7 @@ export function MediaHub() {
                                     {ep.vote_average > 0 && <span className="text-yellow-500 text-xs font-bold shrink-0 flex items-center gap-1"><Star size={10} fill="currentColor" /> {ep.vote_average.toFixed(1)}</span>}
                                   </div>
                                   <p className="text-[var(--text-muted)] text-xs line-clamp-2 mb-2 flex-1">{ep.overview || "Aucun résumé."}</p>
-                                  <button 
+                                  <button
                                     onClick={() => {
                                       setSeasonNum(selectedSeason)
                                       setEpisodeNum(ep.episode_number)
@@ -1388,11 +1451,27 @@ export function MediaHub() {
                     <div className="flex flex-wrap gap-3 mb-8 border-b border-[var(--border)] pb-8">
 
                       {(() => {
-                        const isWatched = watchedList.some(m => m.tmdb_id === (selectedMedia.tmdb_id || selectedMedia.id?.toString()));
+                        const isUpcoming = selectedMedia.release_date && selectedMedia.release_date > new Date().toISOString().split('T')[0];
+                        const mediaId = selectedMedia.tmdb_id || selectedMedia.id?.toString();
+                        const isReminded = reminders.some(m => m.tmdb_id === mediaId);
+                        
+                        if (isUpcoming) {
+                          return (
+                            <button
+                              onClick={() => toggleWatchlist(selectedMedia, 'reminder')}
+                              className={`flex items-center gap-2 px-6 py-2.5 rounded font-bold transition-colors ${isReminded ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500' : 'bg-gray-700 text-white hover:bg-gray-600 border border-transparent'}`}
+                            >
+                              <Clock size={20} />
+                              {isReminded ? 'Rappel activé' : 'Me le rappeler'}
+                            </button>
+                          )
+                        }
+
+                        const isWatched = watchedList.some(m => m.tmdb_id === mediaId);
                         return (
                           <button
                             onClick={() => toggleWatched(selectedMedia)}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded font-bold transition-colors ${isWatched ? 'bg-green-600 text-[var(--text)] hover:bg-green-700' : 'bg-gray-700 text-[var(--text)] hover:bg-gray-600'}`}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded font-bold transition-colors ${isWatched ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
                           >
                             <Eye size={20} />
                             {isWatched ? 'Vu' : 'Marquer comme vu'}
@@ -1401,20 +1480,24 @@ export function MediaHub() {
                       })()}
 
                       {(() => {
-                        const isMyList = watchlist.some(m => m.tmdb_id === (selectedMedia.tmdb_id || selectedMedia.id?.toString()));
+                        const isUpcoming = selectedMedia.release_date && selectedMedia.release_date > new Date().toISOString().split('T')[0];
+                        if (isUpcoming) return null; // No Add To list for upcoming
+
+                        const mediaId = selectedMedia.tmdb_id || selectedMedia.id?.toString();
+                        const isMyList = watchlist.some(m => m.tmdb_id === mediaId);
                         return (
                           <div className="relative">
                             <button
                               onClick={() => {
-                                const menu = document.getElementById('list-menu-' + (selectedMedia.tmdb_id || selectedMedia.id));
+                                const menu = document.getElementById('list-menu-' + mediaId);
                                 if (menu) menu.classList.toggle('hidden');
                               }}
-                              className={`flex items-center gap-2 px-6 py-2.5 rounded font-bold transition-colors ${isMyList ? 'bg-white/20 text-[var(--text)] hover:bg-white/30 border border-white/50' : 'bg-white text-black hover:bg-gray-200'}`}
+                              className={`flex items-center gap-2 px-6 py-2.5 rounded font-bold transition-colors ${isMyList ? 'bg-blue-600 text-white hover:bg-blue-700 border border-transparent' : 'bg-gray-700 text-white hover:bg-gray-600 border border-transparent'}`}
                             >
                               {isMyList ? <Check size={20} /> : <Plus size={20} />}
                               <span className="hidden sm:inline">Ajouter à...</span>
                             </button>
-                            <div id={'list-menu-' + (selectedMedia.tmdb_id || selectedMedia.id)} className="hidden absolute top-full left-0 mt-2 w-48 bg-[var(--surface-2)] border border-[var(--border)] rounded-lg shadow-xl z-[100] py-2">
+                            <div id={'list-menu-' + mediaId} className="hidden absolute top-full left-0 mt-2 w-48 bg-[var(--surface-2)] border border-[var(--border)] rounded-lg shadow-xl z-[100] py-2">
                               <button
                                 onClick={() => {
                                   toggleWatchlist(selectedMedia, 'personal');
@@ -1438,12 +1521,12 @@ export function MediaHub() {
                                   </button>
                                 );
                               })}
-                              <button 
+                              <button
                                 onClick={() => {
                                   setListMediaContext(selectedMedia);
                                   setShowCreateListModal(true);
                                   document.getElementById('list-menu-' + (selectedMedia.tmdb_id || selectedMedia.id))?.classList.add('hidden');
-                                }} 
+                                }}
                                 className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-800 flex items-center gap-2 border-t border-[var(--border)] mt-1 pt-2"
                               >
                                 <Plus size={14} /> Nouvelle liste
@@ -1458,7 +1541,7 @@ export function MediaHub() {
                         return (
                           <button
                             onClick={() => toggleWatchlist(selectedMedia, 'class')}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded font-bold transition-colors ${isClassList ? 'bg-green-600/80 text-[var(--text)] hover:bg-green-600' : 'bg-gray-700 text-[var(--text)] hover:bg-gray-600'}`}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded font-bold transition-colors ${isClassList ? 'bg-green-600/80 text-white hover:bg-green-600' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
                           >
                             {isClassList ? <Check size={20} /> : <Users size={20} />}
                             {isClassList ? 'Dans la promo' : 'Liste de Promo'}
@@ -1474,7 +1557,7 @@ export function MediaHub() {
                           })
                           // The ChatWidget will automatically detect this parameter and open the forward modal
                         }}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded font-bold transition-colors bg-indigo-600 text-[var(--text)] hover:bg-indigo-700"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded font-bold transition-colors bg-indigo-600 text-white hover:bg-indigo-700"
                       >
                         <MessageSquare size={20} />
                         Chat
@@ -1580,7 +1663,7 @@ export function MediaHub() {
 
           {/* Global Toast */}
           {toast && (
-            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] bg-gray-800 text-[var(--text)] px-6 py-3 rounded-full shadow-lg border border-gray-700 animate-fade-in flex items-center gap-2">
+            <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg border border-gray-700 animate-fade-in flex items-center gap-2">
               <Check size={18} className="text-green-400" />
               {toast}
             </div>
@@ -1594,7 +1677,7 @@ export function MediaHub() {
                   <X size={20} />
                 </button>
                 <h2 className="text-2xl font-black text-[var(--text)] mb-6 flex items-center gap-2"><TrendingUp className="text-red-600" /> Statistiques de la Promo</h2>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {promoStats.most_reviewed_movie && (
                     <div className="bg-[var(--surface-3)] rounded-xl p-4 flex gap-4 items-center relative overflow-hidden">
@@ -1654,9 +1737,9 @@ export function MediaHub() {
                   <X size={20} />
                 </button>
                 <h3 className="text-lg font-bold text-[var(--text)] mb-6 flex items-center gap-2"><ListPlus size={20} className="text-red-600" /> Nouvelle liste</h3>
-                <input 
-                  type="text" 
-                  placeholder="Ex: Mes films d'horreur..." 
+                <input
+                  type="text"
+                  placeholder="Ex: Mes films d'horreur..."
                   value={newListName}
                   onChange={(e) => setNewListName(e.target.value)}
                   className="w-full bg-[var(--surface-3)] text-[var(--text)] p-3 rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none mb-4"

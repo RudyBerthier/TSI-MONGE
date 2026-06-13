@@ -1,8 +1,42 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ArrowLeft, BarChart3, Plus, Trash2, X, Check, Lock, Unlock, LogIn, Settings, Ghost } from 'lucide-react'
+import { ArrowLeft, BarChart3, Plus, Trash2, X, Check, Lock, Unlock, LogIn, Settings, Ghost, Calendar, ListChecks, Square, CheckSquare } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { RestrictedAccess } from '../components/RestrictedAccess'
+import { io } from 'socket.io-client'
+import { motion } from 'framer-motion'
+
+function Countdown({ expiresAt }) {
+  const [timeLeft, setTimeLeft] = useState('');
+  const [expired, setExpired] = useState(false);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+    const update = () => {
+      const diff = new Date(expiresAt) - new Date();
+      if (diff <= 0) {
+        setExpired(true);
+        setTimeLeft('Terminé');
+        return;
+      }
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const mins = Math.floor((diff / 1000 / 60) % 60);
+      if (days > 0) setTimeLeft(`${days}j ${hours}h`);
+      else setTimeLeft(`${hours}h ${mins}m`);
+    };
+    update();
+    const interval = setInterval(update, 60000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  if (!expiresAt) return null;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border ${expired ? 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800' : 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800'}`}>
+      <Calendar size={10} /> {expired ? 'Terminé' : `Reste ${timeLeft}`}
+    </span>
+  );
+}
 
 export function Sondages() {
   const location = useLocation();
@@ -17,6 +51,8 @@ export function Sondages() {
   const [newTitle, setNewTitle] = useState('')
   const [newDesc, setNewDesc] = useState('')
   const [newOptions, setNewOptions] = useState(['', ''])
+  const [newExpiresAt, setNewExpiresAt] = useState('')
+  const [newIsMultiple, setNewIsMultiple] = useState(false)
 
   const loadSondages = () => {
     fetch('/api/sondages')
@@ -48,13 +84,40 @@ export function Sondages() {
   useEffect(() => {
     loadSondages()
     loadUserVotes()
+
+    const socket = io(import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : ''), {
+      auth: { token: getToken() }
+    });
+
+    socket.on('sondage:update', (data) => {
+      setSondages(prev => prev.map(s => 
+        s.id === data.id ? { ...s, votes: data.votes, voters: data.voters } : s
+      ));
+    });
+
+    return () => socket.disconnect();
   }, [isAuthenticated])
 
   // Voter ou changer de vote (par compte utilisateur)
-  const handleVote = (sondageId, option) => {
+  const handleVote = (sondageId, option, isMultipleChoice) => {
     if (!isAuthenticated) return
-    const previousVote = votedIds[sondageId]
-    if (previousVote === option) return
+    const currentVotes = Array.isArray(votedIds[sondageId]) ? votedIds[sondageId] : (votedIds[sondageId] ? [votedIds[sondageId]] : []);
+    
+    let newOptions;
+    if (isMultipleChoice) {
+      if (currentVotes.includes(option)) {
+        newOptions = currentVotes.filter(o => o !== option);
+        if (newOptions.length === 0) {
+          alert("Vous devez garder au moins une option cochée.");
+          return;
+        }
+      } else {
+        newOptions = [...currentVotes, option];
+      }
+    } else {
+      if (currentVotes.includes(option)) return;
+      newOptions = [option];
+    }
 
     fetch(`/api/sondages/${sondageId}/vote`, {
       method: 'POST',
@@ -62,7 +125,7 @@ export function Sondages() {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getToken()}`
       },
-      body: JSON.stringify({ option, isAnonymous: anonMode[sondageId] || false })
+      body: JSON.stringify({ options: newOptions, isAnonymous: anonMode[sondageId] || false })
     })
       .then(res => res.json())
       .then(result => {
@@ -71,6 +134,8 @@ export function Sondages() {
           setSondages(prev => prev.map(s =>
             s.id === sondageId ? { ...s, votes: result.votes, voters: result.voters } : s
           ))
+        } else if (result.error) {
+          alert(result.error);
         }
       })
   }
@@ -84,13 +149,15 @@ export function Sondages() {
     fetch('/api/sondages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getToken()}` },
-      body: JSON.stringify({ title: newTitle, description: newDesc, options: filteredOptions })
+      body: JSON.stringify({ title: newTitle, description: newDesc, options: filteredOptions, expiresAt: newExpiresAt || null, isMultipleChoice: newIsMultiple })
     })
       .then(res => res.json())
       .then(() => {
         setNewTitle('')
         setNewDesc('')
         setNewOptions(['', ''])
+        setNewExpiresAt('')
+        setNewIsMultiple(false)
         setShowForm(false)
         loadSondages()
       })
@@ -135,8 +202,32 @@ export function Sondages() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center" style={{ background: 'var(--bg)', minHeight: '100vh' }}>
-        <div className="animate-pulse text-lg" style={{ color: 'var(--text-muted)' }}>Chargement des sondages...</div>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh' }}>
+        <div style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}>
+          <div className="max-w-3xl mx-auto px-4 py-5">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+              <div className="space-y-2">
+                <div className="w-28 h-5 rounded-lg animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                <div className="w-36 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="max-w-3xl mx-auto px-4 py-8 space-y-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="rounded-2xl p-5 space-y-4" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div className="w-2/3 h-5 rounded-lg animate-pulse" style={{ background: 'var(--surface-2)' }} />
+              <div className="w-1/3 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+              <div className="space-y-2">
+                {[1,2,3].map(j => (
+                  <div key={j} className="h-11 rounded-xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                ))}
+              </div>
+              <div className="w-16 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -196,7 +287,10 @@ export function Sondages() {
 
         {/* Sondages actifs */}
         {actifs.map(s => {
-          const voted = votedIds[s.id]
+          const votedRaw = votedIds[s.id]
+          const isMultiple = s.isMultipleChoice
+          const votedArray = Array.isArray(votedRaw) ? votedRaw : (votedRaw ? [votedRaw] : [])
+          const hasVoted = votedArray.length > 0
           const total = totalVotes(s)
           const max = maxVotes(s)
 
@@ -204,9 +298,11 @@ export function Sondages() {
             <div key={s.id} className="rounded-2xl overflow-hidden" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
               <div className="p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  <h3 className="text-base sm:text-lg font-bold flex items-center gap-2" style={{ color: 'var(--text)' }}>
+                  <h3 className="text-base sm:text-lg font-bold flex flex-wrap items-center gap-2" style={{ color: 'var(--text)' }}>
                     {s.title}
+                    {s.expiresAt && <Countdown expiresAt={s.expiresAt} />}
                     {s.isAnonymous && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800"><Ghost size={10} /> Anonyme</span>}
+                    {isMultiple && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800"><ListChecks size={10} /> Choix Multiples</span>}
                   </h3>
                   {isAdmin && (
                     <div className="flex gap-1.5 shrink-0">
@@ -225,33 +321,41 @@ export function Sondages() {
                   {s.options.map(opt => {
                     const pct = percent(s, opt)
                     const isMax = s.votes[opt] === max && max > 0
-                    const isMyVote = voted === opt
+                    const isMyVote = votedArray.includes(opt)
                     const optionVoters = s.voters?.[opt] || []
 
                     return (
                       <div key={opt}>
                         <button
-                          onClick={() => isAuthenticated && handleVote(s.id, opt)}
-                          disabled={!isAuthenticated || isMyVote}
-                          className="w-full text-left rounded-xl p-2.5 sm:p-3 transition-all relative overflow-hidden"
+                          onClick={() => isAuthenticated && handleVote(s.id, opt, isMultiple)}
+                          disabled={!isAuthenticated}
+                          className="w-full text-left rounded-xl p-2.5 sm:p-3 transition-all relative overflow-hidden group"
                           style={{
                             border: `2px solid ${isMyVote ? 'var(--accent)' : 'var(--border)'}`,
-                            cursor: !isAuthenticated || isMyVote ? 'default' : 'pointer',
+                            cursor: !isAuthenticated ? 'default' : 'pointer',
                             opacity: !isAuthenticated ? 0.8 : 1,
                           }}
                         >
-                          <div
-                            className="absolute inset-y-0 left-0 transition-all duration-500 rounded-xl"
-                            style={{ width: `${pct}%`, background: isMax ? 'rgba(var(--accent-rgb), 0.08)' : 'var(--surface-2)' }}
+                          <motion.div
+                            layout
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ type: 'spring', bounce: 0, duration: 0.6 }}
+                            className="absolute inset-y-0 left-0 rounded-xl"
+                            style={{ background: isMax ? 'rgba(var(--accent-rgb), 0.08)' : 'var(--surface-2)' }}
                           />
                           <div className="relative flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
-                              {isMyVote && <Check size={16} className="shrink-0" style={{ color: 'var(--accent)' }} />}
-                              <span className="text-sm sm:text-base truncate" style={{ color: isMyVote ? 'var(--accent)' : 'var(--text)', fontWeight: isMyVote ? 600 : 400 }}>
+                              {isMultiple ? (
+                                isMyVote ? <CheckSquare size={16} className="shrink-0" style={{ color: 'var(--accent)' }} /> : <Square size={16} className="shrink-0 text-gray-400 group-hover:text-gray-500 transition-colors" />
+                              ) : (
+                                isMyVote && <Check size={16} className="shrink-0" style={{ color: 'var(--accent)' }} />
+                              )}
+                              <span className="text-sm sm:text-base truncate transition-colors" style={{ color: isMyVote ? 'var(--accent)' : 'var(--text)', fontWeight: isMyVote ? 600 : 400 }}>
                                 {opt}
                               </span>
                             </div>
-                            <span className="text-xs sm:text-sm shrink-0" style={{ color: isMax && total > 0 ? 'var(--accent)' : 'var(--text-muted)', fontWeight: isMax && total > 0 ? 700 : 400 }}>
+                            <span className="text-xs sm:text-sm shrink-0 transition-colors" style={{ color: isMax && total > 0 ? 'var(--accent)' : 'var(--text-muted)', fontWeight: isMax && total > 0 ? 700 : 400 }}>
                               {pct}% <span style={{ color: 'var(--text-muted)' }}>({s.votes[opt]})</span>
                             </span>
                           </div>
@@ -295,7 +399,7 @@ export function Sondages() {
                 </div>
 
                 {/* Option for Individual Anonymity Toggle Before Voting */}
-                {isAuthenticated && !voted && total === 0 && (
+                {isAuthenticated && !hasVoted && total === 0 && (
                   <div className="mt-4 flex justify-end">
                     <label
                       className="flex items-center gap-2 cursor-pointer p-2 rounded-xl bg-gray-50 dark:bg-slate-800/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors border border-gray-200 dark:border-slate-700"
@@ -315,7 +419,7 @@ export function Sondages() {
                     </label>
                   </div>
                 )}
-                {isAuthenticated && voted && anonMode[s.id] && (
+                {isAuthenticated && hasVoted && anonMode[s.id] && (
                   <div className="mt-3 flex justify-end">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800/30">
                       <Ghost size={12} />
@@ -326,7 +430,7 @@ export function Sondages() {
 
                 <div className="mt-2.5 flex items-center justify-between text-xs" style={{ color: 'var(--text-muted)' }}>
                   <span>{total} vote{total > 1 ? 's' : ''}</span>
-                  {voted && <span style={{ color: 'var(--accent)' }}>Vous avez voté</span>}
+                  {hasVoted && <span style={{ color: 'var(--accent)' }}>Vous avez voté</span>}
                   {!isAuthenticated && (
                     <Link to="/login" state={{ from: location.pathname }} className="flex items-center gap-1" style={{ color: 'var(--accent)' }}>
                       <LogIn size={12} />
@@ -346,6 +450,7 @@ export function Sondages() {
               <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Terminés</h2>
             </div>
             {termines.map(s => {
+              const isMultiple = s.isMultipleChoice
               const total = totalVotes(s)
               const max = maxVotes(s)
 
@@ -353,9 +458,10 @@ export function Sondages() {
                 <div key={s.id} className="rounded-2xl overflow-hidden opacity-75" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
                   <div className="p-4 sm:p-5">
                     <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--text-muted)' }}>
+                      <h3 className="text-base font-bold flex flex-wrap items-center gap-2" style={{ color: 'var(--text-muted)' }}>
                         {s.title}
                         {s.isAnonymous && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-100/50 text-indigo-700/70 dark:bg-indigo-900/10 dark:text-indigo-300/50 border border-indigo-200/50 dark:border-indigo-800/30"><Ghost size={10} /> Anonyme</span>}
+                        {isMultiple && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100/50 text-blue-700/70 dark:bg-blue-900/10 dark:text-blue-300/50 border border-blue-200/50 dark:border-blue-800/30"><ListChecks size={10} /> Multiples</span>}
                       </h3>
                       {isAdmin && (
                         <div className="flex gap-1.5 shrink-0">
@@ -378,9 +484,13 @@ export function Sondages() {
                         return (
                           <div key={opt}>
                             <div className="rounded-lg p-2 relative overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-                              <div
+                              <motion.div
+                                layout
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ type: 'spring', bounce: 0, duration: 0.6 }}
                                 className="absolute inset-y-0 left-0"
-                                style={{ width: `${pct}%`, background: isMax ? 'rgba(var(--accent-rgb), 0.07)' : 'var(--surface-2)' }}
+                                style={{ background: isMax ? 'rgba(var(--accent-rgb), 0.07)' : 'var(--surface-2)' }}
                               />
                               <div className="relative flex items-center justify-between gap-2">
                                 <span className="text-sm truncate" style={{ color: 'var(--text-muted)' }}>{opt}</span>
@@ -471,12 +581,36 @@ export function Sondages() {
                   </button>
                 </div>
 
-                <div className="flex gap-2 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Date de fin (optionnelle)</label>
+                    <input 
+                      type="datetime-local" 
+                      value={newExpiresAt} 
+                      onChange={(e) => setNewExpiresAt(e.target.value)} 
+                      className="tsi-input w-full text-sm" 
+                    />
+                  </div>
+                  
+                  <div className="flex items-end pb-2">
+                    <label className="flex items-center gap-2 cursor-pointer p-2 w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] transition-colors hover:border-[var(--accent)]">
+                      <input 
+                        type="checkbox" 
+                        checked={newIsMultiple} 
+                        onChange={(e) => setNewIsMultiple(e.target.checked)} 
+                        className="checkbox checkbox-sm checkbox-primary rounded"
+                      />
+                      <span className="text-sm font-medium" style={{ color: 'var(--text)' }}>Choix multiples</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-3">
                   <button onClick={createSondage} className="tsi-btn-primary text-sm py-1.5 px-4">
                     <Check size={14} />
                     Créer
                   </button>
-                  <button onClick={() => { setShowForm(false); setNewTitle(''); setNewDesc(''); setNewOptions(['', '']); setNewIsAnonymous(false) }} className="tsi-btn-ghost text-sm py-1.5 px-4">
+                  <button onClick={() => { setShowForm(false); setNewTitle(''); setNewDesc(''); setNewOptions(['', '']); setNewExpiresAt(''); setNewIsMultiple(false); }} className="tsi-btn-ghost text-sm py-1.5 px-4">
                     Annuler
                   </button>
                 </div>

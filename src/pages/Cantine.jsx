@@ -643,7 +643,18 @@ export function Cantine() {
               </h2>
 
               {loading ? (
-                <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>Chargement...</div>
+                <div className="space-y-3">
+                  {[1,2,3].map(i => (
+                    <div key={i} className="rounded-2xl p-4 space-y-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 h-3.5 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                        <div className="flex gap-1">{[1,2,3,4,5].map(s => <div key={s} className="w-3.5 h-3.5 rounded animate-pulse" style={{ background: 'var(--surface-2)' }} />)}</div>
+                      </div>
+                      <div className="w-3/4 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                      <div className="w-1/2 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
+                    </div>
+                  ))}
+                </div>
               ) : avis.length === 0 ? (
                 <div className="rounded-2xl p-8 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)' }}>
                   <UtensilsCrossed size={48} className="mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />

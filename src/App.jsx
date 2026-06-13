@@ -14,8 +14,10 @@ import { GoogleOAuthProvider } from '@react-oauth/google'
 import { MusicProvider } from './contexts/MusicContext'
 import MiniPlayer from './components/widgets/MiniPlayer.jsx'
 import { GlobalSearch } from './components/GlobalSearch'
+import { ScrollToTop } from './components/ScrollToTop'
 import { ErrorPage } from './pages/ErrorPage'
 import { MyReviews } from './pages/MyReviews'
+import { TransportPage } from './pages/TransportPage'
 
 // Lazy loading des pages lourdes pour le code splitting
 const IndexPage = lazy(() => import('./pages/IndexPage').then(m => ({ default: m.IndexPage })))
@@ -104,8 +106,9 @@ class ErrorBoundary extends Component {
 // Composant de chargement pour Suspense
 function PageLoader() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center">
-      <div className="animate-pulse text-gray-500 dark:text-gray-400">Chargement...</div>
+    <div className="min-h-screen flex flex-col items-center justify-center gap-3" style={{ background: 'var(--bg)' }}>
+      <div className="w-10 h-10 rounded-xl animate-pulse" style={{ background: 'var(--surface-2)' }} />
+      <div className="w-32 h-3 rounded-full animate-pulse" style={{ background: 'var(--surface-2)' }} />
     </div>
   )
 }
@@ -114,18 +117,22 @@ function AnimatedOutlet() {
   const location = useLocation()
   const element = useOutlet()
 
-  // Use root path to prevent full page remounts for nested routing (e.g., inside /social)
-  const rootPath = '/' + (location.pathname.split('/')[1] || '')
+  // For /social, group by root so the layout doesn't remount on sub-navigation.
+  // For everything else, use the full pathname so each page change gets an animation.
+  const isSocial = location.pathname.startsWith('/social')
+  const animationKey = isSocial
+    ? '/social'
+    : location.pathname
 
   return (
     <AnimatePresence mode="wait" initial={false}>
       {element && (
         <motion.div
-          key={rootPath}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
+          key={animationKey}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
           className="flex-1 flex flex-col w-full"
         >
           <Suspense fallback={<PageLoader />}>
@@ -172,6 +179,7 @@ function AppLayout() {
       {!hideNavbar && <Navbar />}
       <AnimatedOutlet />
       {!hideNavbar && <ChatWidget />}
+      {!hideNavbar && <ScrollToTop />}
       <CallUI />
 
       {/* Offline Banner */}
@@ -241,6 +249,7 @@ const router = createBrowserRouter([
       { path: "covoiturage/proposer", element: <CarpoolOffer /> },
       { path: "covoiturage/modifier/:id", element: <CarpoolOffer /> },
       { path: "covoiturage/:id", element: <CarpoolDetails /> },
+      { path: "transport", element: <TransportPage /> },
 
       {
         path: "social",
