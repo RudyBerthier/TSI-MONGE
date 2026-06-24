@@ -3,7 +3,7 @@ import { Sun, Umbrella, Timer } from 'lucide-react'
 import confetti from 'canvas-confetti'
 
 export function VacationCountdown({ children }) {
-  const targetDate = new Date('2026-06-26T10:30:00+02:00')
+  const targetDate = new Date('2026-06-25T16:00:00+02:00')
   const [timeLeft, setTimeLeft] = useState(calculateTimeLeft())
 
   function calculateTimeLeft() {

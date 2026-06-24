@@ -1,7 +1,0 @@
-principale:
-
-#mettre la sauvegarde des vocaux directement dans upload et pas supabase  Chat / Appels
-- Raccourcis clavier — ← → pour changer de jour dans l'EDT, Esc pour fermer les modaux
-- changer le systeme de profil pour faire comme sur instagram avec les publication followers suivie biographie liens, pouvoir poster des images/videos et ducoup integrer a cela un bouton modifier le profil qui va renvoyer vers le systeme de profile de base mais re moderniser, t ducoup tout les endroit ou on peut avoir acces au profile l fait rediriger vers la page de la personne
-- pour parler avec quelqu'un il faut etre abonné a lui et que l'autre c'est abonnée aussi (donc faire un système de notification par rapprot a cela)
-- aussi fait en sorte de pouvoir mettre ou non son compte en privé donc si en public tout le monde peut voir les posts sinon que les ceux qui s'abonne peut voir les posts

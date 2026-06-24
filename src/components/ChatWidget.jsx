@@ -26,8 +26,8 @@ export function ChatWidget() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  // Don't show widget on /chat page
-  const isOnChatPage = location.pathname === '/social/chat'
+  // Don't show widget on specific pages
+  const isHiddenPage = location.pathname === '/social/chat' || location.pathname === '/outils/clicker'
 
   const [isOpen, setIsOpen] = useState(false)
   const [messageMenu, setMessageMenu] = useState(null) // message.id when menu is open
@@ -82,9 +82,9 @@ export function ChatWidget() {
         prev.delete('shareMedia')
         return prev
       }, { replace: true })
-      if (!isOpen && !isOnChatPage) setIsOpen(true)
+      if (!isOpen && !isHiddenPage) setIsOpen(true)
     }
-  }, [searchParams, isOpen, isOnChatPage, setSearchParams])
+  }, [searchParams, isOpen, isHiddenPage, setSearchParams])
   const [showDmInfo, setShowDmInfo] = useState(false)
   const [showGroupInfo, setShowGroupInfo] = useState(false)
   const [dmSettings, setDmSettings] = useState({ muted: [], blocked: [] })
@@ -1091,7 +1091,7 @@ export function ChatWidget() {
     ? allUsers.filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase()))
     : []
 
-  if (isOnChatPage) return null
+  if (isHiddenPage) return null
 
   return (
     <>

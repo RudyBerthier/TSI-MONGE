@@ -4,6 +4,7 @@ import { Trophy, Zap, Clock, MousePointer2, Settings, ArrowLeft, ExternalLink, A
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { Link } from 'react-router-dom';
+import { UserAvatar } from '../../components/UserAvatar';
 
 const UPGRADES = [
   // Clic (PPC)
@@ -21,11 +22,19 @@ const UPGRADES = [
   { id: 'numworks', name: 'Numworks', description: '+10 clics/sec', baseCost: 1000, type: 'passive', value: 10, icon: <Smartphone size={22} className="text-yellow-500" /> },
   { id: 'prof_absent', name: 'Prof absent', description: '+100 clics/sec', baseCost: 10000, type: 'passive', value: 100, icon: <PartyPopper size={22} className="text-fuchsia-500" /> },
   { id: 'sujet_fuite', name: 'Sujet de DS fuité sur Discord', description: '+1 500 clics/sec', baseCost: 100000, type: 'passive', value: 1500, icon: <EyeOff size={22} className="text-red-500" /> },
-  { id: 'major_promo', name: 'Aspirer l\'âme de d\'Akram', description: '+8 000 clics/sec', baseCost: 500000, type: 'passive', value: 8000, icon: <Ghost size={22} className="text-slate-500 dark:text-slate-300" /> },
+  { id: 'major_promo', name: 'Aspirer l\'âme d\'Akram', description: '+8 000 clics/sec', baseCost: 500000, type: 'passive', value: 8000, icon: <Ghost size={22} className="text-slate-500 dark:text-slate-300" /> },
   { id: 'corrige_erreur', name: 'Le prof envoie le corrigé par erreur', description: '+40 000 clics/sec', baseCost: 2500000, type: 'passive', value: 40000, icon: <Mail size={22} className="text-sky-500" /> },
   { id: 'cles_lycee', name: 'Rab à la cantine', description: '+250 000 clics/sec', baseCost: 15000000, type: 'passive', value: 250000, icon: <Key size={22} className="text-yellow-600" /> },
   { id: 'parcoursup', name: 'Crida pas là', description: '+1 000 000 clics/sec', baseCost: 100000000, type: 'passive', value: 1000000, icon: <ServerOff size={22} className="text-rose-600" /> },
   { id: 'x_ens', name: 'Intégration directe à l\'X', description: '+10 000 000 clics/sec', baseCost: 1000000000, type: 'passive', value: 10000000, icon: <GraduationCap size={22} className="text-purple-600" /> },
+  
+  // Rebirth / Late Game
+  { id: 'ia_quantique', name: 'IA Quantique au CDI', description: '+5 000 000 clics par clic', baseCost: 1000000000, type: 'click', value: 5000000, icon: <Settings size={22} className="text-blue-400" /> },
+  { id: 'ferme_minage_cdi', name: 'Ferme de Minage au sous-sol', description: '+25 000 000 clics/sec', baseCost: 5000000000, type: 'passive', value: 25000000, icon: <Settings size={22} className="text-emerald-500" /> },
+  { id: 'controle_mental', name: 'Contrôle mental des 1ères années', description: '+100 000 000 clics par clic', baseCost: 50000000000, type: 'click', value: 100000000, icon: <EyeOff size={22} className="text-purple-500" /> },
+  { id: 'cerveau_merieux', name: 'Cloner le cerveau de M. Mérieux', description: '+1 000 000 000 clics/sec', baseCost: 250000000000, type: 'passive', value: 1000000000, icon: <Settings size={22} className="text-pink-500" /> },
+  { id: 'fusion_monge', name: 'Fusion avec Gaspard Monge', description: '+5 000 000 000 clics par clic', baseCost: 500000000000, type: 'click', value: 5000000000, icon: <Flame size={22} className="text-red-600" /> },
+  { id: 'dieu_prepa', name: 'Dieu de la Prépa', description: '+25 000 000 000 clics/sec', baseCost: 5000000000000, type: 'passive', value: 25000000000, icon: <Trophy size={22} className="text-yellow-400" /> },
 ];
 
 export default function MongeClicker() {
@@ -41,6 +50,8 @@ export default function MongeClicker() {
   const [ownedUpgrades, setOwnedUpgrades] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [totalClicks, setTotalClicks] = useState(0);
+  const [rebirths, setRebirths] = useState(0);
+  const [activeTab, setActiveTab] = useState('clicker'); // 'clicker', 'shop', 'leaderboard'
 
   // Floating numbers
   const [clicks, setClicks] = useState([]);
@@ -65,6 +76,7 @@ export default function MongeClicker() {
             setClickPower(data.user.click_power || 1);
             setPps(data.user.passive_pps || 0);
             setOwnedUpgrades(data.user.upgrades || []);
+            setRebirths(parseInt(data.user.rebirths) || 0);
           }
         }
 
@@ -183,11 +195,17 @@ export default function MongeClicker() {
     const cost = getCost(upgrade);
     if (points < cost) return;
 
-    // Optimistic UI update
-    setPoints(p => p - cost);
+    // Optimistic UI
+    setPoints(prev => prev - cost);
     setOwnedUpgrades(prev => [...prev, upgrade.id]);
-    if (upgrade.type === 'click') setClickPower(p => p + upgrade.value);
-    if (upgrade.type === 'passive') setPps(p => p + upgrade.value);
+    
+    // Le multiplicateur est géré par le backend pour la persistance,
+    // mais le frontend passe les valeurs de base pour que le backend les multiplie !
+    if (upgrade.type === 'click') {
+      setClickPower(prev => prev + (upgrade.value * (1 + rebirths)));
+    } else {
+      setPps(prev => prev + (upgrade.value * (1 + rebirths)));
+    }
 
     try {
       const res = await fetch('/api/clicker/upgrade', {
@@ -203,24 +221,104 @@ export default function MongeClicker() {
           passivePpsBonus: upgrade.type === 'passive' ? upgrade.value : 0
         })
       });
-      if (!res.ok) throw new Error('Achat refusé');
+
+      if (!res.ok) {
+        // Simple rollback if error (reload state)
+        const stateRes = await fetch('/api/clicker/state', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        });
+        const data = await stateRes.json();
+        setPoints(parseInt(data.user.points) || 0);
+        setClickPower(data.user.click_power || 1);
+        setPps(data.user.passive_pps || 0);
+        setOwnedUpgrades(data.user.upgrades || []);
+      }
+    } catch (err) {
+      console.error('Failed to buy upgrade', err);
+    }
+  };
+
+  const handleRebirth = async () => {
+    const rebirthCost = 1000000000000 * Math.pow(10, rebirths);
+    if (points < rebirthCost) return;
+    if (!window.confirm(`Êtes-vous sûr de vouloir faire un Rebirth ? Vous allez perdre tous vos MongeCoins et améliorations actuelles, mais votre force de frappe de base et vos futurs gains seront multipliés par ${rebirths + 2} !`)) return;
+
+    try {
+      const res = await fetch('/api/clicker/rebirth', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPoints(0);
+        setClickPower(data.user.click_power);
+        setPps(0);
+        setOwnedUpgrades([]);
+        setRebirths(data.user.rebirths);
+      }
     } catch (err) {
       console.error(err);
-      // Revert optimistic update silently
-      fetch('/api/clicker/state', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      })
-        .then(r => r.json())
-        .then(data => {
-          if (data.user) {
-            setPoints(parseInt(data.user.points) || 0);
-            setClickPower(data.user.click_power || 1);
-            setPps(data.user.passive_pps || 0);
-            setOwnedUpgrades(data.user.upgrades || []);
-          }
-        })
-        .catch(() => { });
     }
+  };
+
+  const renderUpgrades = (type) => {
+    const list = UPGRADES.filter(u => u.type === type);
+    const firstUnownedIndex = list.findIndex(u => getOwnedCount(u.id) === 0);
+    const rebirthMultiplier = 1 + rebirths;
+
+    return list.map((u, index) => {
+      const count = getOwnedCount(u.id);
+      const isOwned = count > 0;
+      const isFirstUnowned = index === firstUnownedIndex;
+      
+      // Masquer totalement les upgrades futurs
+      if (!isOwned && !isFirstUnowned && firstUnownedIndex !== -1 && index > firstUnownedIndex) {
+        return null; 
+      }
+
+      const cost = getCost(u);
+      const canAfford = points >= cost;
+      const isMystery = isFirstUnowned && !canAfford; 
+      const actualValue = u.value * rebirthMultiplier;
+      const isClick = type === 'click';
+
+      const borderBgColor = canAfford && !isMystery
+        ? (isClick ? 'border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 hover:scale-[1.02] cursor-pointer' : 'border-orange-200 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-800/50 hover:scale-[1.02] cursor-pointer')
+        : 'border-gray-200 dark:border-[var(--border)] bg-gray-50 dark:bg-[var(--surface-2)]/50 opacity-60 cursor-not-allowed';
+
+      const textColor = canAfford && !isMystery
+        ? (isClick ? 'text-indigo-600 dark:text-indigo-400' : 'text-orange-600 dark:text-orange-400')
+        : 'text-red-500';
+
+      return (
+        <button
+          key={u.id}
+          onClick={() => !isMystery && buyUpgrade(u)}
+          disabled={!canAfford || isMystery}
+          className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left ${borderBgColor}`}
+        >
+          <div className="flex items-center gap-3">
+            <div className="text-2xl bg-white dark:bg-slate-700 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm shrink-0 font-bold text-gray-400">
+              {isMystery ? '?' : u.icon}
+            </div>
+            <div>
+              <h4 className="font-bold text-sm leading-tight" style={{ color: 'var(--text)' }}>
+                {isMystery ? '???' : u.name}
+              </h4>
+              <p className="text-[10px] text-gray-500 dark:text-[var(--text-muted)] leading-tight mt-0.5">
+                {isMystery ? 'Revenez quand vous serez plus riche !' : `+${actualValue.toLocaleString()} ${isClick ? 'par clic' : 'clics/sec'}`}
+              </p>
+              <p className={`text-xs font-bold mt-1 ${textColor}`}>
+                {cost.toLocaleString()} pts
+              </p>
+            </div>
+          </div>
+          <div className="text-xl font-black text-gray-200 dark:text-gray-700 ml-1 shrink-0">
+            {count > 0 ? count : ''}
+          </div>
+        </button>
+      );
+    });
   };
 
   const getOwnedCount = (upgradeId) => {
@@ -237,34 +335,59 @@ export default function MongeClicker() {
   }
 
   return (
-    <div className="h-[calc(100vh-80px)] max-w-7xl mx-auto pt-4 pb-4 px-4 flex flex-col">
+    <div className="h-[calc(100dvh-70px)] lg:h-[calc(100vh-80px)] max-w-7xl mx-auto pt-2 pb-2 px-3 lg:pt-4 lg:pb-4 lg:px-4 flex flex-col overflow-hidden">
 
       {/* Compact Header */}
-      <div className="flex items-center justify-between mb-4 shrink-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 shrink-0">
         <div className="flex items-center gap-3">
           <Link to="/outils" className="p-2 rounded-xl flex items-center justify-center transition-all w-fit" style={{ background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text)' }}>
+          <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight" style={{ color: 'var(--text)' }}>
             Monge <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">Clicker</span>
           </h1>
         </div>
 
         {/* Global Score Compact Badge */}
-        <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl py-2 px-5 shadow-lg border border-white/10 flex flex-col items-end">
+        <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl py-2 px-4 shadow-lg border border-white/10 flex flex-col items-center md:items-end self-center md:self-auto w-full md:w-auto">
           <p className="text-indigo-300 font-bold uppercase tracking-wider text-[10px] mb-0.5">Total Lycée</p>
-          <div className="text-xl font-black text-[var(--text)] font-mono flex items-center gap-2">
-            <Trophy className="text-yellow-400" size={18} />
+          <div className="text-lg lg:text-xl font-black text-[var(--text)] font-mono flex items-center gap-2">
+            <Trophy className="text-yellow-400" size={16} />
             {globalScore.toLocaleString()}
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
+      {/* Mobile Tabs */}
+      <div className="flex lg:hidden bg-white dark:bg-[var(--surface-2)] p-1 rounded-2xl mb-4 shrink-0 shadow-sm border border-gray-100 dark:border-[var(--border)]/50">
+        <button 
+          onClick={() => setActiveTab('clicker')}
+          className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'clicker' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-500 dark:text-[var(--text-muted)]'}`}
+        >
+          <MousePointer2 className="w-4 h-4 mx-auto mb-1" />
+          Clicker
+        </button>
+        <button 
+          onClick={() => setActiveTab('shop')}
+          className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'shop' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-500 dark:text-[var(--text-muted)]'}`}
+        >
+          <Settings className="w-4 h-4 mx-auto mb-1" />
+          Boutique
+        </button>
+        <button 
+          onClick={() => setActiveTab('leaderboard')}
+          className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'leaderboard' ? 'bg-yellow-500 text-white shadow-md' : 'text-gray-500 dark:text-[var(--text-muted)]'}`}
+        >
+          <Award className="w-4 h-4 mx-auto mb-1" />
+          Top
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 flex-1 min-h-0 overflow-hidden w-full">
 
         {/* Main Click Area */}
-        <div className="lg:col-span-5 flex flex-col h-full min-h-0">
-          <div className="w-full h-full bg-white dark:bg-[var(--surface-2)] rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 flex flex-col items-center shrink-0">
+        <div className={`lg:col-span-5 flex-col h-full min-h-0 w-full ${activeTab === 'clicker' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="w-full h-full bg-white dark:bg-[var(--surface-2)] rounded-3xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 flex flex-col items-center min-h-0">
 
             <div className="text-center mb-2 shrink-0">
               <p className="text-gray-500 font-semibold uppercase tracking-wider text-xs mb-1">Tes MongeCoins</p>
@@ -324,8 +447,8 @@ export default function MongeClicker() {
         </div>
 
         {/* Upgrades Shop */}
-        <div className="lg:col-span-4 flex flex-col h-full min-h-0">
-          <div className="bg-white dark:bg-[var(--surface-2)] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 h-full flex flex-col min-h-0">
+        <div className={`lg:col-span-4 flex-col h-full min-h-0 w-full ${activeTab === 'shop' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="w-full bg-white dark:bg-[var(--surface-2)] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 h-full flex flex-col min-h-0">
             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 shrink-0" style={{ color: 'var(--text)' }}>
               <Settings className="text-[var(--text-muted)]" /> Boutique
             </h3>
@@ -339,38 +462,7 @@ export default function MongeClicker() {
                   <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 px-2 py-0.5 rounded-full text-xs">{clickPower} PPC</span>
                 </h4>
                 <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1 min-h-0">
-                  {UPGRADES.filter(u => u.type === 'click').map(u => {
-                    const cost = getCost(u);
-                    const count = getOwnedCount(u.id);
-                    const canAfford = points >= cost;
-                    return (
-                      <button
-                        key={u.id}
-                        onClick={() => buyUpgrade(u)}
-                        disabled={!canAfford}
-                        className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left ${canAfford
-                          ? 'border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 hover:scale-[1.02] cursor-pointer'
-                          : 'border-gray-200 dark:border-[var(--border)] bg-gray-50 dark:bg-[var(--surface-2)]/50 opacity-60 cursor-not-allowed'
-                          }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="text-2xl bg-white dark:bg-slate-700 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm shrink-0">
-                            {u.icon}
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-sm leading-tight" style={{ color: 'var(--text)' }}>{u.name}</h4>
-                            <p className="text-[10px] text-gray-500 dark:text-[var(--text-muted)] leading-tight mt-0.5">{u.description}</p>
-                            <p className={`text-xs font-bold mt-1 ${canAfford ? 'text-indigo-600 dark:text-indigo-400' : 'text-red-500'}`}>
-                              {cost.toLocaleString()} pts
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-xl font-black text-gray-200 dark:text-gray-700 ml-1 shrink-0">
-                          {count}
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {renderUpgrades('click')}
                 </div>
               </div>
 
@@ -381,48 +473,49 @@ export default function MongeClicker() {
                   <span className="bg-orange-100 dark:bg-orange-900/50 text-orange-600 px-2 py-0.5 rounded-full text-xs">{pps} PPS</span>
                 </h4>
                 <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1 min-h-0">
-                  {UPGRADES.filter(u => u.type === 'passive').map(u => {
-                    const cost = getCost(u);
-                    const count = getOwnedCount(u.id);
-                    const canAfford = points >= cost;
-                    return (
-                      <button
-                        key={u.id}
-                        onClick={() => buyUpgrade(u)}
-                        disabled={!canAfford}
-                        className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left ${canAfford
-                          ? 'border-orange-200 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-800/50 hover:scale-[1.02] cursor-pointer'
-                          : 'border-gray-200 dark:border-[var(--border)] bg-gray-50 dark:bg-[var(--surface-2)]/50 opacity-60 cursor-not-allowed'
-                          }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="text-2xl bg-white dark:bg-slate-700 w-10 h-10 rounded-xl flex items-center justify-center shadow-sm shrink-0">
-                            {u.icon}
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-sm leading-tight" style={{ color: 'var(--text)' }}>{u.name}</h4>
-                            <p className="text-[10px] text-gray-500 dark:text-[var(--text-muted)] leading-tight mt-0.5">{u.description}</p>
-                            <p className={`text-xs font-bold mt-1 ${canAfford ? 'text-orange-600 dark:text-orange-400' : 'text-red-500'}`}>
-                              {cost.toLocaleString()} pts
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-xl font-black text-gray-200 dark:text-gray-700 ml-1 shrink-0">
-                          {count}
-                        </div>
-                      </button>
-                    );
-                  })}
+                  {renderUpgrades('passive')}
                 </div>
               </div>
 
+              {/* Rebirth Section */}
+              <div className="pt-4 border-t dark:border-[var(--border)] shrink-0 mt-2">
+                {points >= 1000000000000 * Math.pow(10, rebirths) ? (
+                  <motion.button
+                    animate={{
+                      scale: [1, 1.02, 1],
+                      boxShadow: ["0px 0px 0px rgba(239,68,68,0)", "0px 0px 25px rgba(249,115,22,0.8)", "0px 0px 0px rgba(239,68,68,0)"]
+                    }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    onClick={handleRebirth}
+                    className="w-full flex flex-col items-center justify-center gap-1 p-4 rounded-2xl font-black bg-gradient-to-r from-red-600 to-orange-500 text-white cursor-pointer border border-red-400"
+                  >
+                    <div className="flex items-center gap-2 text-lg">
+                      <Flame size={24} className="animate-pulse" />
+                      FAIRE UN REBIRTH !
+                      <Flame size={24} className="animate-pulse" />
+                    </div>
+                    <span className="text-xs font-medium opacity-90 font-normal">
+                      Multipliez vos futurs gains par {rebirths + 2} !
+                    </span>
+                  </motion.button>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl font-bold transition-all bg-gray-100 dark:bg-slate-800 text-gray-400 cursor-not-allowed"
+                  >
+                    <Flame size={20} />
+                    Rebirth ({(1000000000000 * Math.pow(10, rebirths)).toLocaleString()} pts)
+                  </button>
+                )}
+                <p className="text-center text-[10px] text-gray-500 mt-2 font-semibold uppercase tracking-widest">Niveau actuel : {rebirths}</p>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Leaderboard */}
-        <div className="lg:col-span-3 flex flex-col h-full min-h-0">
-          <div className="bg-white dark:bg-[var(--surface-2)] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 h-full flex flex-col min-h-0">
+        <div className={`lg:col-span-3 flex-col h-full min-h-0 w-full ${activeTab === 'leaderboard' ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="w-full bg-white dark:bg-[var(--surface-2)] rounded-3xl p-5 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 h-full flex flex-col min-h-0">
             <h3 className="text-lg font-bold mb-3 flex items-center gap-2 shrink-0" style={{ color: 'var(--text)' }}>
               <Award className="text-yellow-500" /> Top Tryharders
             </h3>
@@ -431,7 +524,7 @@ export default function MongeClicker() {
               {leaderboard.map((lb, index) => (
                 <div key={lb.user_id} className="flex items-center justify-between group">
                   <div className="flex items-center gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                    <span className={`w-7 h-7 shrink-0 flex-none rounded-full flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-100 text-yellow-700' :
                       index === 1 ? 'bg-gray-200 text-gray-700' :
                         index === 2 ? 'bg-orange-100 text-orange-800' :
                           'bg-gray-100 dark:bg-slate-700 text-gray-500'
@@ -439,14 +532,15 @@ export default function MongeClicker() {
                       {index + 1}
                     </span>
                     <div className="flex items-center gap-2">
-                      <img
-                        src={lb.users?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${lb.users?.username}`}
-                        alt={lb.users?.username}
-                        className="w-8 h-8 rounded-full bg-indigo-100 object-cover"
-                      />
+                      <UserAvatar user={lb.users} size={28} />
                       <span className="text-sm font-semibold truncate max-w-[100px]" style={{ color: 'var(--text)' }}>
                         {lb.users?.username || 'Inconnu'}
                       </span>
+                      {parseInt(lb.rebirths) > 0 && (
+                        <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 ml-1 shrink-0">
+                          <Flame size={10} /> {lb.rebirths}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <span className="text-xs font-bold text-gray-500">

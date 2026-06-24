@@ -62,8 +62,11 @@ router.get('/state', async (req, res) => {
         if (!updErr) {
           userProfile = updated;
           
-          // Mettre à jour le global aussi
-          await supabase.rpc('increment_clicker_global', { amount: offlineGains });
+          // Mettre à jour le global aussi (on the backend)
+          // We can just query it and add
+          const { data: globalData } = await supabase.from('clicker_global').select('total_clicks').eq('id', 1).single();
+          const newGlobal = (Number(globalData?.total_clicks || 0)) + Number(offlineGains);
+          await supabase.from('clicker_global').update({ total_clicks: newGlobal }).eq('id', 1);
         }
       }
     }
@@ -146,9 +149,12 @@ router.post('/upgrade', async (req, res) => {
       return res.status(400).json({ error: 'Fonds insuffisants' });
     }
 
+    const currentRebirths = parseInt(profile.rebirths) || 0;
+    const multiplier = 1 + currentRebirths;
+
     const newPoints = profile.points - cost;
-    const newClickPower = profile.click_power + (clickPowerBonus || 0);
-    const newPps = profile.passive_pps + (passivePpsBonus || 0);
+    const newClickPower = profile.click_power + ((clickPowerBonus || 0) * multiplier);
+    const newPps = profile.passive_pps + ((passivePpsBonus || 0) * multiplier);
     
     const upgrades = [...(profile.upgrades || [])];
     upgrades.push(upgradeId);
@@ -174,12 +180,58 @@ router.post('/upgrade', async (req, res) => {
   }
 });
 
+// Rebirth
+router.post('/rebirth', async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: profile, error } = await supabase
+      .from('clicker_users')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) throw error;
+
+    const currentRebirths = parseInt(profile.rebirths) || 0;
+    // Cost: 1 Trillion base, x10 each rebirth
+    const rebirthCost = 1000000000000 * Math.pow(10, currentRebirths);
+
+    if (profile.points < rebirthCost) {
+      return res.status(400).json({ error: 'Fonds insuffisants pour un Rebirth' });
+    }
+
+    const newRebirths = currentRebirths + 1;
+    const newMultiplier = 1 + newRebirths;
+
+    const { data: updated, error: updErr } = await supabase
+      .from('clicker_users')
+      .update({
+        points: 0,
+        click_power: 1 * newMultiplier,
+        passive_pps: 0,
+        upgrades: [],
+        rebirths: newRebirths
+      })
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (updErr) throw updErr;
+
+    res.json({ success: true, user: updated });
+  } catch (error) {
+    console.error('Erreur Clicker Rebirth:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
 // Leaderboard
 router.get('/leaderboard', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('clicker_users')
-      .select('total_clicks, user_id, users:user_id(username, avatar)')
+      .select('total_clicks, user_id, rebirths, users:user_id(username, avatar, google_avatar)')
       .order('total_clicks', { ascending: false })
       .limit(10);
 
