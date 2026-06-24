@@ -27,12 +27,12 @@ const UPGRADES = [
   { id: 'cles_lycee', name: 'Rab à la cantine', description: '+250 000 clics/sec', baseCost: 15000000, type: 'passive', value: 250000, icon: <Key size={22} className="text-yellow-600" /> },
   { id: 'parcoursup', name: 'Crida pas là', description: '+1 000 000 clics/sec', baseCost: 100000000, type: 'passive', value: 1000000, icon: <ServerOff size={22} className="text-rose-600" /> },
   { id: 'x_ens', name: 'Intégration directe à l\'X', description: '+10 000 000 clics/sec', baseCost: 1000000000, type: 'passive', value: 10000000, icon: <GraduationCap size={22} className="text-purple-600" /> },
-  
+
   // Rebirth / Late Game
   { id: 'ia_quantique', name: 'IA Quantique au CDI', description: '+5 000 000 clics par clic', baseCost: 1000000000, type: 'click', value: 5000000, icon: <Settings size={22} className="text-blue-400" /> },
   { id: 'ferme_minage_cdi', name: 'Ferme de Minage au sous-sol', description: '+25 000 000 clics/sec', baseCost: 5000000000, type: 'passive', value: 25000000, icon: <Settings size={22} className="text-emerald-500" /> },
   { id: 'controle_mental', name: 'Contrôle mental des 1ères années', description: '+100 000 000 clics par clic', baseCost: 50000000000, type: 'click', value: 100000000, icon: <EyeOff size={22} className="text-purple-500" /> },
-  { id: 'cerveau_merieux', name: 'Cloner le cerveau de M. Mérieux', description: '+1 000 000 000 clics/sec', baseCost: 250000000000, type: 'passive', value: 1000000000, icon: <Settings size={22} className="text-pink-500" /> },
+  { id: 'cerveau_merieux', name: 'Cloner le cerveau de M. Deveaux', description: '+1 000 000 000 clics/sec', baseCost: 250000000000, type: 'passive', value: 1000000000, icon: <Settings size={22} className="text-pink-500" /> },
   { id: 'fusion_monge', name: 'Fusion avec Gaspard Monge', description: '+5 000 000 000 clics par clic', baseCost: 500000000000, type: 'click', value: 5000000000, icon: <Flame size={22} className="text-red-600" /> },
   { id: 'dieu_prepa', name: 'Dieu de la Prépa', description: '+25 000 000 000 clics/sec', baseCost: 5000000000000, type: 'passive', value: 25000000000, icon: <Trophy size={22} className="text-yellow-400" /> },
 ];
@@ -198,7 +198,7 @@ export default function MongeClicker() {
     // Optimistic UI
     setPoints(prev => prev - cost);
     setOwnedUpgrades(prev => [...prev, upgrade.id]);
-    
+
     // Le multiplicateur est géré par le backend pour la persistance,
     // mais le frontend passe les valeurs de base pour que le backend les multiplie !
     if (upgrade.type === 'click') {
@@ -270,15 +270,15 @@ export default function MongeClicker() {
       const count = getOwnedCount(u.id);
       const isOwned = count > 0;
       const isFirstUnowned = index === firstUnownedIndex;
-      
+
       // Masquer totalement les upgrades futurs
       if (!isOwned && !isFirstUnowned && firstUnownedIndex !== -1 && index > firstUnownedIndex) {
-        return null; 
+        return null;
       }
 
       const cost = getCost(u);
       const canAfford = points >= cost;
-      const isMystery = isFirstUnowned && !canAfford; 
+      const isMystery = isFirstUnowned && !canAfford;
       const actualValue = u.value * rebirthMultiplier;
       const isClick = type === 'click';
 
@@ -360,21 +360,21 @@ export default function MongeClicker() {
 
       {/* Mobile Tabs */}
       <div className="flex lg:hidden bg-white dark:bg-[var(--surface-2)] p-1 rounded-2xl mb-4 shrink-0 shadow-sm border border-gray-100 dark:border-[var(--border)]/50">
-        <button 
+        <button
           onClick={() => setActiveTab('clicker')}
           className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'clicker' ? 'bg-indigo-500 text-white shadow-md' : 'text-gray-500 dark:text-[var(--text-muted)]'}`}
         >
           <MousePointer2 className="w-4 h-4 mx-auto mb-1" />
           Clicker
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('shop')}
           className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'shop' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-500 dark:text-[var(--text-muted)]'}`}
         >
           <Settings className="w-4 h-4 mx-auto mb-1" />
           Boutique
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('leaderboard')}
           className={`flex-1 py-2 text-sm font-bold rounded-xl transition-all ${activeTab === 'leaderboard' ? 'bg-yellow-500 text-white shadow-md' : 'text-gray-500 dark:text-[var(--text-muted)]'}`}
         >
@@ -453,26 +453,26 @@ export default function MongeClicker() {
               <Settings className="text-[var(--text-muted)]" /> Boutique
             </h3>
 
-            <div className="flex flex-col flex-1 min-h-0 gap-6">
+            <div className="flex flex-col flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2 gap-6">
 
               {/* Section PPC */}
-              <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex flex-col shrink-0">
                 <h4 className="text-sm font-bold text-indigo-500 mb-2 uppercase tracking-wider shrink-0 flex justify-between items-center">
                   <span>Clic (PPC)</span>
                   <span className="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 px-2 py-0.5 rounded-full text-xs">{clickPower} PPC</span>
                 </h4>
-                <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1 min-h-0">
+                <div className="space-y-3 shrink-0">
                   {renderUpgrades('click')}
                 </div>
               </div>
 
               {/* Section PPS */}
-              <div className="flex flex-col flex-1 min-h-0">
+              <div className="flex flex-col shrink-0">
                 <h4 className="text-sm font-bold text-orange-500 mb-2 uppercase tracking-wider shrink-0 flex justify-between items-center">
                   <span>Passif (PPS)</span>
                   <span className="bg-orange-100 dark:bg-orange-900/50 text-orange-600 px-2 py-0.5 rounded-full text-xs">{pps} PPS</span>
                 </h4>
-                <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1 min-h-0">
+                <div className="space-y-3 shrink-0">
                   {renderUpgrades('passive')}
                 </div>
               </div>
@@ -507,7 +507,7 @@ export default function MongeClicker() {
                     Rebirth ({(1000000000000 * Math.pow(10, rebirths)).toLocaleString()} pts)
                   </button>
                 )}
-                <p className="text-center text-[10px] text-gray-500 mt-2 font-semibold uppercase tracking-widest">Niveau actuel : {rebirths}</p>
+                <p className="text-center text-[10px] text-gray-500 mt-2 font-semibold uppercase tracking-widest pb-4">Niveau actuel : {rebirths}</p>
               </div>
             </div>
           </div>
