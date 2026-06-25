@@ -85,7 +85,7 @@ export default function MongeClicker() {
   const [customCookie, setCustomCookie] = useState(() => localStorage.getItem('monge_custom_cookie') || '/monge_cookie.png');
   const [sessionId] = useState(() => Date.now() + Math.random());
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -93,46 +93,40 @@ export default function MongeClicker() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 400;
-        const MAX_HEIGHT = 400;
-        let width = img.width;
-        let height = img.height;
+    const formData = new FormData();
+    formData.append('image', file);
 
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const dataUrl = canvas.toDataURL('image/png', 0.8);
-        try {
-          localStorage.setItem('monge_custom_cookie', dataUrl);
-          setCustomCookie(dataUrl);
-          setCookieInputUrl('');
-          setShowCookieModal(false);
-        } catch (e) {
-          alert("L'image est trop volumineuse pour le navigateur. Essaie une image plus petite.");
-        }
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+    try {
+      const res = await fetch('/api/clicker/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.url) {
+        setCustomCookie(data.url);
+        localStorage.setItem('monge_custom_cookie', data.url);
+        setShowCookieModal(false);
+        setCookieInputUrl('');
+        
+        // Save to DB
+        await fetch('/api/clicker/skin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ url: data.url })
+        });
+      } else {
+        alert(data.error || "Erreur lors de l'upload sur le serveur");
+      }
+    } catch(err) {
+      alert("Erreur de connexion lors de l'upload");
+    }
   };
 
   // Prevent multiple tabs using BroadcastChannel
@@ -191,6 +185,13 @@ export default function MongeClicker() {
             setPps(data.user.passive_pps || 0);
             setOwnedUpgrades(data.user.upgrades || []);
             setRebirths(parseInt(data.user.rebirths) || 0);
+            if (data.user.custom_cookie_url) {
+              setCustomCookie(data.user.custom_cookie_url);
+              localStorage.setItem('monge_custom_cookie', data.user.custom_cookie_url);
+            } else {
+              setCustomCookie('/monge_cookie.png');
+              localStorage.removeItem('monge_custom_cookie');
+            }
           }
         }
 
@@ -849,22 +850,45 @@ export default function MongeClicker() {
                 </div>
                 <div className="flex gap-2 justify-end mt-4">
                   <button 
-                    onClick={() => {
+                    onClick={async () => {
                       setCustomCookie('/monge_cookie.png');
                       localStorage.removeItem('monge_custom_cookie');
                       setShowCookieModal(false);
+                      try {
+                        await fetch('/api/clicker/skin', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                          },
+                          body: JSON.stringify({ url: null })
+                        });
+                      } catch(e) {}
                     }}
                     className="px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                   >
                     Réinitialiser
                   </button>
                   <button 
-                    onClick={() => {
+                    onClick={async () => {
                       if (cookieInputUrl.trim()) {
-                        setCustomCookie(cookieInputUrl.trim());
-                        localStorage.setItem('monge_custom_cookie', cookieInputUrl.trim());
+                        const newUrl = cookieInputUrl.trim();
+                        setCustomCookie(newUrl);
+                        localStorage.setItem('monge_custom_cookie', newUrl);
+                        setShowCookieModal(false);
+                        try {
+                          await fetch('/api/clicker/skin', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({ url: newUrl })
+                          });
+                        } catch(e) {}
+                      } else {
+                        setShowCookieModal(false);
                       }
-                      setShowCookieModal(false);
                     }}
                     className="px-4 py-2 text-sm bg-pink-500 text-white font-bold rounded-lg hover:bg-pink-600 transition-colors"
                   >
