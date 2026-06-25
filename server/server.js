@@ -39,6 +39,7 @@ const mediaRouter = require('./routes/media');
 const kanbanRouter = require('./routes/kanban');
 const searchRouter = require('./routes/search');
 const clickerRouter = require('./routes/clicker');
+const clickerUploadRouter = require('./routes/clicker-upload');
 const mediaStatsRouter = require('./routes/media_stats');
 const mediaListsRouter = require('./routes/media_lists');
 const transitRouter = require('./routes/transit');
@@ -125,6 +126,7 @@ app.use('/uploads/chat', jwtProtected, express.static(path.join(__dirname, 'uplo
 app.use('/uploads/voice', jwtProtected, express.static(path.join(__dirname, 'uploads', 'voice')));
 app.use('/uploads/stories', express.static(path.join(__dirname, 'uploads', 'stories'))); // Public like posts
 app.use('/uploads/cantine', express.static(path.join(__dirname, 'uploads', 'cantine'))); // Menu images
+app.use('/uploads/clicker', express.static(path.join(__dirname, 'uploads', 'clicker'))); // Clicker custom cookies
 
 // ─── Route registry ────────────────────────────────────────────────────────
 // Ajouter / supprimer une entrée ici suffit : la page /status se met à jour
@@ -249,6 +251,7 @@ app.use('/api/media', apiLimiter, mediaRouter);
 app.use('/api/kanban', jwtWithUser, kanbanRouter);
 app.use('/api/search', jwtWithUser, searchRouter);
 app.use('/api/clicker', jwtWithUser, clickerRouter);
+app.use('/api/clicker/upload', jwtWithUser, clickerUploadRouter);
 app.use('/api/transit', transitRouter);
 
 // Health check

@@ -2,6 +2,55 @@ const express = require('express');
 const router = express.Router();
 const supabase = require('../config/supabase');
 
+const UPGRADES = [
+  // Clic (PPC)
+  { id: 'stylo', baseCost: 50, type: 'click', value: 1 },
+  { id: 'cafe', baseCost: 500, type: 'click', value: 5 },
+  { id: 'calculatrice', baseCost: 5000, type: 'click', value: 25 },
+  { id: 'livre_maths', baseCost: 50000, type: 'click', value: 100 },
+  { id: 'blouse', baseCost: 250000, type: 'click', value: 500 },
+  { id: 'soudure_parfaite', baseCost: 2500000, type: 'click', value: 10000 },
+  { id: 'copion_trousse', baseCost: 10000000, type: 'click', value: 50000 },
+  { id: 'hack_wifi', baseCost: 50000000, type: 'click', value: 250000 },
+
+  // Passif (PPS)
+  { id: 'delegue', baseCost: 100, type: 'passive', value: 1 },
+  { id: 'numworks', baseCost: 1000, type: 'passive', value: 10 },
+  { id: 'prof_absent', baseCost: 10000, type: 'passive', value: 100 },
+  { id: 'sujet_fuite', baseCost: 100000, type: 'passive', value: 1500 },
+  { id: 'major_promo', baseCost: 500000, type: 'passive', value: 8000 },
+  { id: 'corrige_erreur', baseCost: 2500000, type: 'passive', value: 40000 },
+  { id: 'cles_lycee', baseCost: 15000000, type: 'passive', value: 250000 },
+  { id: 'parcoursup', baseCost: 100000000, type: 'passive', value: 1000000 },
+  { id: 'x_ens', baseCost: 1000000000, type: 'passive', value: 10000000 },
+
+  // Rebirth / Late Game
+  { id: 'ia_quantique', baseCost: 1000000000, type: 'click', value: 5000000 },
+  { id: 'ferme_minage_cdi', baseCost: 5000000000, type: 'passive', value: 25000000 },
+  { id: 'controle_mental', baseCost: 50000000000, type: 'click', value: 100000000 },
+  { id: 'cerveau_merieux', baseCost: 250000000000, type: 'passive', value: 1000000000 },
+  { id: 'fusion_monge', baseCost: 500000000000, type: 'click', value: 5000000000 },
+  { id: 'dieu_prepa', baseCost: 5000000000000, type: 'passive', value: 25000000000 },
+];
+
+// --- User Lock Mechanism for Race Conditions ---
+const userLocks = new Map();
+
+const acquireLock = async (userId) => {
+  if (!userLocks.has(userId)) {
+    userLocks.set(userId, Promise.resolve());
+  }
+  const currentPromise = userLocks.get(userId);
+  let resolveNext;
+  const nextPromise = new Promise(resolve => {
+    resolveNext = resolve;
+  });
+  userLocks.set(userId, currentPromise.then(() => nextPromise));
+  await currentPromise;
+  return resolveNext;
+};
+// -----------------------------------------------
+
 // Get global and user state
 router.get('/state', async (req, res) => {
   try {
@@ -90,14 +139,31 @@ router.post('/sync', async (req, res) => {
 
     if (!earnedPoints || earnedPoints <= 0) return res.json({ success: true });
 
-    // 1. Mettre à jour l'utilisateur (points et total)
-    const { data: profile, error } = await supabase
+    const releaseLock = await acquireLock(userId);
+    try {
+      // 1. Mettre à jour l'utilisateur (points et total)
+      const { data: profile, error } = await supabase
       .from('clicker_users')
-      .select('points, total_clicks')
+      .select('points, total_clicks, click_power, passive_pps, last_sync')
       .eq('user_id', userId)
       .single();
 
     if (error) throw error;
+
+    // --- SECURITY CHECK: Anti-Cheat Sync Validation ---
+    const now = Date.now();
+    const lastSyncTime = profile.last_sync ? new Date(profile.last_sync).getTime() : now - 3000;
+    // Calculate seconds since last sync (min 3 seconds for regular interval)
+    const diffSeconds = Math.max((now - lastSyncTime) / 1000, 3);
+    
+    // Max theoretical points = (PPS + (ClickPower * 15 max CPS)) * (Elapsed time + 5s grace period)
+    const maxPossible = (parseInt(profile.passive_pps) + (parseInt(profile.click_power) * 15)) * (diffSeconds + 5);
+    
+    if (parseInt(earnedPoints) > maxPossible) {
+      console.warn(`[ANTI-CHEAT] User ${userId} tried to sync ${earnedPoints} points. Max possible was ${maxPossible}.`);
+      return res.status(400).json({ error: 'Montant de points invalide (triche détectée)' });
+    }
+    // ----------------------------------------------------
 
     const newPoints = parseInt(profile.points) + parseInt(earnedPoints);
     const newTotal = parseInt(profile.total_clicks) + parseInt(earnedPoints);
@@ -125,6 +191,9 @@ router.post('/sync', async (req, res) => {
     }
 
     res.json({ success: true, newPoints, newGlobal });
+    } finally {
+      releaseLock();
+    }
   } catch (error) {
     console.error('Erreur Clicker Sync:', error);
     res.status(500).json({ error: 'Erreur serveur' });
@@ -135,26 +204,44 @@ router.post('/sync', async (req, res) => {
 router.post('/upgrade', async (req, res) => {
   try {
     const userId = req.user.id;
-    const { upgradeId, cost, clickPowerBonus, passivePpsBonus } = req.body;
+    const { upgradeId } = req.body;
 
-    const { data: profile, error } = await supabase
-      .from('clicker_users')
+    const upgradeDef = UPGRADES.find(u => u.id === upgradeId);
+    if (!upgradeDef) {
+      return res.status(400).json({ error: 'Amélioration introuvable' });
+    }
+
+    const releaseLock = await acquireLock(userId);
+    try {
+      const { data: profile, error } = await supabase
+        .from('clicker_users')
       .select('*')
       .eq('user_id', userId)
       .single();
 
     if (error) throw error;
 
-    if (profile.points < cost) {
+    const count = (profile.upgrades || []).filter(id => id === upgradeId).length;
+    if (count >= 100) {
+      return res.status(400).json({ error: 'Niveau maximum atteint (100) pour cette amélioration' });
+    }
+
+    // Server-side cost calculation
+    const actualCost = Math.floor(upgradeDef.baseCost * Math.pow(1.15, count));
+
+    if (profile.points < actualCost) {
       return res.status(400).json({ error: 'Fonds insuffisants' });
     }
 
     const currentRebirths = parseInt(profile.rebirths) || 0;
     const multiplier = 1 + currentRebirths;
 
-    const newPoints = profile.points - cost;
-    const newClickPower = profile.click_power + ((clickPowerBonus || 0) * multiplier);
-    const newPps = profile.passive_pps + ((passivePpsBonus || 0) * multiplier);
+    const newPoints = profile.points - actualCost;
+    const clickPowerBonus = upgradeDef.type === 'click' ? upgradeDef.value : 0;
+    const passivePpsBonus = upgradeDef.type === 'passive' ? upgradeDef.value : 0;
+    
+    const newClickPower = profile.click_power + (clickPowerBonus * multiplier);
+    const newPps = profile.passive_pps + (passivePpsBonus * multiplier);
     
     const upgrades = [...(profile.upgrades || [])];
     upgrades.push(upgradeId);
@@ -171,11 +258,34 @@ router.post('/upgrade', async (req, res) => {
       .select()
       .single();
 
-    if (updErr) throw updErr;
+      if (updErr) throw updErr;
 
-    res.json({ success: true, user: updated });
+      res.json({ success: true, user: updated });
+    } finally {
+      releaseLock();
+    }
   } catch (error) {
     console.error('Erreur Clicker Upgrade:', error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+});
+
+// --- SKIN ---
+router.post('/skin', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { url } = req.body;
+
+    const { error } = await supabase
+      .from('clicker_users')
+      .update({ custom_cookie_url: url || null })
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    res.json({ success: true, url });
+  } catch (error) {
+    console.error('Erreur Clicker Skin:', error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 });
