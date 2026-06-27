@@ -4,8 +4,6 @@ import { ChevronLeft, History, Play, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function PokerHistory() {
-  const [searchParams] = useSearchParams();
-  const roomId = searchParams.get('room');
   const navigate = useNavigate();
   const { token } = useAuth();
   
@@ -13,12 +11,7 @@ export default function PokerHistory() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!roomId) {
-      navigate('/outils/poker');
-      return;
-    }
-    
-    fetch(`${import.meta.env.VITE_API_URL}/api/poker/history/${roomId}`, {
+    fetch(`${import.meta.env.VITE_API_URL}/api/poker/my-history`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -37,7 +30,7 @@ export default function PokerHistory() {
       console.error(err);
       setLoading(false);
     });
-  }, [roomId, token, navigate]);
+  }, [token, navigate]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col p-4 sm:p-8 pt-20">
@@ -45,7 +38,7 @@ export default function PokerHistory() {
         
         <header className="flex items-center gap-4 mb-8">
           <button 
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/outils/poker')}
             className="p-3 bg-slate-900 hover:bg-slate-800 rounded-xl transition"
           >
             <ChevronLeft size={24} />
@@ -53,9 +46,9 @@ export default function PokerHistory() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
               <History className="text-emerald-500" />
-              Historique des parties
+              Mon Historique de Poker
             </h1>
-            <p className="text-slate-400 font-mono mt-1">Salon : {roomId}</p>
+            <p className="text-slate-400 font-mono mt-1">Vos dernières parties jouées</p>
           </div>
         </header>
 
@@ -74,7 +67,7 @@ export default function PokerHistory() {
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <span className="bg-slate-800 text-slate-300 text-xs font-mono px-2 py-1 rounded-md">
-                      #{history.length - idx}
+                      Salon: {hand.room_id}
                     </span>
                     <span className="text-slate-400 text-sm">
                       {new Date(hand.created_at).toLocaleString('fr-FR')}

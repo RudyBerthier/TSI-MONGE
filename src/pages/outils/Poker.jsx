@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Users, LogIn, Plus, ArrowLeft } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Users, LogIn, Plus, ArrowLeft, History } from 'lucide-react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import PokerTable from '../../components/poker/PokerTable';
 import { RestrictedAccess } from '../../components/RestrictedAccess';
 
@@ -13,6 +13,7 @@ export default function Poker() {
   
   const [searchParams, setSearchParams] = useSearchParams();
   const roomId = searchParams.get('room');
+  const navigate = useNavigate();
   
   const [inputRoomId, setInputRoomId] = useState('');
   
@@ -87,6 +88,16 @@ export default function Poker() {
               Jouer
             </button>
           </form>
+          
+          <div className="mt-6 pt-6 border-t border-slate-700/50">
+             <button 
+                onClick={() => navigate('/outils/poker/history')}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700/50 font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-md"
+              >
+                <History size={18} />
+                Mon Historique de Parties
+              </button>
+          </div>
         </motion.div>
       </div>
     </div>

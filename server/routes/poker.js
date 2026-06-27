@@ -12,16 +12,16 @@ const supabase = createClient(
   }
 );
 
-// Get recent hand history for a room
-router.get('/history/:roomId', async (req, res) => {
+// Get recent hand history for the logged in user
+router.get('/my-history', async (req, res) => {
   try {
-    const { roomId } = req.params;
-    const limit = parseInt(req.query.limit) || 20;
+    const userId = req.user.id;
+    const limit = parseInt(req.query.limit) || 50;
 
     const { data, error } = await supabase
       .from('poker_hands')
       .select('id, room_id, created_at, pot, winners, players')
-      .eq('room_id', roomId)
+      .contains('players', `[{"id":"${userId}"}]`)
       .order('created_at', { ascending: false })
       .limit(limit);
 
