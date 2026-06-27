@@ -308,10 +308,13 @@ class PokerGame {
       });
       // Remove offline players
       this.players = this.players.filter(p => !p.isOffline);
+      
       // Auto-start if enough players
       if (this.players.length >= 2) {
-        // Could auto-start, or wait for manual start
+         this.startGame();
       }
+      
+      if (this.onStateChange) this.onStateChange();
     }, 8000);
   }
 

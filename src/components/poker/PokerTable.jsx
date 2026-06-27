@@ -44,6 +44,16 @@ export default function PokerTable({ roomId, onLeave }) {
   useEffect(() => {
     if (!socket || !user) return;
 
+    socket.on('poker:error', (msg) => {
+      alert(msg);
+      onLeave();
+    });
+    
+    socket.on('poker:kicked', ({ reason }) => {
+      alert(reason);
+      onLeave();
+    });
+
     socket.emit('poker:join', { roomId, user: { id: user.id, username: user.username, avatar: user.avatar || user.google_avatar || null } });
 
     const handleState = (state) => {
@@ -225,7 +235,14 @@ export default function PokerTable({ roomId, onLeave }) {
           {gameState.players.map((p, i) => {
             const isMe = p.id === user.id;
             const total = Math.max(gameState.players.length, 2);
-            const angle = (i / total) * Math.PI * 2 + Math.PI/2;
+            
+            // Shift index so that the local user is ALWAYS at index 0
+            const myIndex = gameState.players.findIndex(player => player.id === user.id);
+            const shift = myIndex !== -1 ? myIndex : 0;
+            const shiftedIndex = (i - shift + total) % total;
+            
+            // Math.PI/2 is the bottom of the circle/oval
+            const angle = (shiftedIndex / total) * Math.PI * 2 + Math.PI/2;
             
             // Map angle to a 900x450 ellipse OR 900x900 circle
             const rx = 450;

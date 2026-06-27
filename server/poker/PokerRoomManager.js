@@ -20,7 +20,9 @@ class PokerRoomManager {
 
   getRoom(roomId) {
     if (!this.rooms.has(roomId)) {
-      this.rooms.set(roomId, new PokerGame(roomId));
+      const game = new PokerGame(roomId);
+      game.onStateChange = () => this.broadcastState(roomId);
+      this.rooms.set(roomId, game);
     }
     return this.rooms.get(roomId);
   }
@@ -35,6 +37,14 @@ class PokerRoomManager {
       socket.join(`poker:${roomId}`);
       currentRoom = roomId;
       currentUser = user;
+
+      const game = this.getRoom(roomId);
+      
+      // Kick previous connection for this user if it exists
+      const existingPlayer = game.players.find(p => p.id === user.id);
+      if (existingPlayer && existingPlayer.socketId && existingPlayer.socketId !== socket.id) {
+        this.io.to(existingPlayer.socketId).emit('poker:kicked', { reason: 'Vous avez rejoint la table depuis un autre onglet ou appareil.' });
+      }
 
       // Fetch user poker profile (chips) from Supabase
       let chips = 10000;
@@ -58,7 +68,6 @@ class PokerRoomManager {
         console.error('Error fetching poker profile:', err);
       }
 
-      const game = this.getRoom(roomId);
       game.addPlayer({
         id: user.id,
         socketId: socket.id,
