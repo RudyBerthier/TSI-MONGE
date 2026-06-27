@@ -93,11 +93,10 @@ class PokerRoomManager {
       }
     });
 
-    socket.on('poker:start', ({ roomId }) => {
+    socket.on('poker:ready', ({ roomId }) => {
       const game = this.rooms.get(roomId);
-      if (game && game.status === 'WAITING') {
-        const started = game.startGame();
-        if (started) {
+      if (game && currentUser) {
+        if (game.toggleReady(currentUser.id)) {
           this.broadcastState(roomId);
         }
       }

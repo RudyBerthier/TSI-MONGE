@@ -38,6 +38,7 @@ class PokerGame {
       currentBet: 0,
       folded: false,
       isAllIn: false,
+      isReady: false,
       cards: [],
       position: this.players.length,
       isOffline: false
@@ -57,6 +58,19 @@ class PokerGame {
     } else {
       this.players = this.players.filter(p => p.id !== userId);
     }
+  }
+
+  toggleReady(userId) {
+    if (this.status !== 'WAITING') return false;
+    const player = this.players.find(p => p.id === userId);
+    if (player) {
+      player.isReady = !player.isReady;
+      if (this.players.length >= 2 && this.players.every(p => p.isReady)) {
+        this.startGame();
+      }
+      return true;
+    }
+    return false;
   }
 
   // --- Game Flow ---
@@ -312,6 +326,9 @@ class PokerGame {
       // Auto-start if enough players
       if (this.players.length >= 2) {
          this.startGame();
+      } else {
+         // Not enough players, reset ready states
+         this.players.forEach(p => p.isReady = false);
       }
       
       if (this.onStateChange) this.onStateChange();
@@ -336,6 +353,7 @@ class PokerGame {
         currentBet: p.currentBet,
         folded: p.folded,
         isAllIn: p.isAllIn,
+        isReady: p.isReady,
         position: p.position,
         isOffline: p.isOffline,
         // Only send cards to the owner or at showdown

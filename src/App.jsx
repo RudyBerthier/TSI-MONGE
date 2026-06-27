@@ -149,6 +149,7 @@ function AnimatedOutlet() {
 function AppLayout() {
   const { pathname } = useLocation()
   const hideNavbar = pathname.startsWith('/social') || pathname.startsWith('/outils/poker')
+  const hideGlobalSearch = pathname.startsWith('/outils/poker')
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [showOfflineBanner, setShowOfflineBanner] = useState(!navigator.onLine)
 
@@ -204,7 +205,7 @@ function AppLayout() {
       <OfflineIndicator />
       <InstallPrompt />
       <MiniPlayer />
-      <GlobalSearch />
+      {!hideGlobalSearch && <GlobalSearch />}
     </ErrorBoundary>
   )
 }

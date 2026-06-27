@@ -221,9 +221,13 @@ export default function PokerTable({ roomId, onLeave }) {
               <div className="absolute text-center flex flex-col items-center z-10">
                 <p className="text-slate-400 mb-4 font-medium uppercase tracking-widest text-sm px-4">En attente de joueurs</p>
                 {gameState.players.length >= 2 ? (
-                  <button onClick={handleStart} className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 px-6 py-3 rounded-full font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)] transition text-base pointer-events-auto">
-                    <Play size={18} /> Lancer la partie
-                  </button>
+                  me && gameState.players.find(p => p.id === me?.id)?.isReady ? (
+                    <p className="text-emerald-400 text-sm font-bold uppercase tracking-widest animate-pulse">En attente des autres...</p>
+                  ) : (
+                    <button onClick={() => socket.emit('poker:ready', { roomId })} className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 px-8 py-3 rounded-full font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)] transition text-base pointer-events-auto">
+                      <Check size={18} strokeWidth={3} /> Prêt
+                    </button>
+                  )
                 ) : (
                   <p className="text-slate-500 text-sm text-center">(Il faut au moins 2 joueurs)</p>
                 )}
