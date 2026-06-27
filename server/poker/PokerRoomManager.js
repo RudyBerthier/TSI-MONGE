@@ -1,10 +1,15 @@
 const PokerGame = require('./PokerGame');
 const { createClient } = require('@supabase/supabase-js');
+const WebSocket = require('ws');
 
 // Assuming SUPABASE_URL and SUPABASE_SERVICE_KEY are in process.env
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY,
+  {
+    auth: { persistSession: false },
+    realtime: { transport: WebSocket }
+  }
 );
 
 class PokerRoomManager {
@@ -26,7 +31,7 @@ class PokerRoomManager {
 
     socket.on('poker:join', async ({ roomId, user }) => {
       if (!roomId || !user) return;
-      
+
       socket.join(`poker:${roomId}`);
       currentRoom = roomId;
       currentUser = user;
@@ -39,7 +44,7 @@ class PokerRoomManager {
           .select('chips')
           .eq('user_id', user.id)
           .single();
-          
+
         if (profile) {
           chips = profile.chips;
         } else {
@@ -95,7 +100,7 @@ class PokerRoomManager {
         if (game) {
           game.removePlayer(currentUser.id);
           this.broadcastState(currentRoom);
-          
+
           // Cleanup empty rooms
           if (game.players.length === 0) {
             this.rooms.delete(currentRoom);
