@@ -7,6 +7,7 @@ const TicTacToe = require('./games/TicTacToe');
 const Connect4 = require('./games/Connect4');
 const RockPaperScissors = require('./games/RockPaperScissors');
 const Chess = require('./games/Chess');
+const PokerRoomManager = require('./poker/PokerRoomManager');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'tsi1-secret-key-2025';
 const MAX_MESSAGES = 500;
@@ -601,6 +602,7 @@ function getRadioState() {
 
 module.exports = (io) => {
   const gameManager = new GameManager(io);
+  const pokerManager = new PokerRoomManager(io);
 
   // Authentication middleware
   io.use((socket, next) => {
@@ -638,6 +640,9 @@ module.exports = (io) => {
   io.on('connection', async (socket) => {
     const user = socket.user;
     console.log(`✅ Chat: ${user.username} connecté`);
+
+    // Poker Manager handler
+    pokerManager.handleConnection(socket);
 
     // Radio Monge Handlers
     socket.on('radio:join', () => {

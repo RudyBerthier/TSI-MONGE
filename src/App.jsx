@@ -55,6 +55,7 @@ const Kholleurs = lazy(() => import('./pages/Kholleurs').then(m => ({ default: m
 const OutilsPage = lazy(() => import('./pages/OutilsPage').then(m => ({ default: m.OutilsPage })))
 const KanbanBoard = lazy(() => import('./pages/outils/KanbanBoard').then(m => ({ default: m.KanbanBoard })))
 const MongeClicker = lazy(() => import('./pages/outils/MongeClicker').then(m => ({ default: m.default })))
+const Poker = lazy(() => import('./pages/outils/Poker').then(m => ({ default: m.default })))
 const CarpoolHub = lazy(() => import('./pages/carpool/CarpoolHub').then(m => ({ default: m.CarpoolHub })))
 const CarpoolOffer = lazy(() => import('./pages/carpool/CarpoolOffer').then(m => ({ default: m.CarpoolOffer })))
 const CarpoolHistory = lazy(() => import('./pages/carpool/CarpoolHistory').then(m => ({ default: m.CarpoolHistory })))
@@ -147,7 +148,7 @@ function AnimatedOutlet() {
 // Components that need router context (like useLocation) are moved into a Layout Route
 function AppLayout() {
   const { pathname } = useLocation()
-  const hideNavbar = pathname.startsWith('/social')
+  const hideNavbar = pathname.startsWith('/social') || pathname.startsWith('/outils/poker')
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [showOfflineBanner, setShowOfflineBanner] = useState(!navigator.onLine)
 
@@ -242,6 +243,7 @@ const router = createBrowserRouter([
       { path: "outils", element: <OutilsPage /> },
       { path: "outils/kanban", element: <KanbanBoard /> },
       { path: "outils/clicker", element: <MongeClicker /> },
+      { path: "outils/poker", element: <Poker /> },
       { path: "mes-critiques", element: <MyReviews /> },
       { path: "media", element: <MediaHub /> },
       { path: "covoiturage", element: <CarpoolHub /> },

@@ -104,9 +104,6 @@ html.dark body {
   border-bottom: 1px solid var(--border);
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.1);
   padding-top: env(safe-area-inset-top, 0px);
-  /* Force GPU rendering to fix Chrome backdrop-filter ignoring transformed child layers */
-  transform: translate3d(0, 0, 0);
-  -webkit-transform: translate3d(0, 0, 0);
 }
 
 /* --- Section labels ------------------------------------------- */

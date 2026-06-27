@@ -25,6 +25,7 @@
     "node-ical": "^0.24.2",
     "pdf-parse": "^2.4.5",
     "play-dl": "^1.9.7",
+    "pokersolver": "^2.1.4",
     "resend": "^6.9.1",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",

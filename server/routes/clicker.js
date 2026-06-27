@@ -31,7 +31,96 @@ const UPGRADES = [
   { id: 'cerveau_merieux', baseCost: 250000000000, type: 'passive', value: 1000000000 },
   { id: 'fusion_monge', baseCost: 500000000000, type: 'click', value: 5000000000 },
   { id: 'dieu_prepa', baseCost: 5000000000000, type: 'passive', value: 25000000000 },
+  
+  // Critiques
+  { id: 'crit_oral', baseCost: 1000000, type: 'crit', value: 1 },
 ];
+
+const ACHIEVEMENTS = [
+  { id: 'semaine_integration', name: 'Semaine d\'intégration', description: 'Atteindre 1 000 clics totaux', threshold: 1000 },
+  { id: 'admissible_mines', name: 'Admissible aux Mines', description: 'Atteindre 1 Milliard de clics', threshold: 1000000000 },
+  { id: 'khagneux_repenti', name: 'Khâgneux repenti', description: 'Jouer après 48h depuis la création du compte', type: 'time' },
+  { id: 'major_promo', name: 'Major de Promo', description: 'Atteindre la 1ère place du classement', type: 'rank' }
+];
+
+const recalculateUserStats = (profile) => {
+  let baseClick = 1;
+  let basePassive = 0;
+  
+  const counts = {};
+  
+  // Safe parse in case DB returns string
+  let upgradesArr = profile.upgrades;
+  if (typeof upgradesArr === 'string') {
+    try { upgradesArr = JSON.parse(upgradesArr); } catch(e) { upgradesArr = []; }
+  }
+  
+  for(const u of (upgradesArr || [])) {
+    counts[u] = (counts[u] || 0) + 1;
+  }
+  
+  for(const [id, count] of Object.entries(counts)) {
+    const def = UPGRADES.find(u => u.id === id);
+    if(def) {
+      if(def.type === 'click') baseClick += def.value * count;
+      if(def.type === 'passive') basePassive += def.value * count;
+    }
+  }
+  
+  const rebirths = parseInt(profile.rebirths) || 0;
+  
+  let achArr = profile.achievements;
+  if (typeof achArr === 'string') {
+    try { achArr = JSON.parse(achArr); } catch(e) { achArr = []; }
+  }
+  const numAchievements = (achArr || []).length;
+  
+  const multiplier = (1 + rebirths) * (1 + (numAchievements * 0.05));
+  
+  return {
+    click_power: Math.floor(baseClick * multiplier),
+    passive_pps: Math.floor(basePassive * multiplier)
+  };
+};
+
+const checkAchievements = async (profile, supabase) => {
+  let currentAchievements = profile.achievements;
+  if (typeof currentAchievements === 'string') {
+    try { currentAchievements = JSON.parse(currentAchievements); } catch(e) { currentAchievements = []; }
+  }
+  currentAchievements = currentAchievements || [];
+  
+  let newUnlocked = false;
+  const newlyUnlocked = [];
+
+  for (const ach of ACHIEVEMENTS) {
+    if (!currentAchievements.includes(ach.id)) {
+      let unlocked = false;
+      if (ach.id === 'semaine_integration' || ach.id === 'admissible_mines') {
+        if (parseInt(profile.total_clicks) >= ach.threshold) unlocked = true;
+      }
+      if (ach.id === 'khagneux_repenti' && profile.created_at) {
+        const createdDate = new Date(profile.created_at);
+        const now = new Date();
+        const diffHours = (now - createdDate) / (1000 * 60 * 60);
+        if (diffHours >= 48) unlocked = true;
+      }
+      if (ach.id === 'major_promo' && parseInt(profile.total_clicks) >= 1000) {
+        // Fast check without heavy query if score is very low
+        const { data: topUser } = await supabase.from('clicker_users').select('total_clicks').order('total_clicks', { ascending: false }).limit(1).single();
+        if (topUser && parseInt(profile.total_clicks) >= parseInt(topUser.total_clicks)) unlocked = true;
+      }
+
+      if (unlocked) {
+        currentAchievements.push(ach.id);
+        newlyUnlocked.push(ach.id);
+        newUnlocked = true;
+      }
+    }
+  }
+
+  return { newUnlocked, currentAchievements, newlyUnlocked };
+};
 
 // --- User Lock Mechanism for Race Conditions ---
 const userLocks = new Map();
@@ -144,7 +233,7 @@ router.post('/sync', async (req, res) => {
       // 1. Mettre à jour l'utilisateur (points et total)
       const { data: profile, error } = await supabase
       .from('clicker_users')
-      .select('points, total_clicks, click_power, passive_pps, last_sync')
+      .select('*')
       .eq('user_id', userId)
       .single();
 
@@ -156,8 +245,11 @@ router.post('/sync', async (req, res) => {
     // Calculate seconds since last sync (min 3 seconds for regular interval)
     const diffSeconds = Math.max((now - lastSyncTime) / 1000, 3);
     
-    // Max theoretical points = (PPS + (ClickPower * 15 max CPS)) * (Elapsed time + 5s grace period)
-    const maxPossible = (parseInt(profile.passive_pps) + (parseInt(profile.click_power) * 15)) * (diffSeconds + 5);
+    // Max theoretical points = (PPS + (ClickPower * 15 max CPS * MaxCritMultiplier)) * (Elapsed time + 5s grace period)
+    // Assuming max possible crits in 15 CPS window (which is extreme but mathematically possible)
+    // Each crit is x10. So we just multiply click power max by 10 to be safe.
+    const theoreticalMaxClickPower = parseInt(profile.click_power) * 10;
+    const maxPossible = (parseInt(profile.passive_pps) + (theoreticalMaxClickPower * 15)) * (diffSeconds + 5);
     
     if (parseInt(earnedPoints) > maxPossible) {
       console.warn(`[ANTI-CHEAT] User ${userId} tried to sync ${earnedPoints} points. Max possible was ${maxPossible}.`);
@@ -168,13 +260,28 @@ router.post('/sync', async (req, res) => {
     const newPoints = parseInt(profile.points) + parseInt(earnedPoints);
     const newTotal = parseInt(profile.total_clicks) + parseInt(earnedPoints);
 
+    profile.points = newPoints;
+    profile.total_clicks = newTotal;
+    const { newUnlocked, newlyUnlocked, currentAchievements } = await checkAchievements(profile, supabase);
+
+    const updatePayload = {
+      points: newPoints,
+      total_clicks: newTotal,
+      last_sync: new Date().toISOString()
+    };
+
+    if (newUnlocked) {
+      profile.achievements = currentAchievements;
+      updatePayload.achievements = currentAchievements;
+      
+      const newStats = recalculateUserStats(profile);
+      updatePayload.click_power = newStats.click_power;
+      updatePayload.passive_pps = newStats.passive_pps;
+    }
+
     await supabase
       .from('clicker_users')
-      .update({
-        points: newPoints,
-        total_clicks: newTotal,
-        last_sync: new Date().toISOString()
-      })
+      .update(updatePayload)
       .eq('user_id', userId);
 
     // 2. Mettre à jour le global (avec une fonction RPC idéale, ou sinon update)
@@ -190,7 +297,7 @@ router.post('/sync', async (req, res) => {
       io.emit('clicker:global_update', newGlobal);
     }
 
-    res.json({ success: true, newPoints, newGlobal });
+    res.json({ success: true, newPoints, newGlobal, newlyUnlocked: newUnlocked ? newlyUnlocked : [] });
     } finally {
       releaseLock();
     }
@@ -221,38 +328,43 @@ router.post('/upgrade', async (req, res) => {
 
     if (error) throw error;
 
-    const count = (profile.upgrades || []).filter(id => id === upgradeId).length;
+    // Safe parse
+    let profileUpgrades = profile.upgrades;
+    if (typeof profileUpgrades === 'string') {
+      try { profileUpgrades = JSON.parse(profileUpgrades); } catch(e) { profileUpgrades = []; }
+    }
+    
+    const count = (profileUpgrades || []).filter(id => id === upgradeId).length;
     if (count >= 100) {
       return res.status(400).json({ error: 'Niveau maximum atteint (100) pour cette amélioration' });
     }
 
     // Server-side cost calculation
-    const actualCost = Math.floor(upgradeDef.baseCost * Math.pow(1.15, count));
+    const scale = upgradeDef.type === 'crit' ? 1.85 : 1.15;
+    const actualCost = Math.floor(upgradeDef.baseCost * Math.pow(scale, count));
 
     if (profile.points < actualCost) {
       return res.status(400).json({ error: 'Fonds insuffisants' });
     }
 
-    const currentRebirths = parseInt(profile.rebirths) || 0;
-    const multiplier = 1 + currentRebirths;
-
     const newPoints = profile.points - actualCost;
-    const clickPowerBonus = upgradeDef.type === 'click' ? upgradeDef.value : 0;
-    const passivePpsBonus = upgradeDef.type === 'passive' ? upgradeDef.value : 0;
+    profile.upgrades = [...(profileUpgrades || []), upgradeId];
+    profile.points = newPoints;
     
-    const newClickPower = profile.click_power + (clickPowerBonus * multiplier);
-    const newPps = profile.passive_pps + (passivePpsBonus * multiplier);
+    // Check if buying something pushes them to an achievement
+    const { newUnlocked, newlyUnlocked, currentAchievements } = await checkAchievements(profile, supabase);
+    if (newUnlocked) profile.achievements = currentAchievements;
     
-    const upgrades = [...(profile.upgrades || [])];
-    upgrades.push(upgradeId);
+    const newStats = recalculateUserStats(profile);
 
     const { data: updated, error: updErr } = await supabase
       .from('clicker_users')
       .update({
         points: newPoints,
-        click_power: newClickPower,
-        passive_pps: newPps,
-        upgrades: upgrades
+        click_power: newStats.click_power,
+        passive_pps: newStats.passive_pps,
+        upgrades: profile.upgrades,
+        achievements: profile.achievements
       })
       .eq('user_id', userId)
       .select()
@@ -260,7 +372,7 @@ router.post('/upgrade', async (req, res) => {
 
       if (updErr) throw updErr;
 
-      res.json({ success: true, user: updated });
+      res.json({ success: true, user: updated, newlyUnlocked: newlyUnlocked || [] });
     } finally {
       releaseLock();
     }
@@ -312,16 +424,20 @@ router.post('/rebirth', async (req, res) => {
     }
 
     const newRebirths = currentRebirths + 1;
-    const newMultiplier = 1 + newRebirths;
+    profile.rebirths = newRebirths;
+    profile.points = 0;
+    profile.upgrades = [];
+    
+    const newStats = recalculateUserStats(profile);
 
     const { data: updated, error: updErr } = await supabase
       .from('clicker_users')
       .update({
         points: 0,
-        click_power: 1 * newMultiplier,
-        passive_pps: 0,
         upgrades: [],
-        rebirths: newRebirths
+        rebirths: newRebirths,
+        click_power: newStats.click_power,
+        passive_pps: newStats.passive_pps
       })
       .eq('user_id', userId)
       .select()

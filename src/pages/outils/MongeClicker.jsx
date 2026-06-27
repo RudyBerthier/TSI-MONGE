@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Zap, Clock, MousePointer2, Settings, ArrowLeft, ExternalLink, Award, PenTool, Coffee, Calculator, BookOpen, Shirt, Flame, FileText, Wifi, UserCheck, Smartphone, PartyPopper, EyeOff, Ghost, Mail, Key, ServerOff, GraduationCap, Check, Info, X, Palette } from 'lucide-react';
+import { Trophy, Zap, Clock, MousePointer2, Settings, ArrowLeft, ExternalLink, Award, PenTool, Coffee, Calculator, BookOpen, Shirt, Flame, FileText, Wifi, UserCheck, Smartphone, PartyPopper, EyeOff, Ghost, Mail, Key, ServerOff, GraduationCap, Check, Info, X, Palette, Lock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { Link } from 'react-router-dom';
@@ -34,7 +34,17 @@ const UPGRADES = [
   { id: 'controle_mental', name: 'Contrôle mental des 1ères années', description: '+100 000 000 clics par clic', baseCost: 50000000000, type: 'click', value: 100000000, icon: <EyeOff size={22} className="text-purple-500" /> },
   { id: 'cerveau_merieux', name: 'Cloner le cerveau de M. Deveaux', description: '+1 000 000 000 clics/sec', baseCost: 250000000000, type: 'passive', value: 1000000000, icon: <Settings size={22} className="text-pink-500" /> },
   { id: 'fusion_monge', name: 'Fusion avec Gaspard Monge', description: '+5 000 000 000 clics par clic', baseCost: 500000000000, type: 'click', value: 5000000000, icon: <Flame size={22} className="text-red-600" /> },
-  { id: 'dieu_prepa', name: 'Dieu de la Prépa', description: '+25 000 000 000 clics/sec', baseCost: 5000000000000, type: 'passive', value: 25000000000, icon: <Trophy size={22} className="text-yellow-400" /> },
+  { id: 'dieu_prepa', name: 'Le Dieu de la Prépa', baseCost: 5000000000000, type: 'passive', value: 25000000000, description: 'Tu as fusionné avec les équations de Maxwell.', icon: <Trophy size={22} className="text-yellow-400" /> },
+  
+  // Critiques
+  { id: 'crit_oral', name: 'Critique d\'Oral de Maths', description: '+1% Chance de Critique', baseCost: 1000000, type: 'crit', value: 1, icon: <Zap size={22} className="text-red-500" /> },
+];
+
+const ACHIEVEMENTS = [
+  { id: 'semaine_integration', name: 'Semaine d\'intégration', description: 'Atteindre 1 000 clics totaux', threshold: 1000 },
+  { id: 'admissible_mines', name: 'Admissible aux Mines', description: 'Atteindre 1 Milliard de clics', threshold: 1000000000 },
+  { id: 'khagneux_repenti', name: 'Khâgneux repenti', description: 'Jouer après 48h depuis la création du compte', type: 'time' },
+  { id: 'major_promo', name: 'Major de Promo', description: 'Atteindre la 1ère place du classement', type: 'rank' }
 ];
 
 const formatNumber = (num) => {
@@ -74,6 +84,9 @@ export default function MongeClicker() {
   const [clickPower, setClickPower] = useState(1);
   const [pps, setPps] = useState(0);
   const [ownedUpgrades, setOwnedUpgrades] = useState([]);
+  const [unlockedAchievements, setUnlockedAchievements] = useState([]);
+  const [newAchievementPopup, setNewAchievementPopup] = useState(null);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
   const [leaderboard, setLeaderboard] = useState([]);
   const [totalClicks, setTotalClicks] = useState(0);
   const [rebirths, setRebirths] = useState(0);
@@ -183,7 +196,18 @@ export default function MongeClicker() {
             setTotalClicks(parseInt(data.user.total_clicks) || 0);
             setClickPower(data.user.click_power || 1);
             setPps(data.user.passive_pps || 0);
-            setOwnedUpgrades(data.user.upgrades || []);
+            let parsedUpgrades = data.user.upgrades || [];
+            if (typeof parsedUpgrades === 'string') {
+              try { parsedUpgrades = JSON.parse(parsedUpgrades); } catch(e) { parsedUpgrades = []; }
+            }
+            setOwnedUpgrades(parsedUpgrades);
+            
+            let parsedAch = data.user.achievements || [];
+            if (typeof parsedAch === 'string') {
+              try { parsedAch = JSON.parse(parsedAch); } catch(e) { parsedAch = []; }
+            }
+            setUnlockedAchievements(parsedAch);
+            
             setRebirths(parseInt(data.user.rebirths) || 0);
             if (data.user.custom_cookie_url) {
               setCustomCookie(data.user.custom_cookie_url);
@@ -242,11 +266,36 @@ export default function MongeClicker() {
             },
             body: JSON.stringify({ earnedPoints: toSync })
           });
+          const data = await res.json();
           if (!res.ok) {
             // Rollback accumulator if failed
             earnedPointsRef.current += toSync;
           } else {
             // Fetch leaderboard occasionally
+            if (data.newlyUnlocked && data.newlyUnlocked.length > 0) {
+              setUnlockedAchievements(prev => {
+                const updated = [...prev];
+                data.newlyUnlocked.forEach(ach => {
+                  if(!updated.includes(ach)) updated.push(ach);
+                });
+                return updated;
+              });
+              // Show popup for first unlocked in batch
+              const achDef = ACHIEVEMENTS.find(a => a.id === data.newlyUnlocked[0]);
+              if (achDef) {
+                setNewAchievementPopup(achDef);
+                setTimeout(() => setNewAchievementPopup(null), 5000);
+              }
+              // Refresh state to get updated multiplier values
+              fetch('/api/clicker/state', { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } })
+                .then(r => r.json())
+                .then(st => {
+                   if(st.user) {
+                     setClickPower(st.user.click_power);
+                     setPps(st.user.passive_pps);
+                   }
+                });
+            }
             fetch('/api/clicker/leaderboard', {
               headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
             }).then(r => r.json()).then(d => setLeaderboard(d)).catch(() => { });
@@ -284,6 +333,13 @@ export default function MongeClicker() {
     return () => clearInterval(interval);
   }, [pps, loading, user]);
 
+  // Crit chance calculation
+  const getCritChance = () => {
+    const baseCrit = 1;
+    const critUpgrades = ownedUpgrades.filter(id => id === 'crit_oral').length;
+    return baseCrit + critUpgrades;
+  };
+
   const handleMainClick = (e) => {
     // 1. Block programmatic/simulated clicks
     if (!e.isTrusted) return;
@@ -306,20 +362,23 @@ export default function MongeClicker() {
     if (overheating) return; // Still cooling down
     clickTimestampsRef.current.push(now);
 
+    const isCrit = Math.random() * 100 < getCritChance();
+    const actualClickPower = isCrit ? clickPower * 10 : clickPower;
+
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     // Add floating number
     const id = Date.now() + Math.random();
-    setClicks(prev => [...prev, { id, x, y, value: clickPower }]);
+    setClicks(prev => [...prev, { id, x, y, value: actualClickPower, isCrit }]);
 
     // Update points
-    setPoints(p => p + clickPower);
-    setTotalClicks(t => t + clickPower);
-    setGlobalScore(g => g + clickPower); // Optimistic UI for global score
-    updateOptimisticLeaderboard(clickPower); // Optimistic UI for leaderboard
-    earnedPointsRef.current += clickPower;
+    setPoints(p => p + actualClickPower);
+    setTotalClicks(t => t + actualClickPower);
+    setGlobalScore(g => g + actualClickPower); // Optimistic UI for global score
+    updateOptimisticLeaderboard(actualClickPower); // Optimistic UI for leaderboard
+    earnedPointsRef.current += actualClickPower;
 
     // Remove after animation
     setTimeout(() => {
@@ -424,11 +483,14 @@ export default function MongeClicker() {
       const cost = getCost(u);
       const canAfford = points >= cost;
       const isMystery = isFirstUnowned && !canAfford;
-      const actualValue = u.value * rebirthMultiplier;
+      const actualValue = u.type === 'crit' ? u.value : u.value * rebirthMultiplier;
       const isClick = type === 'click';
+      const isCrit = type === 'crit';
 
       const borderBgColor = canAfford && !isMystery && !isMax
-        ? (isClick ? 'border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 hover:scale-[1.02] cursor-pointer' : 'border-orange-200 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-800/50 hover:scale-[1.02] cursor-pointer')
+        ? (isClick ? 'border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 hover:scale-[1.02] cursor-pointer' 
+          : isCrit ? 'border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-800/50 hover:scale-[1.02] cursor-pointer'
+          : 'border-orange-200 dark:border-orange-900/50 bg-orange-50/50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-800/50 hover:scale-[1.02] cursor-pointer')
         : isMax 
           ? 'border-gray-200 dark:border-[var(--border)] bg-green-50 dark:bg-green-900/10 opacity-80 cursor-not-allowed'
           : 'border-gray-200 dark:border-[var(--border)] bg-gray-50 dark:bg-[var(--surface-2)]/50 opacity-60 cursor-not-allowed';
@@ -436,7 +498,7 @@ export default function MongeClicker() {
       const textColor = isMax 
         ? 'text-green-600 dark:text-green-500'
         : canAfford && !isMystery
-          ? (isClick ? 'text-indigo-600 dark:text-indigo-400' : 'text-orange-600 dark:text-orange-400')
+          ? (isClick ? 'text-indigo-600 dark:text-indigo-400' : isCrit ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400')
           : 'text-red-500';
 
       return (
@@ -455,7 +517,7 @@ export default function MongeClicker() {
                 {isMystery ? '???' : u.name}
               </h4>
               <p className="text-[10px] text-gray-500 dark:text-[var(--text-muted)] leading-tight mt-0.5">
-                {isMystery ? 'Revenez quand vous serez plus riche !' : isMax ? 'Niveau maximum atteint' : `+${formatNumber(actualValue)} ${isClick ? 'par clic' : 'clics/sec'}`}
+                {isMystery ? 'Revenez quand vous serez plus riche !' : isMax ? 'Niveau maximum atteint' : `+${formatNumber(actualValue)} ${isClick ? 'par clic' : isCrit ? '% de chance' : 'clics/sec'}`}
               </p>
               <p className={`text-xs font-bold mt-1 ${textColor}`}>
                 {isMax ? 'MAX' : `${formatNumber(cost)} pts`}
@@ -476,7 +538,8 @@ export default function MongeClicker() {
 
   const getCost = (upgrade) => {
     const count = getOwnedCount(upgrade.id);
-    return Math.floor(upgrade.baseCost * Math.pow(1.15, count));
+    const scale = upgrade.type === 'crit' ? 1.85 : 1.15;
+    return Math.floor(upgrade.baseCost * Math.pow(scale, count));
   };
 
   if (loading) {
@@ -559,26 +622,28 @@ export default function MongeClicker() {
           <div className="w-full h-full bg-white dark:bg-[var(--surface-2)] rounded-3xl p-4 lg:p-6 shadow-sm border border-gray-100 dark:border-[var(--border)]/50 flex flex-col items-center min-h-0">
 
             <div className="text-center mb-2 shrink-0">
-              <p className="text-gray-500 font-semibold uppercase tracking-wider text-xs mb-1 flex items-center justify-center gap-1">
+              <p className="text-gray-500 font-semibold uppercase tracking-wider text-xs mb-1">
                 Tes MongeCoins
-                <button onClick={() => setShowNumberInfo(true)} className="text-gray-400 hover:text-indigo-500 transition-colors" title="Informations sur les grands nombres">
-                  <Info size={14} />
-                </button>
-                <button onClick={() => {
-                  setCookieInputUrl(customCookie === '/monge_cookie.png' ? '' : customCookie);
-                  setShowCookieModal(true);
-                }} className="text-gray-400 hover:text-pink-500 transition-colors" title="Changer l'apparence du cookie">
-                  <Palette size={14} />
-                </button>
               </p>
               <h2 className="text-4xl font-black text-indigo-600 dark:text-indigo-400 leading-none">{formatNumber(points)}</h2>
-              <div className="flex gap-3 justify-center mt-3 text-xs font-semibold">
-                <span className="flex items-center gap-1 bg-indigo-50 dark:bg-slate-700/50 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full">
+              <div className="flex gap-3 justify-center mt-3 text-xs font-semibold flex-wrap">
+                <span className="flex items-center gap-1 bg-indigo-50 dark:bg-slate-700/50 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-900/50">
                   <MousePointer2 size={14} /> {clickPower} PPC
                 </span>
-                <span className="flex items-center gap-1 bg-orange-50 dark:bg-slate-700/50 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full">
+                <span className="flex items-center gap-1 bg-orange-50 dark:bg-slate-700/50 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-full border border-orange-100 dark:border-orange-900/50">
                   <Zap size={14} /> {pps} PPS
                 </span>
+              </div>
+              <div className="flex gap-2 justify-center mt-3 flex-wrap">
+                <button onClick={() => setShowAchievementsModal(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 font-bold text-xs hover:scale-105 transition-transform border border-yellow-200 dark:border-yellow-700/50 shadow-sm" title="Voir les succès débloqués">
+                  <Trophy size={14} /> Succès
+                </button>
+                <button onClick={() => { setCookieInputUrl(customCookie === '/monge_cookie.png' ? '' : customCookie); setShowCookieModal(true); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-100 dark:bg-pink-900/40 text-pink-700 dark:text-pink-400 font-bold text-xs hover:scale-105 transition-transform border border-pink-200 dark:border-pink-700/50 shadow-sm" title="Changer l'apparence du cookie">
+                  <Palette size={14} /> Skin
+                </button>
+                <button onClick={() => setShowNumberInfo(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300 font-bold text-xs hover:scale-105 transition-transform border border-gray-200 dark:border-gray-700 shadow-sm" title="Informations sur les grands nombres">
+                  <Info size={14} /> Nombres
+                </button>
               </div>
             </div>
 
@@ -615,13 +680,14 @@ export default function MongeClicker() {
                   {clicks.map(c => (
                     <motion.div
                       key={c.id}
-                      initial={{ opacity: 1, y: c.y - 20, x: c.x }}
-                      animate={{ opacity: 0, y: c.y - 100 }}
+                      initial={{ opacity: 1, y: c.y - 20, x: c.x, scale: c.isCrit ? 1.5 : 1 }}
+                      animate={{ opacity: 0, y: c.y - 100, scale: c.isCrit ? 2 : 1 }}
                       exit={{ opacity: 0 }}
                       transition={{ duration: 1 }}
-                      className="absolute text-2xl font-black text-indigo-600 dark:text-indigo-400 drop-shadow-md pointer-events-none select-none z-50"
+                      className={`absolute text-2xl font-black drop-shadow-md pointer-events-none select-none z-50 ${c.isCrit ? 'text-red-600 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]' : 'text-indigo-600 dark:text-indigo-400'}`}
                     >
                       +{formatNumber(c.value)}
+                      {c.isCrit && <div className="text-[10px] uppercase text-red-500 leading-none">Critique !</div>}
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -659,6 +725,17 @@ export default function MongeClicker() {
                 </h4>
                 <div className="space-y-3 shrink-0">
                   {renderUpgrades('passive')}
+                </div>
+              </div>
+
+              {/* Section Critiques */}
+              <div className="flex flex-col shrink-0">
+                <h4 className="text-sm font-bold text-red-500 mb-2 uppercase tracking-wider shrink-0 flex justify-between items-center">
+                  <span>Critiques</span>
+                  <span className="bg-red-100 dark:bg-red-900/50 text-red-600 px-2 py-0.5 rounded-full text-xs">{getCritChance()}% Chance</span>
+                </h4>
+                <div className="space-y-3 shrink-0">
+                  {renderUpgrades('crit')}
                 </div>
               </div>
 
@@ -898,6 +975,82 @@ export default function MongeClicker() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Achievements Modal */}
+      <AnimatePresence>
+        {showAchievementsModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 max-w-lg w-full border border-gray-100 dark:border-white/10 flex flex-col max-h-[80vh]"
+            >
+              <div className="flex justify-between items-center mb-6 shrink-0">
+                <h3 className="text-2xl font-black text-[var(--text)] flex items-center gap-2">
+                  <Trophy className="text-yellow-400" size={28} />
+                  Succès
+                </h3>
+                <button onClick={() => setShowAchievementsModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 bg-gray-100 dark:bg-slate-700 rounded-full p-2">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400 p-3 rounded-xl mb-4 text-sm font-semibold flex items-center gap-3 shrink-0">
+                <Info size={20} className="shrink-0" />
+                Chaque succès débloqué augmente de manière PERMANENTE ta force de frappe (PPC) et tes revenus (PPS) de 5% !
+              </div>
+
+              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                {ACHIEVEMENTS.map(ach => {
+                  const isUnlocked = unlockedAchievements.includes(ach.id);
+                  return (
+                    <div key={ach.id} className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${isUnlocked ? 'border-yellow-200 dark:border-yellow-900/50 bg-yellow-50/50 dark:bg-yellow-900/20' : 'border-gray-200 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 opacity-60'}`}>
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${isUnlocked ? 'bg-yellow-400 text-white shadow-[0_0_15px_rgba(250,204,21,0.5)]' : 'bg-gray-200 dark:bg-slate-700 text-gray-400'}`}>
+                        {isUnlocked ? <Trophy size={24} /> : <Lock size={20} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`font-bold text-base ${isUnlocked ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                          {ach.name}
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {ach.description}
+                        </p>
+                      </div>
+                      {isUnlocked && (
+                        <div className="font-black text-yellow-500 shrink-0">
+                          +5%
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* New Achievement Toaster */}
+      <AnimatePresence>
+        {newAchievementPopup && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] bg-white dark:bg-slate-800 rounded-2xl shadow-[0_10px_40px_rgba(250,204,21,0.3)] border border-yellow-200 dark:border-yellow-600/30 p-4 flex items-center gap-4 w-11/12 max-w-sm"
+          >
+            <div className="w-12 h-12 rounded-full bg-yellow-400 text-white flex items-center justify-center shrink-0 shadow-inner">
+              <Trophy size={24} />
+            </div>
+            <div>
+              <p className="text-yellow-600 dark:text-yellow-400 text-xs font-bold uppercase tracking-wider">Succès débloqué !</p>
+              <h4 className="font-black text-[var(--text)] text-lg leading-tight">{newAchievementPopup.name}</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mt-1">Gains globaux +5% !</p>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

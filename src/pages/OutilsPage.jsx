@@ -13,6 +13,7 @@ const OTHER_NAV_ITEMS = [
   { href: '/countdown', label: 'Concours', Icon: Timer, color: '#0891B2', description: 'Compte à rebours jusqu\'aux épreuves' },
   { href: '/media', label: 'MongeFlix', Icon: Film, color: '#E50914', description: 'Films & Séries de la promo', badge: 'Nouveau' },
   { href: '/outils/clicker', label: 'Monge Clicker', Icon: MousePointer2, color: '#EAB308', description: 'Le jeu officiel du lycée', badge: 'Nouveau Jeu' },
+  { href: '/outils/poker', label: 'TSI Poker', Icon: Users, color: '#10B981', description: 'Texas Hold\'em Multijoueur', badge: 'Nouveau' },
 ]
 
 export function OutilsPage() {
