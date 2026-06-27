@@ -27,6 +27,10 @@ class PokerGame {
       const existing = this.players.find(p => p.id === player.id);
       existing.socketId = player.socketId;
       existing.isOffline = false;
+      if (existing.disconnectTimer) {
+        clearTimeout(existing.disconnectTimer);
+        existing.disconnectTimer = null;
+      }
       return true;
     }
     if (this.players.length >= 9) return false;
@@ -54,9 +58,22 @@ class PokerGame {
     
     if (this.status !== 'WAITING') {
       p.isOffline = true;
-      if (this.players[this.turnIndex]?.id === userId) {
-        this.fold(userId);
-      }
+      if (this.onStateChange) this.onStateChange();
+      
+      // Give them 30 seconds to reconnect before folding
+      p.disconnectTimer = setTimeout(() => {
+        if (p.isOffline && this.status !== 'WAITING' && !p.folded) {
+          if (this.players[this.turnIndex]?.id === userId) {
+            this.fold(userId);
+          } else {
+            p.folded = true;
+            this.timeline.push({ type: 'ACTION', player_id: userId, action: 'fold', amount: 0 });
+            this.checkNextPhase();
+          }
+          if (this.onStateChange) this.onStateChange();
+        }
+      }, 30000);
+      
     } else {
       this.players = this.players.filter(p => p.id !== userId);
     }

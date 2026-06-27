@@ -88,10 +88,10 @@ export default function PokerTable({ roomId, onLeave }) {
         const portrait = clientHeight > clientWidth;
         setIsPortrait(portrait);
         
-        // If portrait, the virtual table is a 900x900 circle
-        // If landscape, it's a 900x450 oval
-        const targetWidth = portrait ? 850 : 1000; 
-        const targetHeight = portrait ? 850 : 550;
+        // Return to standard sizes (1000x1000) so it's not overly huge on mobile, 
+        // rely on larger fonts/cards instead
+        const targetWidth = 1000; 
+        const targetHeight = portrait ? 1000 : 550;
         
         const scaleX = clientWidth / targetWidth;
         const scaleY = clientHeight / targetHeight;
@@ -103,8 +103,12 @@ export default function PokerTable({ roomId, onLeave }) {
     };
 
     updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
+    
+    // Use ResizeObserver instead of window resize to catch when the footer expands
+    const observer = new ResizeObserver(() => updateScale());
+    if (containerRef.current) observer.observe(containerRef.current);
+    
+    return () => observer.disconnect();
   }, [gameState]); // Recalculate when game state loads just in case
 
   const toggleFullscreen = async () => {
@@ -288,7 +292,7 @@ export default function PokerTable({ roomId, onLeave }) {
               >
                 {/* Player Cards */}
                 {p.cards && p.cards.length > 0 && !p.folded && (
-                  <div className="flex gap-[-20px] mb-2 scale-75 origin-bottom">
+                  <div className="flex mb-2 scale-90 sm:scale-100 origin-bottom">
                     <PlayingCard card={p.cards[0]} className="-rotate-6 translate-x-2" />
                     <PlayingCard card={p.cards[1]} className="rotate-6 -translate-x-2" />
                   </div>
@@ -296,22 +300,22 @@ export default function PokerTable({ roomId, onLeave }) {
                 
                 {/* Player Info Box */}
                 <div className={`
-                  relative bg-slate-800/90 backdrop-blur-md px-4 py-2 rounded-2xl border flex items-center gap-3 min-w-[140px] shadow-xl
+                  relative bg-slate-800/90 backdrop-blur-md px-4 py-3 rounded-2xl border flex items-center gap-3 min-w-[150px] shadow-xl
                   ${isMe ? 'border-emerald-500 bg-emerald-900/20' : 'border-slate-700/50'}
                   ${gameState.players[gameState.turnIndex]?.id === p.id && gameState.status !== 'WAITING' ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-[#0F172A]' : ''}
                   ${p.folded ? 'opacity-50 grayscale' : ''}
                 `}>
                   {p.avatar ? (
-                    <img src={p.avatar} alt={p.username} className="w-10 h-10 rounded-full bg-slate-700 object-cover border border-slate-600" />
+                    <img src={p.avatar} alt={p.username} className="w-12 h-12 rounded-full bg-slate-700 object-cover border border-slate-600" />
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400 text-sm">
+                    <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400 text-base">
                       {p.username.substring(0,2).toUpperCase()}
                     </div>
                   )}
                   
                   <div className="flex-1">
-                    <div className="font-bold text-sm truncate max-w-[80px]">{p.username}</div>
-                    <div className="text-emerald-400 text-xs font-mono">{p.chips}</div>
+                    <div className="font-bold text-base truncate max-w-[90px]">{p.username}</div>
+                    <div className="text-emerald-400 text-sm font-mono">{p.chips}</div>
                   </div>
                   
                   {/* Dealer Button */}
@@ -322,7 +326,7 @@ export default function PokerTable({ roomId, onLeave }) {
                 
                 {/* Current Bet */}
                 {p.currentBet > 0 && (
-                  <div className="mt-2 bg-slate-900/90 backdrop-blur px-3 py-1 rounded-full text-xs font-mono text-slate-300 border border-slate-700 whitespace-nowrap">
+                  <div className="mt-2 bg-slate-900/90 backdrop-blur px-4 py-1.5 rounded-full text-sm font-mono font-bold text-slate-300 border border-slate-700 whitespace-nowrap shadow-lg">
                     Bet: {p.currentBet}
                   </div>
                 )}
@@ -330,6 +334,7 @@ export default function PokerTable({ roomId, onLeave }) {
                 {/* Action status */}
                 {p.folded && <div className="mt-2 text-red-400 text-xs font-bold bg-red-900/40 px-2 py-1 rounded">FOLD</div>}
                 {p.isAllIn && <div className="mt-2 text-orange-400 text-xs font-bold bg-orange-900/40 px-2 py-1 rounded">ALL-IN</div>}
+                {p.isOffline && !p.folded && <div className="mt-2 text-yellow-400 text-xs font-bold bg-yellow-900/40 px-2 py-1 rounded animate-pulse">DÉCONNECTÉ</div>}
               </div>
             );
           })}

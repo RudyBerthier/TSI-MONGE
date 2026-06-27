@@ -182,7 +182,7 @@ export default function PokerReplay() {
               >
                 {/* Cards */}
                 {p.visibleCards && p.visibleCards.length > 0 && !p.folded && (
-                  <div className="flex gap-[-10px] mb-2 scale-75 origin-bottom">
+                  <div className="flex mb-2 scale-90 sm:scale-100 origin-bottom">
                     <div className="-rotate-6 translate-x-2"><PlayingCard cardStr={p.visibleCards[0]} /></div>
                     <div className="rotate-6 -translate-x-2"><PlayingCard cardStr={p.visibleCards[1]} /></div>
                   </div>
@@ -190,16 +190,16 @@ export default function PokerReplay() {
                 
                 {/* Player Box */}
                 <div className={`
-                  relative bg-slate-800/90 backdrop-blur px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl border flex items-center gap-2 sm:gap-3 min-w-[120px] sm:min-w-[140px] shadow-xl
+                  relative bg-slate-800/90 backdrop-blur px-3 py-2 sm:px-4 sm:py-3 rounded-2xl border flex items-center gap-2 sm:gap-3 min-w-[130px] sm:min-w-[150px] shadow-xl
                   ${isActing ? 'border-emerald-500 ring-4 ring-emerald-500/20' : 'border-slate-700/50'}
                   ${p.folded ? 'opacity-40 grayscale' : ''}
                 `}>
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400 text-xs sm:text-sm">
-                    {p.avatar ? <img src={p.avatar} alt="A" className="w-full h-full rounded-full" /> : p.username.substring(0,2).toUpperCase()}
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400 text-sm sm:text-base">
+                    {p.avatar ? <img src={p.avatar} alt="A" className="w-full h-full rounded-full object-cover" /> : p.username.substring(0,2).toUpperCase()}
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold text-xs sm:text-sm truncate max-w-[60px] sm:max-w-[80px]">{p.username}</div>
-                    <div className="text-emerald-400 text-[10px] sm:text-xs font-mono">{p.chips}</div>
+                    <div className="font-bold text-sm sm:text-base truncate max-w-[70px] sm:max-w-[90px]">{p.username}</div>
+                    <div className="text-emerald-400 text-xs sm:text-sm font-mono">{p.chips}</div>
                   </div>
                 </div>
                 

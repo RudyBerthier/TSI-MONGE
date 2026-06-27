@@ -25,7 +25,12 @@ export default function PokerHistory() {
     })
     .then(res => res.json())
     .then(data => {
-      setHistory(data);
+      if (Array.isArray(data)) {
+        setHistory(data);
+      } else {
+        console.error("API Error or Invalid Data:", data);
+        setHistory([]);
+      }
       setLoading(false);
     })
     .catch(err => {
