@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
+const WebSocket = require('ws');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY,
-  { auth: { persistSession: false } }
+  { 
+    auth: { persistSession: false },
+    realtime: { transport: WebSocket }
+  }
 );
 
 // Get recent hand history for a room
