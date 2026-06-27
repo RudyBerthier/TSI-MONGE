@@ -15,6 +15,8 @@ class PokerGame {
     this.currentMaxBet = 0;
     this.minRaise = this.bigBlindAmount;
     this.history = []; // History of hands for showing past winners
+    this.timeline = []; // Hand history timeline for replay
+    this.initialPlayersSnapshot = []; // Players state at start of hand
     this.lastActionTime = Date.now();
   }
 
@@ -81,6 +83,7 @@ class PokerGame {
     this.status = 'PREFLOP';
     this.communityCards = [];
     this.pot = 0;
+    this.timeline = [];
     this.currentMaxBet = this.bigBlindAmount;
     this.minRaise = this.bigBlindAmount;
     
@@ -90,6 +93,14 @@ class PokerGame {
       p.isAllIn = false;
       p.cards = [];
     });
+
+    this.initialPlayersSnapshot = this.players.filter(p => !p.folded).map(p => ({
+      id: p.id,
+      username: p.username,
+      avatar: p.avatar,
+      initialChips: p.chips,
+      cards: []
+    }));
 
     this.dealerIndex = (this.dealerIndex + 1) % this.players.length;
     while (this.players[this.dealerIndex].folded) {
@@ -102,8 +113,12 @@ class PokerGame {
     this.players.forEach(p => {
       if (!p.folded) {
         p.cards = [this.deck.pop(), this.deck.pop()];
+        const snap = this.initialPlayersSnapshot.find(s => s.id === p.id);
+        if (snap) snap.cards = [...p.cards];
       }
     });
+
+    this.timeline.push({ type: 'PHASE', phase: 'PREFLOP', pot: 0 });
 
     // Blinds
     let sbIndex = this.getNextActiveIndex(this.dealerIndex);
@@ -157,6 +172,16 @@ class PokerGame {
       }
       this.currentMaxBet = player.currentBet;
     }
+    
+    if (actualBet > 0) {
+      this.timeline.push({
+        type: isBlind ? 'BLIND' : 'ACTION',
+        player_id: player.id,
+        action: isBlind ? 'blind' : 'bet',
+        amount: actualBet
+      });
+    }
+
     return actualBet;
   }
 
@@ -183,6 +208,7 @@ class PokerGame {
     if (this.players[this.turnIndex].id !== userId) return false;
     const player = this.players[this.turnIndex];
     player.folded = true;
+    this.timeline.push({ type: 'ACTION', player_id: userId, action: 'fold', amount: 0 });
     this.checkNextPhase();
     return true;
   }
@@ -192,6 +218,10 @@ class PokerGame {
     const player = this.players[this.turnIndex];
     const amountToCall = this.currentMaxBet - player.currentBet;
     this.placeBet(this.turnIndex, amountToCall);
+    // Replace the last action in timeline if it was just logged as a generic 'bet' by placeBet
+    if (this.timeline[this.timeline.length - 1].action === 'bet') {
+      this.timeline[this.timeline.length - 1].action = amountToCall === 0 ? 'check' : 'call';
+    }
     this.checkNextPhase();
     return true;
   }
@@ -207,6 +237,12 @@ class PokerGame {
     if (amount < this.minRaise && player.chips > amountToAdd) return false; // Invalid raise
 
     this.placeBet(this.turnIndex, amountToAdd);
+    // Replace generic 'bet' with 'raise'
+    if (this.timeline[this.timeline.length - 1].action === 'bet') {
+      this.timeline[this.timeline.length - 1].action = 'raise';
+      this.timeline[this.timeline.length - 1].raiseTo = totalNewBet;
+    }
+    
     this.checkNextPhase();
     return true;
   }
@@ -247,22 +283,31 @@ class PokerGame {
 
     if (this.status === 'PREFLOP') {
       this.status = 'FLOP';
-      this.communityCards.push(this.deck.pop(), this.deck.pop(), this.deck.pop());
+      const newCards = [this.deck.pop(), this.deck.pop(), this.deck.pop()];
+      this.communityCards.push(...newCards);
+      this.timeline.push({ type: 'PHASE', phase: 'FLOP', cards: newCards, pot: this.pot });
     } else if (this.status === 'FLOP') {
       this.status = 'TURN';
-      this.communityCards.push(this.deck.pop());
+      const newCards = [this.deck.pop()];
+      this.communityCards.push(...newCards);
+      this.timeline.push({ type: 'PHASE', phase: 'TURN', cards: newCards, pot: this.pot });
     } else if (this.status === 'TURN') {
       this.status = 'RIVER';
-      this.communityCards.push(this.deck.pop());
+      const newCards = [this.deck.pop()];
+      this.communityCards.push(...newCards);
+      this.timeline.push({ type: 'PHASE', phase: 'RIVER', cards: newCards, pot: this.pot });
     } else if (this.status === 'RIVER') {
       this.status = 'SHOWDOWN';
       this.endHand();
       return;
     }
 
-    // If everyone is all in or folded, just fast-forward
+    // If everyone is all in or folded, just fast-forward with a delay for suspense
     if (this.getBettingPlayersCount() <= 1) {
-      this.nextPhase();
+      if (this.onStateChange) this.onStateChange(); // Broadcast current state so cards show up
+      setTimeout(() => {
+        this.nextPhase();
+      }, 2000); // 2 second delay between fast-forward phases
       return;
     }
 
@@ -310,6 +355,20 @@ class PokerGame {
       });
     }
 
+    this.timeline.push({ type: 'SHOWDOWN', winners: this.history.slice(-1)[0], pot: this.pot });
+
+    // Save to DB via Room Manager
+    if (this.onHandComplete) {
+      this.onHandComplete({
+        room_id: this.roomId,
+        pot: this.pot,
+        players: this.initialPlayersSnapshot,
+        community_cards: this.communityCards,
+        timeline: this.timeline,
+        winners: this.history.slice(-1)[0]
+      });
+    }
+
     // Reset for next game
     setTimeout(() => {
       this.status = 'WAITING';
@@ -318,7 +377,9 @@ class PokerGame {
       this.players.forEach(p => {
         p.cards = [];
         p.currentBet = 0;
-        if (p.chips === 0) p.isOffline = true; // Kicked out for now if 0 chips
+        if (p.chips <= 0) {
+           p.isOffline = true; // Kicked out if 0 chips
+        }
       });
       // Remove offline players
       this.players = this.players.filter(p => !p.isOffline);

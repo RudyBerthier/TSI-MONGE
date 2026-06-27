@@ -43,6 +43,7 @@ const clickerUploadRouter = require('./routes/clicker-upload');
 const mediaStatsRouter = require('./routes/media_stats');
 const mediaListsRouter = require('./routes/media_lists');
 const transitRouter = require('./routes/transit');
+const pokerRouter = require('./routes/poker');
 
 // Import socket handler
 const setupSocket = require('./socket');
@@ -253,6 +254,7 @@ app.use('/api/search', jwtWithUser, searchRouter);
 app.use('/api/clicker', jwtWithUser, clickerRouter);
 app.use('/api/clicker/upload', jwtWithUser, clickerUploadRouter);
 app.use('/api/transit', transitRouter);
+app.use('/api/poker', jwtWithUser, pokerRouter);
 
 // Health check
 app.get('/api/health', (req, res) => {

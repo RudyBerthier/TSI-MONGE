@@ -56,6 +56,8 @@ const OutilsPage = lazy(() => import('./pages/OutilsPage').then(m => ({ default:
 const KanbanBoard = lazy(() => import('./pages/outils/KanbanBoard').then(m => ({ default: m.KanbanBoard })))
 const MongeClicker = lazy(() => import('./pages/outils/MongeClicker').then(m => ({ default: m.default })))
 const Poker = lazy(() => import('./pages/outils/Poker').then(m => ({ default: m.default })))
+const PokerHistory = lazy(() => import('./pages/outils/PokerHistory').then(m => ({ default: m.default })))
+const PokerReplay = lazy(() => import('./pages/outils/PokerReplay').then(m => ({ default: m.default })))
 const CarpoolHub = lazy(() => import('./pages/carpool/CarpoolHub').then(m => ({ default: m.CarpoolHub })))
 const CarpoolOffer = lazy(() => import('./pages/carpool/CarpoolOffer').then(m => ({ default: m.CarpoolOffer })))
 const CarpoolHistory = lazy(() => import('./pages/carpool/CarpoolHistory').then(m => ({ default: m.CarpoolHistory })))
@@ -245,6 +247,8 @@ const router = createBrowserRouter([
       { path: "outils/kanban", element: <KanbanBoard /> },
       { path: "outils/clicker", element: <MongeClicker /> },
       { path: "outils/poker", element: <Poker /> },
+      { path: "outils/poker/history", element: <PokerHistory /> },
+      { path: "outils/poker/replay/:handId", element: <PokerReplay /> },
       { path: "mes-critiques", element: <MyReviews /> },
       { path: "media", element: <MediaHub /> },
       { path: "covoiturage", element: <CarpoolHub /> },

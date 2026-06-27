@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSocket } from '../../contexts/SocketContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence, animate } from 'framer-motion';
-import { LogOut, Play, Users, Trophy, Maximize, Minimize, X, Check, TrendingUp } from 'lucide-react';
+import { LogOut, Play, Users, Trophy, Maximize, Minimize, X, Check, TrendingUp, History } from 'lucide-react';
 import PlayingCard from './PlayingCard';
 
 // Composant pour l'effet "Machine à sous / Casino"
@@ -153,6 +153,11 @@ export default function PokerTable({ roomId, onLeave }) {
   };
 
   const amountToCall = me ? gameState.currentMaxBet - me.currentBet : 0;
+  const potAfterCall = gameState ? gameState.pot + amountToCall : 0;
+  
+  const minRaiseAmount = gameState ? gameState.currentMaxBet + gameState.minRaise : 0;
+  const halfPotBet = gameState && me ? Math.max(minRaiseAmount, Math.min(me.chips, gameState.currentMaxBet + Math.floor(potAfterCall / 2))) : 0;
+  const potBet = gameState && me ? Math.max(minRaiseAmount, Math.min(me.chips, gameState.currentMaxBet + potAfterCall)) : 0;
 
   return (
     <div className="min-h-[100dvh] h-[100dvh] bg-[#0F172A] relative flex flex-col font-sans text-white overflow-hidden selection:bg-emerald-500/30">
@@ -161,9 +166,12 @@ export default function PokerTable({ roomId, onLeave }) {
 
       {/* Header */}
       <header className="absolute top-0 w-full p-4 flex justify-between items-start sm:items-center z-50 pointer-events-none">
-        <div className="flex-1 flex justify-start pointer-events-auto">
+        <div className="flex-1 flex justify-start pointer-events-auto gap-2">
           <button onClick={onLeave} className="flex items-center justify-center gap-1 sm:gap-2 bg-slate-800/50 hover:bg-slate-700 backdrop-blur px-3 sm:px-4 py-2 rounded-xl transition text-xs sm:text-base border border-slate-700/50 shadow-md">
             <LogOut size={16} /> <span className="hidden sm:inline">Quitter</span>
+          </button>
+          <button onClick={() => window.open(`/outils/poker/history?room=${roomId}`, '_blank')} className="flex items-center justify-center gap-1 sm:gap-2 bg-slate-800/50 hover:bg-slate-700 backdrop-blur px-3 sm:px-4 py-2 rounded-xl transition text-xs sm:text-base border border-slate-700/50 shadow-md text-emerald-400">
+            <History size={16} /> <span className="hidden sm:inline">Historique</span>
           </button>
         </div>
         
@@ -186,12 +194,12 @@ export default function PokerTable({ roomId, onLeave }) {
       </header>
 
       {/* Main Table Area (Scalable Container) */}
-      <main ref={containerRef} className="flex-1 flex items-center justify-center relative w-full overflow-hidden mt-10">
+      <main ref={containerRef} className="flex-1 relative w-full overflow-hidden mt-10">
         
         {/* The Scaled Wrapper */}
         <div 
-          className="relative origin-center transition-all duration-500"
-          style={{ transform: `scale(${scale})`, width: 900, height: isPortrait ? 900 : 450 }}
+          className="absolute left-1/2 top-1/2 origin-center transition-all duration-500"
+          style={{ transform: `translate(-50%, -50%) scale(${scale})`, width: 900, height: isPortrait ? 900 : 450 }}
         >
           {/* The Poker Table Oval/Circle */}
           <div 
@@ -368,9 +376,9 @@ export default function PokerTable({ roomId, onLeave }) {
                   />
                   
                   <div className="flex gap-2 justify-between w-full">
-                    <button onClick={() => setBetAmount(gameState.currentMaxBet + gameState.minRaise)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[10px] sm:text-xs font-bold py-2 rounded-lg transition">Min</button>
-                    <button onClick={() => setBetAmount(Math.max(gameState.currentMaxBet + gameState.minRaise, Math.min(me.chips, Math.floor(gameState.pot / 2))))} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[10px] sm:text-xs font-bold py-2 rounded-lg transition">½ Pot</button>
-                    <button onClick={() => setBetAmount(Math.max(gameState.currentMaxBet + gameState.minRaise, Math.min(me.chips, gameState.pot)))} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[10px] sm:text-xs font-bold py-2 rounded-lg transition">Pot</button>
+                    <button onClick={() => setBetAmount(minRaiseAmount)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[10px] sm:text-xs font-bold py-2 rounded-lg transition">Min</button>
+                    <button onClick={() => setBetAmount(halfPotBet)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[10px] sm:text-xs font-bold py-2 rounded-lg transition">½ Pot</button>
+                    <button onClick={() => setBetAmount(potBet)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-[10px] sm:text-xs font-bold py-2 rounded-lg transition">Pot</button>
                     <button onClick={() => setBetAmount(me.chips)} className="flex-1 bg-red-900/50 hover:bg-red-900/80 text-red-300 border border-red-900 text-[10px] sm:text-xs font-bold py-2 rounded-lg transition">ALL-IN</button>
                   </div>
                 </motion.div>

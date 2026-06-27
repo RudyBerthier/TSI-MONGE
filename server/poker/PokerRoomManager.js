@@ -22,9 +22,40 @@ class PokerRoomManager {
     if (!this.rooms.has(roomId)) {
       const game = new PokerGame(roomId);
       game.onStateChange = () => this.broadcastState(roomId);
+      game.onHandComplete = (historyData) => this.saveHandHistory(roomId, historyData);
       this.rooms.set(roomId, game);
     }
     return this.rooms.get(roomId);
+  }
+
+  async saveHandHistory(roomId, historyData) {
+    try {
+      // 1. Save hand history
+      const { error: historyErr } = await supabase.from('poker_hands').insert({
+        room_id: historyData.room_id,
+        pot: historyData.pot,
+        players: historyData.players,
+        community_cards: historyData.community_cards,
+        timeline: historyData.timeline,
+        winners: historyData.winners
+      });
+      
+      if (historyErr) {
+        console.error("Error saving poker hand history:", historyErr);
+      }
+
+      // 2. Update players chips in DB
+      const game = this.rooms.get(roomId);
+      if (game) {
+        for (const p of game.players) {
+           if (!p.isOffline) {
+              await supabase.from('poker_profiles').update({ chips: p.chips }).eq('user_id', p.id);
+           }
+        }
+      }
+    } catch(err) {
+      console.error("Exception saving poker hand history:", err);
+    }
   }
 
   async handleConnection(socket) {
