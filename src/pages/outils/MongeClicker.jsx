@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { Link } from 'react-router-dom';
 import { UserAvatar } from '../../components/UserAvatar';
+import { RestrictedAccess } from '../../components/RestrictedAccess';
 
 const UPGRADES = [
   // Clic (PPC)
@@ -74,7 +75,7 @@ const formatNumber = (num) => {
 };
 
 export default function MongeClicker() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { socket } = useSocket();
   const [loading, setLoading] = useState(true);
 
@@ -544,6 +545,22 @@ export default function MongeClicker() {
 
   if (loading) {
     return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[calc(100dvh-70px)] p-6 bg-gray-50/50 dark:bg-[#121212] w-full">
+         <div className="w-full max-w-md">
+          <Link to="/outils" className="inline-flex items-center text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white mb-8 transition-colors">
+            <ArrowLeft size={18} className="mr-2" /> Retour aux outils
+          </Link>
+          <RestrictedAccess 
+            title="Accès restreint" 
+            message="Connectez-vous pour jouer au Monge Clicker et enregistrer votre score." 
+          />
+        </div>
+      </div>
+    );
   }
 
   if (sessionBlocked) {
