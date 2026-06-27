@@ -88,10 +88,10 @@ export default function PokerTable({ roomId, onLeave }) {
         const portrait = clientHeight > clientWidth;
         setIsPortrait(portrait);
         
-        // If portrait, the virtual table is a 900x900 circle + 100px padding = 1000x1000
-        // If landscape, it's a 900x450 oval + 100px padding = 1000x550
-        const targetWidth = 1000; 
-        const targetHeight = portrait ? 1000 : 550;
+        // If portrait, the virtual table is a 900x900 circle
+        // If landscape, it's a 900x450 oval
+        const targetWidth = portrait ? 850 : 1000; 
+        const targetHeight = portrait ? 850 : 550;
         
         const scaleX = clientWidth / targetWidth;
         const scaleY = clientHeight / targetHeight;
@@ -109,8 +109,12 @@ export default function PokerTable({ roomId, onLeave }) {
 
   const toggleFullscreen = async () => {
     try {
-      if (!document.fullscreenElement) {
-        await document.documentElement.requestFullscreen();
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (document.documentElement.requestFullscreen) {
+          await document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+          await document.documentElement.webkitRequestFullscreen();
+        }
         if (screen.orientation && screen.orientation.lock) {
           try {
             await screen.orientation.lock('landscape');
@@ -121,9 +125,11 @@ export default function PokerTable({ roomId, onLeave }) {
       } else {
         if (document.exitFullscreen) {
           await document.exitFullscreen();
-          if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-          }
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        }
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
         }
       }
     } catch(err) {
@@ -154,20 +160,28 @@ export default function PokerTable({ roomId, onLeave }) {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-900/20 blur-[120px] rounded-full pointer-events-none" />
 
       {/* Header */}
-      <header className="absolute top-0 w-full p-4 flex justify-between items-center z-50 pointer-events-none">
-        <button onClick={onLeave} className="pointer-events-auto flex items-center gap-1 sm:gap-2 bg-slate-800/50 hover:bg-slate-700 backdrop-blur px-3 sm:px-4 py-2 rounded-xl transition text-xs sm:text-base">
-          <LogOut size={16} /> <span className="hidden sm:inline">Quitter</span>
-        </button>
-        <div className="bg-slate-800/50 backdrop-blur px-4 sm:px-6 py-2 rounded-xl border border-slate-700/50 font-mono font-bold tracking-widest text-emerald-400 text-xs sm:text-base">
-          SALON: {roomId}
+      <header className="absolute top-0 w-full p-4 flex justify-between items-start sm:items-center z-50 pointer-events-none">
+        <div className="flex-1 flex justify-start pointer-events-auto">
+          <button onClick={onLeave} className="flex items-center justify-center gap-1 sm:gap-2 bg-slate-800/50 hover:bg-slate-700 backdrop-blur px-3 sm:px-4 py-2 rounded-xl transition text-xs sm:text-base border border-slate-700/50 shadow-md">
+            <LogOut size={16} /> <span className="hidden sm:inline">Quitter</span>
+          </button>
         </div>
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <div className="hidden sm:flex items-center gap-2 bg-slate-800/50 backdrop-blur px-4 py-2 rounded-xl border border-slate-700/50 text-slate-300 text-xs sm:text-base">
+        
+        <div className="flex-1 flex justify-center">
+          <div className="bg-slate-800/50 backdrop-blur px-4 sm:px-6 py-2 rounded-xl border border-slate-700/50 font-mono font-bold tracking-widest text-emerald-400 text-xs sm:text-base shadow-md">
+            SALON: {roomId}
+          </div>
+        </div>
+        
+        <div className="flex-1 flex justify-end items-center gap-2 pointer-events-auto">
+          <div className="hidden sm:flex items-center gap-2 bg-slate-800/50 backdrop-blur px-4 py-2 rounded-xl border border-slate-700/50 text-slate-300 text-xs sm:text-base shadow-md">
             <Users size={16} /> {gameState.players.length} / 9
           </div>
-          <button onClick={toggleFullscreen} className="flex items-center justify-center w-10 h-10 bg-slate-800/50 hover:bg-slate-700 backdrop-blur rounded-xl transition border border-slate-700/50">
-            {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-          </button>
+          {(document.fullscreenEnabled || document.webkitFullscreenEnabled) && (
+            <button onClick={toggleFullscreen} className="flex items-center justify-center w-10 h-10 sm:w-auto sm:px-4 sm:py-2 bg-slate-800/50 hover:bg-slate-700 backdrop-blur rounded-xl transition border border-slate-700/50 shadow-md">
+              {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
+            </button>
+          )}
         </div>
       </header>
 
